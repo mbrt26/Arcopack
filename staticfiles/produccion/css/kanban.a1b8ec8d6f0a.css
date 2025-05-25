@@ -1,0 +1,89 @@
+.kanban-container {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem;
+    min-height: calc(100vh - 56px);
+    overflow-x: auto;
+}
+
+.kanban-column {
+    flex: 1;
+    min-width: 300px;
+    max-width: 400px;
+    background-color: #f8f9fa;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.kanban-column-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.kanban-column-content {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.proceso-item {
+    background: white;
+    border-radius: 0.25rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.proceso-item:last-child {
+    margin-bottom: 0;
+}
+
+.proceso-item:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    transition: box-shadow 0.3s ease;
+}
+
+.proceso-meta {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-top: 0.5rem;
+}
+
+.proceso-operario {
+    font-size: 0.875rem;
+    color: #495057;
+    margin-top: 0.5rem;
+}
+
+.proceso-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    background-color: #e9ecef;
+}
+
+.proceso-status .badge {
+    font-size: 0.75rem;
+}
+
+.progress {
+    height: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.alert {
+    margin-bottom: 0.5rem;
+    padding: 0.5rem;
+}
+
+.alert:last-child {
+    margin-bottom: 0;
+}

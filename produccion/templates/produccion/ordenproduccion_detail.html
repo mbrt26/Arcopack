@@ -1,0 +1,322 @@
+{% extends "base.html" %}
+
+{% block title %}OP {{ op.op_numero }} - ARCOPACK ERP{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>OP {{ op.op_numero }}</h1>
+    <div>
+        <a href="{% url 'admin:produccion_ordenproduccion_change' op.id %}" class="btn btn-warning">
+            <i class="fas fa-edit"></i> Editar
+        </a>
+        <a href="{% url 'op_list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Volver
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Información General -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Información General</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-sm-4 fw-bold">N° OP:</div>
+                    <div class="col-sm-8">{{ op.op_numero }}</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-sm-4 fw-bold">Cliente:</div>
+                    <div class="col-sm-8">{{ op.cliente }}</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-sm-4 fw-bold">Producto:</div>
+                    <div class="col-sm-8">{{ op.producto }}</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-sm-4 fw-bold">Cantidad:</div>
+                    <div class="col-sm-8">{{ op.cantidad_solicitada_kg }} kg</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-sm-4 fw-bold">Etapa:</div>
+                    <div class="col-sm-8">
+                        <span class="badge bg-info">{{ op.get_etapa_actual_display }}</span>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-sm-4 fw-bold">Estado:</div>
+                    <div class="col-sm-8">
+                        <span class="badge {% if op.is_active %}bg-success{% else %}bg-danger{% endif %}">
+                            {{ op.is_active|yesno:"Activa,Cancelada" }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fechas -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Fechas</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-sm-4 fw-bold">Inicio Programado:</div>
+                    <div class="col-sm-8">{{ op.fecha_programada_inicio|date:"d/m/Y" }}</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-sm-4 fw-bold">Fin Programado:</div>
+                    <div class="col-sm-8">{{ op.fecha_programada_fin|date:"d/m/Y" }}</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-sm-4 fw-bold">Compromiso:</div>
+                    <div class="col-sm-8">{{ op.fecha_compromiso_entrega|date:"d/m/Y" }}</div>
+                </div>
+                {% if op.fecha_real_inicio %}
+                <div class="row mb-3">
+                    <div class="col-sm-4 fw-bold">Inicio Real:</div>
+                    <div class="col-sm-8">{{ op.fecha_real_inicio|date:"d/m/Y" }}</div>
+                </div>
+                {% endif %}
+                {% if op.fecha_real_fin %}
+                <div class="row mb-3">
+                    <div class="col-sm-4 fw-bold">Fin Real:</div>
+                    <div class="col-sm-8">{{ op.fecha_real_fin|date:"d/m/Y" }}</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Secuencia de Procesos -->
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Secuencia de Procesos</h5>
+            </div>
+            <div class="card-body">
+                <div class="timeline">
+                    {% for proceso in op.secuencia_procesos.all %}
+                    <div class="timeline-item">
+                        <div class="timeline-badge {% if proceso.completado %}bg-success{% elif proceso.en_proceso %}bg-info{% else %}bg-secondary{% endif %}">
+                            <i class="fas {% if proceso.completado %}fa-check{% elif proceso.en_proceso %}fa-cog fa-spin{% else %}fa-clock{% endif %}"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <h6>{{ proceso.proceso.nombre }}</h6>
+                            {% if proceso.completado %}
+                                <p class="text-success">Completado</p>
+                            {% elif proceso.en_proceso %}
+                                <p class="text-info">En Proceso</p>
+                            {% else %}
+                                <p class="text-muted">Pendiente</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Registros de Procesos -->
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Registros de Procesos</h5>
+            </div>
+            <div class="card-body">
+                <ul class="nav nav-tabs" id="procesosTabs" role="tablist">
+                    {% if op.registros_impresion.exists %}
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="impresion-tab" data-bs-toggle="tab" data-bs-target="#impresion" type="button" role="tab">
+                            Impresión
+                        </button>
+                    </li>
+                    {% endif %}
+                    {% if op.registros_refilado.exists %}
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="refilado-tab" data-bs-toggle="tab" data-bs-target="#refilado" type="button" role="tab">
+                            Refilado
+                        </button>
+                    </li>
+                    {% endif %}
+                    {% if op.registros_sellado.exists %}
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="sellado-tab" data-bs-toggle="tab" data-bs-target="#sellado" type="button" role="tab">
+                            Sellado
+                        </button>
+                    </li>
+                    {% endif %}
+                    {% if op.registros_doblado.exists %}
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="doblado-tab" data-bs-toggle="tab" data-bs-target="#doblado" type="button" role="tab">
+                            Doblado
+                        </button>
+                    </li>
+                    {% endif %}
+                </ul>
+
+                <div class="tab-content mt-3" id="procesosTabsContent">
+                    {% if op.registros_impresion.exists %}
+                    <div class="tab-pane fade show active" id="impresion" role="tabpanel">
+                        {% for registro in op.registros_impresion.all %}
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h6 class="card-subtitle mb-2 text-muted">Registro #{{ registro.id }}</h6>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <p><strong>Máquina:</strong> {{ registro.maquina }}</p>
+                                        <p><strong>Fecha:</strong> {{ registro.fecha_hora_inicio|date:"d/m/Y H:i" }}</p>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <p><strong>Operario:</strong> {{ registro.operario }}</p>
+                                        <p><strong>Metros:</strong> {{ registro.metros_impresos }}</p>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <p><strong>Supervisor:</strong> {{ registro.supervisor }}</p>
+                                        <p><strong>Estado:</strong> {{ registro.get_estado_display }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    {% if op.registros_refilado.exists %}
+                    <div class="tab-pane fade" id="refilado" role="tabpanel">
+                        {% for registro in op.registros_refilado.all %}
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h6 class="card-subtitle mb-2 text-muted">Registro #{{ registro.id }}</h6>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <p><strong>Máquina:</strong> {{ registro.maquina }}</p>
+                                        <p><strong>Fecha:</strong> {{ registro.fecha_hora_inicio|date:"d/m/Y H:i" }}</p>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <p><strong>Operario:</strong> {{ registro.operario }}</p>
+                                        <p><strong>Kg Producidos:</strong> {{ registro.kg_producidos }}</p>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <p><strong>Supervisor:</strong> {{ registro.supervisor }}</p>
+                                        <p><strong>Estado:</strong> {{ registro.get_estado_display }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    {% if op.registros_sellado.exists %}
+                    <div class="tab-pane fade" id="sellado" role="tabpanel">
+                        {% for registro in op.registros_sellado.all %}
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h6 class="card-subtitle mb-2 text-muted">Registro #{{ registro.id }}</h6>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <p><strong>Máquina:</strong> {{ registro.maquina }}</p>
+                                        <p><strong>Fecha:</strong> {{ registro.fecha_hora_inicio|date:"d/m/Y H:i" }}</p>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <p><strong>Operario:</strong> {{ registro.operario }}</p>
+                                        <p><strong>Kg Producidos:</strong> {{ registro.kg_producidos }}</p>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <p><strong>Supervisor:</strong> {{ registro.supervisor }}</p>
+                                        <p><strong>Estado:</strong> {{ registro.get_estado_display }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    {% if op.registros_doblado.exists %}
+                    <div class="tab-pane fade" id="doblado" role="tabpanel">
+                        {% for registro in op.registros_doblado.all %}
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h6 class="card-subtitle mb-2 text-muted">Registro #{{ registro.id }}</h6>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <p><strong>Máquina:</strong> {{ registro.maquina }}</p>
+                                        <p><strong>Fecha:</strong> {{ registro.fecha_hora_inicio|date:"d/m/Y H:i" }}</p>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <p><strong>Operario:</strong> {{ registro.operario }}</p>
+                                        <p><strong>Kg Producidos:</strong> {{ registro.kg_producidos }}</p>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <p><strong>Supervisor:</strong> {{ registro.supervisor }}</p>
+                                        <p><strong>Estado:</strong> {{ registro.get_estado_display }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.timeline {
+    position: relative;
+    padding: 20px 0;
+}
+
+.timeline:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50px;
+    height: 100%;
+    width: 2px;
+    background: #e9ecef;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 30px;
+    padding-left: 70px;
+}
+
+.timeline-badge {
+    position: absolute;
+    left: 35px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    text-align: center;
+    color: white;
+    line-height: 30px;
+}
+
+.timeline-content {
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+.timeline-content h6 {
+    margin: 0 0 10px;
+}
+
+.timeline-content p {
+    margin: 0;
+}
+</style>
+{% endblock %}

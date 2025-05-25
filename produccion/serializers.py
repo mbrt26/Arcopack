@@ -5,13 +5,14 @@ from decimal import Decimal
 
 # Importar modelos de esta app
 from .models import (
-    OrdenProduccion, RegistroImpresion, Refilado, Sellado, Doblado,
+    OrdenProduccion, RegistroImpresion, Refilado, Sellado, Doblado, OrdenProduccionProceso,
     # Los modelos de detalle como Paro*, Desperdicio*, Consumo* no suelen
     # necesitar serializers propios si se manejan vía inlines o acciones,
     # a menos que quieras endpoints específicos para ellos.
 )
 # Importar modelos relacionados de otras apps (solo si se usan aquí para validación o representación)
 from configuracion.models import Proceso
+from inventario.models import LoteMateriaPrima, LoteProductoEnProceso, LoteProductoTerminado
 # from clientes.models import Cliente # Necesario para validación o representación profunda
 # from productos.models import ProductoTerminado # Necesario para validación o representación profunda
 # from inventario.models import MateriaPrima, Tinta # Necesario para validación o representación profunda
@@ -19,6 +20,50 @@ from configuracion.models import Proceso
 # =============================================
 # === SERIALIZER PARA ORDEN DE PRODUCCIÓN ===
 # =============================================
+
+class LoteProductoEnProcesoSerializer(serializers.ModelSerializer):
+    """Serializer básico para LoteProductoEnProceso (WIP)."""
+    producto_terminado_nombre = serializers.CharField(source='producto_terminado.nombre', read_only=True)
+    ubicacion_nombre = serializers.CharField(source='ubicacion.nombre', read_only=True)
+    orden_produccion_numero = serializers.CharField(source='orden_produccion.op_numero', read_only=True)
+
+    class Meta:
+        model = LoteProductoEnProceso
+        fields = [
+            'id', 'lote_id', 'producto_terminado', 'producto_terminado_nombre',
+            'orden_produccion', 'orden_produccion_numero',
+            'cantidad_actual', 'unidad_medida_lote',
+            'estado', 'ubicacion', 'ubicacion_nombre', 'fecha_produccion'
+        ]
+        read_only_fields = (
+            'id', 'producto_terminado_nombre', 'ubicacion_nombre', 'orden_produccion_numero',
+        )
+
+class LoteMateriaPrimaSerializer(serializers.ModelSerializer):
+    """Serializer básico para LoteMateriaPrima."""
+    materia_prima_nombre = serializers.CharField(source='materia_prima.nombre', read_only=True)
+    ubicacion_nombre = serializers.CharField(source='ubicacion.nombre', read_only=True)
+
+    class Meta:
+        model = LoteMateriaPrima
+        fields = [
+            'id', 'lote_id', 'materia_prima', 'materia_prima_nombre',
+            'cantidad_actual', 'cantidad_recibida', 'unidad_medida_lote',
+            'estado', 'ubicacion', 'ubicacion_nombre', 'fecha_recepcion', 'fecha_vencimiento'
+        ]
+        read_only_fields = (
+            'id', 'materia_prima_nombre', 'ubicacion_nombre',
+        )
+
+class OrdenProduccionProcesoSerializer(serializers.ModelSerializer):
+    """Serializer para mostrar la secuencia de procesos de la OP."""
+    proceso_nombre = serializers.CharField(source='proceso.nombre', read_only=True)
+
+    class Meta:
+        model = OrdenProduccionProceso
+        fields = ['id', 'proceso', 'proceso_nombre', 'secuencia']
+        read_only_fields = ['id', 'proceso_nombre']
+
 class OrdenProduccionSerializer(serializers.ModelSerializer):
     """Serializer para Ordenes de Producción."""
 
@@ -35,6 +80,9 @@ class OrdenProduccionSerializer(serializers.ModelSerializer):
         many=True, write_only=True # write_only=True si ya muestras 'procesos_nombres' para lectura
     )
 
+    # --- Secuencia de procesos (lectura anidada) ---
+    procesos_secuencia = OrdenProduccionProcesoSerializer(many=True, read_only=True)
+
     class Meta:
         model = OrdenProduccion
         # Listar campos explícitamente, incluyendo los read_only para lectura
@@ -47,8 +95,7 @@ class OrdenProduccionSerializer(serializers.ModelSerializer):
             'fecha_real_inicio', 'fecha_real_terminacion', 'fecha_real_entrega',
             'sustrato', 'sustrato_nombre', # ID para escritura, Nombre para lectura
             'ancho_sustrato_mm', 'calibre_sustrato_um', 'tratamiento_sustrato', 'color_sustrato',
-            'procesos', 'procesos_nombres', # IDs para escritura, Nombres para lectura
-            'etapa_actual', 'etapa_actual_display',
+            'procesos', 'procesos_nombres', 'procesos_secuencia', 'etapa_actual', 'etapa_actual_display',
             'codigo_barras_op', 'observaciones_generales', 'observaciones_produccion',
             'is_active', 'actualizado_en', 'creado_por', 'actualizado_por',
         ]
@@ -57,7 +104,7 @@ class OrdenProduccionSerializer(serializers.ModelSerializer):
             'cantidad_producida_kg', 'fecha_real_inicio', 'fecha_real_terminacion',
             'fecha_real_entrega', 'is_active',
             'cliente_nombre', 'producto_info', 'sustrato_nombre',
-            'procesos_nombres', 'etapa_actual_display',
+            'procesos_nombres', 'procesos_secuencia', 'etapa_actual_display',
         )
 
 # =============================================
@@ -66,8 +113,28 @@ class OrdenProduccionSerializer(serializers.ModelSerializer):
 
 class ConsumoImpresionSerializer(serializers.Serializer):
     """Valida datos para consumir sustrato en Impresión."""
-    lote_sustrato_id = serializers.CharField(max_length=100, required=True, help_text="ID Lote MP (sustrato) a consumir.")
-    cantidad_kg = serializers.DecimalField(max_digits=12, decimal_places=3, required=True, min_value=Decimal('0.001'), help_text="Cantidad en Kg a consumir.")
+    lote_sustrato_id = serializers.PrimaryKeyRelatedField(
+        queryset=LoteMateriaPrima.objects.filter(estado='DISPONIBLE'),
+        source='lote_consumido',
+        required=True,
+        help_text="ID Lote MP (sustrato) a consumir."
+    )
+    cantidad_kg = serializers.DecimalField(
+        max_digits=12, decimal_places=3,
+        required=True,
+        min_value=Decimal('0.001'),
+        help_text="Cantidad en Kg a consumir."
+    )
+
+    def __init__(self, *args, **kwargs):
+        registro_impresion = kwargs.pop('registro_impresion', None)
+        super().__init__(*args, **kwargs)
+        if (registro_impresion):
+            # Filtrar lotes por materia prima de la OP
+            self.fields['lote_sustrato_id'].queryset = (
+                self.fields['lote_sustrato_id'].queryset
+                .filter(materia_prima=registro_impresion.orden_produccion.sustrato)
+            )
 
 class ProduccionImpresionSerializer(serializers.Serializer):
     """Valida datos para registrar producción WIP/PT desde Impresión."""
@@ -98,8 +165,28 @@ class RegistroImpresionSerializer(serializers.ModelSerializer):
 
 class ConsumoWipRefiladoSerializer(serializers.Serializer):
     """Valida datos para consumir WIP en Refilado."""
-    lote_entrada_id = serializers.CharField(max_length=100, required=True, help_text="ID Lote WIP (rollo impreso?) a consumir.")
-    cantidad_kg = serializers.DecimalField(max_digits=12, decimal_places=3, required=True, min_value=Decimal('0.001'), help_text="Cantidad en Kg a consumir.")
+    lote_entrada_id = serializers.PrimaryKeyRelatedField(
+        queryset=LoteProductoEnProceso.objects.filter(estado='DISPONIBLE'),
+        source='lote_consumido',
+        required=True,
+        help_text="ID Lote WIP (rollo impreso?) a consumir."
+    )
+    cantidad_kg = serializers.DecimalField(
+        max_digits=12, decimal_places=3,
+        required=True,
+        min_value=Decimal('0.001'),
+        help_text="Cantidad en Kg a consumir."
+    )
+
+    def __init__(self, *args, **kwargs):
+        registro_refilado = kwargs.pop('registro_refilado', None)
+        super().__init__(*args, **kwargs)
+        if registro_refilado:
+            # Filtrar lotes por OP
+            self.fields['lote_entrada_id'].queryset = (
+                self.fields['lote_entrada_id'].queryset
+                .filter(orden_produccion=registro_refilado.orden_produccion)
+            )
 
 class ConsumoMpRefiladoSerializer(serializers.Serializer):
     """Valida datos para consumir MP (ej: core) en Refilado."""

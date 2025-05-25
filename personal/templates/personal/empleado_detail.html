@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ empleado.nombre_completo }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    {% include "components/_messages.html" %}
+
+    <div class="card">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h3 class="card-title mb-0">{{ empleado.nombre_completo }}</h3>
+                <div>
+                    <a href="{% url 'personal:empleado_update' empleado.pk %}" class="btn btn-primary">
+                        <i class="bi bi-pencil"></i> Editar
+                    </a>
+                    <a href="{% url 'personal:empleado_list' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Volver
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>Información Personal</h5>
+                    <table class="table table-sm">
+                        <tr>
+                            <th width="30%">Nombres:</th>
+                            <td>{{ empleado.nombres }}</td>
+                        </tr>
+                        <tr>
+                            <th>Apellidos:</th>
+                            <td>{{ empleado.apellidos }}</td>
+                        </tr>
+                        <tr>
+                            <th>Cédula:</th>
+                            <td>{{ empleado.cedula }}</td>
+                        </tr>
+                        <tr>
+                            <th>Estado:</th>
+                            <td>
+                                <span class="badge {% if empleado.is_active %}bg-success{% else %}bg-danger{% endif %}">
+                                    {{ empleado.is_active|yesno:"Activo,Inactivo" }}
+                                </span>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <h5>Información Laboral</h5>
+                    <table class="table table-sm">
+                        <tr>
+                            <th width="30%">Código:</th>
+                            <td>{{ empleado.codigo_empleado }}</td>
+                        </tr>
+                        <tr>
+                            <th>Cargo:</th>
+                            <td>{{ empleado.cargo }}</td>
+                        </tr>
+                        <tr>
+                            <th>Área:</th>
+                            <td>{{ empleado.area }}</td>
+                        </tr>
+                        <tr>
+                            <th>Fecha Ingreso:</th>
+                            <td>{{ empleado.fecha_ingreso|date:"d/m/Y" }}</td>
+                        </tr>
+                        {% if empleado.fecha_retiro %}
+                        <tr>
+                            <th>Fecha Retiro:</th>
+                            <td>{{ empleado.fecha_retiro|date:"d/m/Y" }}</td>
+                        </tr>
+                        {% endif %}
+                    </table>
+                </div>
+            </div>
+
+            {% if empleado.usuario_sistema %}
+            <div class="row mt-4">
+                <div class="col-12">
+                    <h5>Acceso al Sistema</h5>
+                    <table class="table table-sm">
+                        <tr>
+                            <th width="15%">Usuario:</th>
+                            <td>{{ empleado.usuario_sistema.username }}</td>
+                            <th width="15%">Email:</th>
+                            <td>{{ empleado.usuario_sistema.email }}</td>
+                        </tr>
+                        <tr>
+                            <th>Grupos:</th>
+                            <td colspan="3">
+                                {% for grupo in empleado.usuario_sistema.groups.all %}
+                                <span class="badge bg-info me-1">{{ grupo.name }}</span>
+                                {% empty %}
+                                -
+                                {% endfor %}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="row mt-4">
+                <div class="col-12">
+                    <h5>Información del Sistema</h5>
+                    <table class="table table-sm">
+                        <tr>
+                            <th width="15%">Creado:</th>
+                            <td>{{ empleado.creado_en }} por {{ empleado.creado_por }}</td>
+                            <th width="15%">Actualizado:</th>
+                            <td>{{ empleado.actualizado_en }} por {{ empleado.actualizado_por }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if turnos %}
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Historial de Turnos</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Turno</th>
+                            <th>Proceso</th>
+                            <th>Máquina</th>
+                            <th>Estado</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for turno in turnos %}
+                        <tr>
+                            <td>{{ turno.fecha|date:"d/m/Y" }}</td>
+                            <td>{{ turno.get_turno_display }}</td>
+                            <td>{{ turno.proceso }}</td>
+                            <td>{{ turno.maquina }}</td>
+                            <td>
+                                <span class="badge {{ turno.get_estado_class }}">
+                                    {{ turno.get_estado_display }}
+                                </span>
+                            </td>
+                            <td>
+                                <a href="{% url 'personal:turno_detail' turno.pk %}" class="btn btn-sm btn-info">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

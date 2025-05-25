@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Productos{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">Productos</h1>
+        <div>
+            <a href="{% url 'productos:import' %}" class="btn btn-success me-2">
+                <i class="bi bi-file-earmark-spreadsheet"></i> Importar
+            </a>
+            <a href="{% url 'productos:export' %}" class="btn btn-info me-2">
+                <i class="bi bi-download"></i> Exportar
+            </a>
+            <a href="{% url 'productos:producto_create' %}" class="btn btn-primary">
+                <i class="bi bi-plus-lg"></i> Nuevo Producto
+            </a>
+        </div>
+    </div>
+
+    {% include "components/_messages.html" %}
+    {% include "components/_search_filters.html" with filter=filter %}
+
+    <div class="card">
+        <div class="card-body">
+            {% with headers=producto_headers items=productos show_actions=True actions=producto_actions %}
+            {% include "productos/components/_table.html" %}
+            {% endwith %}
+        </div>
+    </div>
+
+    {% include "components/_pagination.html" with page_obj=page_obj %}
+</div>
+
+{% block extra_js %}
+<script>
+    // Handle filter form submission
+    const filterForm = document.querySelector('form[method="get"]');
+    if (filterForm) {
+        filterForm.querySelectorAll('select').forEach(select => {
+            select.addEventListener('change', () => {
+                filterForm.submit();
+            });
+        });
+    }
+</script>
+{% endblock %}
+{% endblock %}

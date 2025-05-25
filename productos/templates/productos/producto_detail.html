@@ -1,0 +1,378 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ producto.nombre }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    {% include "components/_messages.html" %}
+
+    <div class="card">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="card-title mb-0">{{ producto.nombre }}</h3>
+                    <small class="text-muted">{{ producto.codigo }}</small>
+                </div>
+                <div>
+                    <a href="{% url 'productos:producto_duplicate' producto.pk %}" class="btn btn-secondary">
+                        <i class="bi bi-files"></i> Duplicar
+                    </a>
+                    <a href="{% url 'productos:producto_update' producto.pk %}" class="btn btn-primary">
+                        <i class="bi bi-pencil"></i> Editar
+                    </a>
+                    <a href="{% url 'productos:producto_list' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Volver
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>Información General</h5>
+                    <table class="table table-sm">
+                        <tr>
+                            <th width="30%">Código:</th>
+                            <td><code>{{ producto.codigo }}</code></td>
+                        </tr>
+                        <tr>
+                            <th>Nombre:</th>
+                            <td>{{ producto.nombre }}</td>
+                        </tr>
+                        <tr>
+                            <th>Categoría:</th>
+                            <td>{{ producto.categoria }}</td>
+                        </tr>
+                        <tr>
+                            <th>Subcategoría:</th>
+                            <td>{{ producto.subcategoria|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Estado:</th>
+                            <td>
+                                <span class="badge {% if producto.is_active %}bg-success{% else %}bg-danger{% endif %}">
+                                    {{ producto.get_estado_display }}
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Comercializable:</th>
+                            <td>
+                                <i class="bi {% if producto.comercializable %}bi-check-circle text-success{% else %}bi-x-circle text-danger{% endif %}"></i>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <h5>Especificaciones</h5>
+                    <table class="table table-sm">
+                        <tr>
+                            <th width="30%">Tipo Material:</th>
+                            <td>{{ producto.tipo_material }}</td>
+                        </tr>
+                        <tr>
+                            <th>Materia Prima:</th>
+                            <td>{{ producto.tipo_materia_prima }}</td>
+                        </tr>
+                        <tr>
+                            <th>Unidad:</th>
+                            <td>{{ producto.unidad_medida }}</td>
+                        </tr>
+                        <tr>
+                            <th>Color:</th>
+                            <td>{{ producto.color|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Calibre:</th>
+                            <td>{{ producto.calibre_um|default:"0" }} µm</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    <h5>Dimensiones</h5>
+                    <table class="table table-sm">
+                        <tr>
+                            <th width="30%">Largo:</th>
+                            <td>{{ producto.largo|default:"0" }} {{ producto.get_medida_en_display }}</td>
+                        </tr>
+                        <tr>
+                            <th>Ancho:</th>
+                            <td>{{ producto.ancho|default:"0" }} {{ producto.get_medida_en_display }}</td>
+                        </tr>
+                        <tr>
+                            <th>Ancho Rollo:</th>
+                            <td>{{ producto.ancho_rollo|default:"0" }} {{ producto.get_medida_en_display }}</td>
+                        </tr>
+                        <tr>
+                            <th>Metros Lineales:</th>
+                            <td>{{ producto.metros_lineales|default:"0" }} m</td>
+                        </tr>
+                        <tr>
+                            <th>Largo Material:</th>
+                            <td>{{ producto.largo_material|default:"0" }} m</td>
+                        </tr>
+                        <tr>
+                            <th>Factor Decimal:</th>
+                            <td>{{ producto.factor_decimal|default:"0" }}</td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <h5>Impresión</h5>
+                    <table class="table table-sm">
+                        <tr>
+                            <th width="30%">Tipo:</th>
+                            <td>{{ producto.imp_tipo_impresion|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Rodillo:</th>
+                            <td>{{ producto.imp_rodillo|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Repeticiones:</th>
+                            <td>{{ producto.imp_repeticiones|default:"0" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Tinta:</th>
+                            <td>{{ producto.tipo_tinta|default:"-" }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    <h5>Sellado</h5>
+                    <table class="table table-sm">
+                        <tr>
+                            <th width="30%">Tipo:</th>
+                            <td>{{ producto.sellado_tipo|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Peso Millar:</th>
+                            <td>{{ producto.sellado_peso_millar|default:"0" }} kg</td>
+                        </tr>
+                        <tr>
+                            <th>Fuelle Fondo:</th>
+                            <td>{{ producto.sellado_fuelle_fondo|default:"0" }} cm</td>
+                        </tr>
+                        <tr>
+                            <th>Fuelle Lateral:</th>
+                            <td>{{ producto.sellado_fuelle_lateral|default:"0" }} cm</td>
+                        </tr>
+                        <tr>
+                            <th>Fuelle Superior:</th>
+                            <td>{{ producto.sellado_fuelle_superior|default:"0" }} cm</td>
+                        </tr>
+                        <tr>
+                            <th>Solapa:</th>
+                            <td>{{ producto.sellado_solapa_cm|default:"0" }} cm</td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <h5>Features Adicionales</h5>
+                    <table class="table table-sm">
+                        <tr>
+                            <th width="30%">Troquel:</th>
+                            <td>
+                                {% if producto.sellado_troquel_tipo %}
+                                {{ producto.sellado_troquel_tipo }} - {{ producto.sellado_troquel_medida|default:"0" }} cm
+                                {% else %}
+                                -
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Zipper:</th>
+                            <td>
+                                {% if producto.sellado_zipper_tipo %}
+                                {{ producto.sellado_zipper_tipo }} - {{ producto.sellado_zipper_medida|default:"0" }} cm
+                                {% else %}
+                                -
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Válvula:</th>
+                            <td>
+                                {% if producto.sellado_valvula_tipo %}
+                                {{ producto.sellado_valvula_tipo }} - {{ producto.sellado_valvula_medida|default:"0" }} cm
+                                {% else %}
+                                -
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Ultrasonido:</th>
+                            <td>
+                                {% if producto.sellado_ultrasonido %}
+                                Sí - {{ producto.sellado_ultrasonido_pos|default:"-" }}
+                                {% else %}
+                                No
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Precorte:</th>
+                            <td>
+                                {% if producto.sellado_precorte %}
+                                Sí - {{ producto.sellado_precorte_medida|default:"0" }} cm
+                                {% else %}
+                                No
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="row mt-4">
+                <div class="col-12">
+                    <h5>Otros Detalles</h5>
+                    <table class="table table-sm">
+                        <tr>
+                            <th width="15%">Lámina:</th>
+                            <td>{{ producto.lamina|default:"-" }}</td>
+                            <th width="15%">Tratamiento:</th>
+                            <td>{{ producto.tratamiento|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Extrusión Doble:</th>
+                            <td>
+                                <i class="bi {% if producto.extrusion_doble %}bi-check-circle text-success{% else %}bi-x-circle text-danger{% endif %}"></i>
+                            </td>
+                            <th>Pistas:</th>
+                            <td>{{ producto.pistas|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Programa Lámina:</th>
+                            <td>{{ producto.programa_lamina|default:"-" }}</td>
+                            <th>XML Cantidad:</th>
+                            <td>{{ producto.cantidad_xml|default:"-" }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="row mt-4">
+                <div class="col-12">
+                    <h5>Información Contable</h5>
+                    <table class="table table-sm">
+                        <tr>
+                            <th width="15%">Cuenta:</th>
+                            <td>{{ producto.cuenta_contable }}</td>
+                            <th width="15%">Servicio:</th>
+                            <td>{{ producto.servicio }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="row mt-4">
+                <div class="col-12">
+                    <h5>Información del Sistema</h5>
+                    <table class="table table-sm">
+                        <tr>
+                            <th width="15%">Creado:</th>
+                            <td>{{ producto.creado_en }} por {{ producto.creado_por }}</td>
+                            <th width="15%">Actualizado:</th>
+                            <td>{{ producto.actualizado_en }} por {{ producto.actualizado_por }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if lotes %}
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Lotes Recientes</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Lote</th>
+                            <th>Producido</th>
+                            <th>Actual</th>
+                            <th>Ubicación</th>
+                            <th>Estado</th>
+                            <th>Fecha</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for lote in lotes %}
+                        <tr>
+                            <td>{{ lote.lote_id }}</td>
+                            <td class="text-end">{{ lote.cantidad_producida|floatformat:2 }} kg</td>
+                            <td class="text-end">{{ lote.cantidad_actual|floatformat:2 }} kg</td>
+                            <td>{{ lote.ubicacion|default:"-" }}</td>
+                            <td>
+                                <span class="badge {{ lote.get_estado_class }}">
+                                    {{ lote.get_estado_display }}
+                                </span>
+                            </td>
+                            <td>{{ lote.fecha_produccion|date:"d/m/Y" }}</td>
+                            <td>
+                                <a href="{% url 'inventario:lote_detail' lote.pk %}" class="btn btn-sm btn-info">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if ordenes %}
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Órdenes de Producción Recientes</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>OP #</th>
+                            <th>Cliente</th>
+                            <th>Cantidad</th>
+                            <th>Etapa</th>
+                            <th>Fecha</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for orden in ordenes %}
+                        <tr>
+                            <td>{{ orden.op_numero }}</td>
+                            <td>{{ orden.cliente }}</td>
+                            <td class="text-end">{{ orden.cantidad_solicitada_kg|floatformat:2 }} kg</td>
+                            <td>{{ orden.get_etapa_actual_display }}</td>
+                            <td>{{ orden.fecha_creacion|date:"d/m/Y" }}</td>
+                            <td>
+                                <a href="{% url 'produccion:orden_detail' orden.pk %}" class="btn btn-sm btn-info">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

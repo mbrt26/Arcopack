@@ -1,5 +1,6 @@
 # productos/views.py
 
+import logging
 from rest_framework import viewsets, permissions, status # Importar componentes DRF
 from rest_framework.response import Response # Para respuestas API personalizadas
 from rest_framework.exceptions import ValidationError # Para errores de validación API
@@ -7,6 +8,8 @@ from rest_framework.exceptions import ValidationError # Para errores de validaci
 from .models import ProductoTerminado # Importar el modelo de esta app
 from .serializers import ProductoTerminadoSerializer # Importar el serializer que creamos
 from produccion.models import OrdenProduccion # Importar para validar cambio de código
+
+logger = logging.getLogger(__name__)
 
 # Opcional: Para filtros y búsqueda en la API
 # from rest_framework import filters

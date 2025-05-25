@@ -17,6 +17,8 @@ from configuracion.models import (
     # Asegúrate de que todos los modelos FK existan en configuracion.models
 )
 
+from inventario.models import LoteProductoTerminado
+
 # --- Resource para Import/Export ---
 # Define cómo mapear el archivo a los campos del modelo ProductoTerminado
 class ProductoTerminadoResource(resources.ModelResource):
@@ -76,6 +78,13 @@ class ProductoTerminadoResource(resources.ModelResource):
         # Excluir campos de auditoría que no se importan/exportan directamente
         exclude = ('creado_en', 'actualizado_en', 'creado_por', 'actualizado_por',)
 
+class LoteProductoTerminadoInline(admin.TabularInline):
+    model = LoteProductoTerminado
+    fk_name = 'producto_terminado'
+    fields = ('lote_id', 'cantidad_producida', 'cantidad_actual', 'fecha_produccion', 'estado')
+    readonly_fields = ('cantidad_actual',)
+    extra = 1
+
 # --- Admin Personalizado ---
 # Hereda de ImportExportModelAdmin para añadir los botones y funcionalidad
 class ProductoTerminadoAdmin(ImportExportModelAdmin):
@@ -101,6 +110,9 @@ class ProductoTerminadoAdmin(ImportExportModelAdmin):
         ('Sellado: Features Adicionales', {'fields': ('sellado_troquel_tipo', 'sellado_troquel_medida', 'sellado_zipper_tipo', 'sellado_zipper_medida', 'sellado_valvula_tipo', 'sellado_valvula_medida', 'sellado_ultrasonido', 'sellado_ultrasonido_pos', 'sellado_precorte', 'sellado_precorte_medida')}),
         ('Otros / Contabilidad', {'fields': ('cuenta_contable', 'servicio')}),
     )
+    inlines = [
+        LoteProductoTerminadoInline,
+    ]
     # Opcional: Hacer campos de auditoría de solo lectura en el admin
     # readonly_fields = ('creado_en', 'actualizado_en', 'creado_por', 'actualizado_por')
 

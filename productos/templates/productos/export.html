@@ -1,0 +1,213 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Exportar Productos{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-xl-8">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h3 class="card-title mb-0">Exportar Productos</h3>
+                        <a href="{% url 'productos:producto_list' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Volver
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% include "productos/components/_form_errors.html" %}
+                    
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.format.id_for_label }}" class="form-label">Formato</label>
+                            {{ form.format }}
+                            {% if form.format.errors %}
+                            <div class="invalid-feedback">{{ form.format.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">Filtros</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="{{ form.categoria.id_for_label }}" class="form-label">Categoría</label>
+                                        {{ form.categoria }}
+                                        {% if form.categoria.errors %}
+                                        <div class="invalid-feedback">{{ form.categoria.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="{{ form.tipo_material.id_for_label }}" class="form-label">Tipo Material</label>
+                                        {{ form.tipo_material }}
+                                        {% if form.tipo_material.errors %}
+                                        <div class="invalid-feedback">{{ form.tipo_material.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="{{ form.estado.id_for_label }}" class="form-label">Estado</label>
+                                        {{ form.estado }}
+                                        {% if form.estado.errors %}
+                                        <div class="invalid-feedback">{{ form.estado.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="{{ form.comercializable.id_for_label }}" class="form-label">Comercializable</label>
+                                        {{ form.comercializable }}
+                                        {% if form.comercializable.errors %}
+                                        <div class="invalid-feedback">{{ form.comercializable.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">Campos a Exportar</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <h6>Información General</h6>
+                                        <div class="form-check">
+                                            {{ form.export_codigo }}
+                                            <label class="form-check-label" for="{{ form.export_codigo.id_for_label }}">
+                                                Código
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            {{ form.export_nombre }}
+                                            <label class="form-check-label" for="{{ form.export_nombre.id_for_label }}">
+                                                Nombre
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            {{ form.export_categoria }}
+                                            <label class="form-check-label" for="{{ form.export_categoria.id_for_label }}">
+                                                Categoría
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            {{ form.export_estado }}
+                                            <label class="form-check-label" for="{{ form.export_estado.id_for_label }}">
+                                                Estado
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <h6>Especificaciones</h6>
+                                        <div class="form-check">
+                                            {{ form.export_material }}
+                                            <label class="form-check-label" for="{{ form.export_material.id_for_label }}">
+                                                Material
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            {{ form.export_dimensiones }}
+                                            <label class="form-check-label" for="{{ form.export_dimensiones.id_for_label }}">
+                                                Dimensiones
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            {{ form.export_impresion }}
+                                            <label class="form-check-label" for="{{ form.export_impresion.id_for_label }}">
+                                                Impresión
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            {{ form.export_sellado }}
+                                            <label class="form-check-label" for="{{ form.export_sellado.id_for_label }}">
+                                                Sellado
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <h6>Adicionales</h6>
+                                        <div class="form-check">
+                                            {{ form.export_features }}
+                                            <label class="form-check-label" for="{{ form.export_features.id_for_label }}">
+                                                Features
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            {{ form.export_otros }}
+                                            <label class="form-check-label" for="{{ form.export_otros.id_for_label }}">
+                                                Otros Detalles
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            {{ form.export_contable }}
+                                            <label class="form-check-label" for="{{ form.export_contable.id_for_label }}">
+                                                Info. Contable
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            {{ form.export_sistema }}
+                                            <label class="form-check-label" for="{{ form.export_sistema.id_for_label }}">
+                                                Info. Sistema
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-download"></i> Exportar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    // Dynamic subcategories based on category selection
+    const categorySelect = document.getElementById('{{ form.categoria.id_for_label }}');
+    const subcategorySelect = document.getElementById('{{ form.subcategoria.id_for_label }}');
+
+    if (categorySelect && subcategorySelect) {
+        categorySelect.addEventListener('change', function() {
+            const categoryId = this.value;
+            if (categoryId) {
+                fetch(`/api/subcategorias-por-categoria/${categoryId}/`)
+                    .then(response => response.json())
+                    .then(data => {
+                        subcategorySelect.innerHTML = '<option value="">---------</option>';
+                        data.forEach(subcategoria => {
+                            const option = new Option(subcategoria.nombre, subcategoria.id);
+                            subcategorySelect.add(option);
+                        });
+                    });
+            } else {
+                subcategorySelect.innerHTML = '<option value="">---------</option>';
+            }
+        });
+    }
+
+    // Initialize all select2 fields
+    document.querySelectorAll('select').forEach(select => {
+        if (select.classList.contains('select2')) {
+            $(select).select2({
+                theme: 'bootstrap-5',
+                width: '100%'
+            });
+        }
+    });
+</script>
+{% endblock %}
+{% endblock %}

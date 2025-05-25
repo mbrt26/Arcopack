@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+
+{% block title %}{{ object.nombre_completo }} - ARCOPACK{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4 align-items-center">
+        <div class="col">
+            <h2>
+                <i class="fas fa-user-tie"></i> {{ object.nombre_completo }}
+                <span class="badge {% if object.is_active %}bg-success{% else %}bg-danger{% endif %}">
+                    {{ object.is_active|yesno:"Activo,Inactivo" }}
+                </span>
+            </h2>
+        </div>
+        <div class="col text-end">
+            <a href="{% url 'personal:colaborador-update' object.pk %}" class="btn btn-warning">
+                <i class="fas fa-edit"></i> Editar
+            </a>
+            <a href="{% url 'personal:colaborador-list' %}" class="btn btn-secondary">
+                <i class="fas fa-list"></i> Volver al Listado
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Información Básica -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-id-card"></i> Información Básica
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <tr>
+                            <th class="w-25">Nombres:</th>
+                            <td>{{ object.nombres }}</td>
+                        </tr>
+                        <tr>
+                            <th>Apellidos:</th>
+                            <td>{{ object.apellidos }}</td>
+                        </tr>
+                        <tr>
+                            <th>Cédula:</th>
+                            <td>{{ object.cedula }}</td>
+                        </tr>
+                        <tr>
+                            <th>Código Empleado:</th>
+                            <td>{{ object.codigo_empleado|default:"-" }}</td>
+                        </tr>
+                        {% if object.usuario_sistema and perms.auth.view_user %}
+                        <tr>
+                            <th>Usuario Sistema:</th>
+                            <td>{{ object.usuario_sistema.username }}</td>
+                        </tr>
+                        {% endif %}
+                    </table>
+                </div>
+            </div>
+
+            <!-- Estado y Auditoría -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-history"></i> Información de Auditoría
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <tr>
+                            <th class="w-25">Estado:</th>
+                            <td>
+                                <span class="badge {% if object.is_active %}bg-success{% else %}bg-danger{% endif %}">
+                                    {{ object.is_active|yesno:"Activo,Inactivo" }}
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Creado por:</th>
+                            <td>{{ object.creado_por|default:"Sistema" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Fecha creación:</th>
+                            <td>{{ object.creado_en|date:"d/m/Y H:i" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Actualizado por:</th>
+                            <td>{{ object.actualizado_por|default:"Sistema" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Última actualización:</th>
+                            <td>{{ object.actualizado_en|date:"d/m/Y H:i" }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Información Laboral -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-briefcase"></i> Información Laboral
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <tr>
+                            <th class="w-25">Cargo:</th>
+                            <td>{{ object.cargo|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Área:</th>
+                            <td>{{ object.area|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Fecha Ingreso:</th>
+                            <td>{{ object.fecha_ingreso|date:"d/m/Y"|default:"-" }}</td>
+                        </tr>
+                        {% if object.fecha_retiro %}
+                        <tr>
+                            <th>Fecha Retiro:</th>
+                            <td>{{ object.fecha_retiro|date:"d/m/Y" }}</td>
+                        </tr>
+                        {% endif %}
+                    </table>
+                </div>
+            </div>
+
+            <!-- Sección para información adicional -->
+            {% if perms.produccion.view_orden_produccion %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-industry"></i> Producción
+                </div>
+                <div class="card-body">
+                    <h6>Órdenes de Producción Recientes</h6>
+                    {% if ordenes_produccion %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Número</th>
+                                    <th>Fecha</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for orden in ordenes_produccion %}
+                                <tr>
+                                    <td>{{ orden.numero }}</td>
+                                    <td>{{ orden.fecha|date:"d/m/Y" }}</td>
+                                    <td>{{ orden.get_estado_display }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No hay órdenes de producción recientes.</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

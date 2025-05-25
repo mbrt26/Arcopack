@@ -1,0 +1,70 @@
+{% comment %}
+Componente para mostrar filtros
+Uso: {% include "produccion/components/_filters.html" with filters=filters active_filters=active_filters %}
+{% endcomment %}
+
+<div class="filters mb-4">
+    <div class="d-flex gap-2 align-items-center flex-wrap">
+        {% if filters.search %}
+        <div class="search-filter">
+            <form class="d-flex" method="get">
+                {% for key, value in request.GET.items %}
+                    {% if key != 'q' %}
+                    <input type="hidden" name="{{ key }}" value="{{ value }}">
+                    {% endif %}
+                {% endfor %}
+                <input type="search" name="q" class="form-control form-control-sm" placeholder="Buscar..." value="{{ request.GET.q|default:'' }}">
+                <button type="submit" class="btn btn-sm btn-outline-primary ms-2">
+                    <i class="fas fa-search"></i>
+                </button>
+            </form>
+        </div>
+        {% endif %}
+
+        {% if filters.dropdown %}
+        {% for filter in filters.dropdown %}
+        <div class="dropdown-filter">
+            <div class="btn-group">
+                <button type="button" class="btn btn-sm btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
+                    <i class="fas fa-{{ filter.icon|default:'filter' }}"></i> {{ filter.label }}
+                </button>
+                <ul class="dropdown-menu">
+                    {% for option in filter.options %}
+                    <li>
+                        <a class="dropdown-item {% if active_filters|get_item:filter.name == option.value %}active{% endif %}" 
+                           href="?{% url_replace request 'page' '1' filter.name option.value %}">
+                            {{ option.label }}
+                        </a>
+                    </li>
+                    {% endfor %}
+                    {% if filter.show_all %}
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <a class="dropdown-item {% if not active_filters|get_item:filter.name %}active{% endif %}" 
+                           href="?{% url_replace request 'page' '1' filter.name '' %}">
+                            Ver Todos
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        {% if active_filters %}
+        <div class="active-filters ms-auto">
+            {% for filter_name, filter_value in active_filters.items %}
+                {% if filter_value %}
+                <span class="badge bg-primary">
+                    {{ filter_name }}: {{ filter_value }}
+                    <a href="?{% url_replace request 'page' '1' filter_name '' %}" class="text-white text-decoration-none ms-1">
+                        <i class="fas fa-times"></i>
+                    </a>
+                </span>
+                {% endif %}
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+</div>

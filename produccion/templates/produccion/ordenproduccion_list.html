@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Listado de Órdenes de Producción{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <a href="{% url 'admin:produccion_ordenproduccion_add' %}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Nueva Orden
+    </a>
+    
+    <!-- Filtros -->
+    <div class="d-flex">
+        <form method="get" class="d-flex gap-2">
+            <div class="input-group">
+                <input type="text" name="search" class="form-control" placeholder="Buscar..." 
+                       value="{{ request.GET.search }}">
+                <button class="btn btn-outline-secondary" type="submit">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+            
+            <select name="estado" class="form-select">
+                <option value="">Estado...</option>
+                <option value="activa" {% if request.GET.estado == 'activa' %}selected{% endif %}>Activas</option>
+                <option value="anulada" {% if request.GET.estado == 'anulada' %}selected{% endif %}>Anuladas</option>
+            </select>
+            
+            <select name="etapa" class="form-select">
+                <option value="">Etapa...</option>
+                {% for etapa in etapas %}
+                <option value="{{ etapa.0 }}" {% if request.GET.etapa == etapa.0 %}selected{% endif %}>
+                    {{ etapa.1 }}
+                </option>
+                {% endfor %}
+            </select>
+            
+            <button type="submit" class="btn btn-primary">Filtrar</button>
+            <a href="{% url 'produccion:produccion_orden_list' %}" class="btn btn-secondary">
+                Limpiar
+            </a>
+        </form>
+    </div>
+</div>
+
+<!-- Tabla de Órdenes -->
+<div class="card">
+    <div class="card-body">
+        {% if ordenes %}
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>OP #</th>
+                        <th>Cliente</th>
+                        <th>Producto</th>
+                        <th>Cantidad (kg)</th>
+                        <th>Fecha Entrega</th>
+                        <th>Etapa</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for op in ordenes %}
+                    <tr>
+                        <td>{{ op.op_numero }}</td>
+                        <td>{{ op.cliente.nombre_corto }}</td>
+                        <td>{{ op.producto.codigo }}</td>
+                        <td>{{ op.cantidad_solicitada_kg|floatformat:2 }}</td>
+                        <td>{{ op.fecha_compromiso_entrega|date:"d/m/Y" }}</td>
+                        <td>
+                            <span class="badge bg-{{ op.get_etapa_actual_color }}">
+                                {{ op.get_etapa_actual_display }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if op.is_active %}
+                            <span class="badge bg-success">Activa</span>
+                            {% else %}
+                            <span class="badge bg-danger">Anulada</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group">
+                                <a href="{% url 'admin:produccion_ordenproduccion_change' op.id %}" class="btn btn-sm btn-warning" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                {% if op.is_active %}
+                                <button type="button" class="btn btn-sm btn-danger" title="Anular"
+                                        data-bs-toggle="modal" data-bs-target="#anularModal{{ op.id }}">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                                <!-- Modal de Confirmación -->
+                                <div class="modal fade" id="anularModal{{ op.id }}" tabindex="-1">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Confirmar Anulación</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                ¿Está seguro de que desea anular la orden de producción {{ op.op_numero }}?
+                                            </div>
+                                            <div class="modal-footer">
+                                                <form method="post" action="{% url 'produccion:anular_orden' op.id %}" style="display: inline;">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-danger">Confirmar</button>
+                                                </form>
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Paginación -->
+        {% if paginator.num_pages > 1 %}
+        <nav aria-label="Paginación de órdenes">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1{% if request.GET.urlencode %}&{{ request.GET.urlencode }}{% endif %}">&laquo; Primera</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.urlencode %}&{{ request.GET.urlencode }}{% endif %}">Anterior</a>
+                </li>
+                {% endif %}
+
+                <li class="page-item active">
+                    <span class="page-link">
+                        Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+                    </span>
+                </li>
+
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.urlencode %}&{{ request.GET.urlencode }}{% endif %}">Siguiente</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.urlencode %}&{{ request.GET.urlencode }}{% endif %}">Última &raquo;</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+        
+        {% else %}
+        <p class="text-muted text-center">No se encontraron órdenes de producción</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Activar tooltips de Bootstrap
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    });
+</script>
+{% endblock %}

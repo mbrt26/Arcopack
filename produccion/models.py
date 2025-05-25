@@ -88,15 +88,20 @@ class OrdenProduccion(models.Model):
 # =============================================
 
 class RegistroImpresion(models.Model):
+    lote_wip_asociado = models.ForeignKey(
+        'inventario.LoteProductoEnProceso',
+        on_delete=models.PROTECT,
+        verbose_name="Lote WIP Asociado",
+        null=True, blank=True,
+        limit_choices_to={'estado': 'DISPONIBLE'},
+        help_text="Solo lotes WIP disponibles y de la misma OP"
+    )
     orden_produccion = models.ForeignKey(OrdenProduccion, on_delete=models.CASCADE, related_name='registros_impresion')
     fecha = models.DateField(default=timezone.now, verbose_name="Fecha Registro")
     maquina = models.ForeignKey('configuracion.Maquina', on_delete=models.PROTECT, limit_choices_to={'tipo': 'IMPRESORA'})
     operario_principal = models.ForeignKey('personal.Colaborador', on_delete=models.PROTECT, related_name='impresiones_operadas')
     hora_inicio = models.DateTimeField(verbose_name="Fecha y Hora Inicio")
     hora_final = models.DateTimeField(verbose_name="Fecha y Hora Final")
-    # --- Campos de producción reportada ELIMINADOS ---
-    # kg_producidos_reportados = ...
-    # produccion_registrada_en_inventario = ...
     anilox = models.ForeignKey('configuracion.RodilloAnilox', on_delete=models.PROTECT, verbose_name="Rodillo Anilox")
     repeticion_mm = models.DecimalField(max_digits=8, decimal_places=2, validators=[MinValueValidator(Decimal('0.01'))], verbose_name="Repetición (mm)")
     pistas = models.PositiveIntegerField(validators=[MinValueValidator(1)], verbose_name="Número de Pistas")
@@ -172,16 +177,41 @@ class ConsumoTintaImpresion(models.Model):
 
 class ConsumoSustratoImpresion(models.Model):
     registro_impresion = models.ForeignKey(RegistroImpresion, on_delete=models.CASCADE, related_name='consumos_sustrato')
-    lote_consumido = models.ForeignKey('inventario.LoteMateriaPrima', on_delete=models.PROTECT, verbose_name="Lote Sustrato Consumido", limit_choices_to={'estado': 'DISPONIBLE'})
+    lote_consumido = models.ForeignKey(
+        'inventario.LoteMateriaPrima', 
+        on_delete=models.PROTECT, 
+        verbose_name="Lote Sustrato Consumido", 
+        limit_choices_to={'estado': 'DISPONIBLE'},  # Solo lotes disponibles
+    )
     cantidad_kg_consumida = models.DecimalField(max_digits=12, decimal_places=3, validators=[MinValueValidator(Decimal('0.01'))], verbose_name="Cantidad Consumida (Kg)")
     registrado_en = models.DateTimeField(auto_now_add=True)
     registrado_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, related_name='+', null=True, blank=True)
 
-    def clean(self): # ... (Validación de stock) ...
-         super().clean()
-         if self.lote_consumido and hasattr(self.lote_consumido, 'cantidad_actual') and self.cantidad_kg_consumida > self.lote_consumido.cantidad_actual: raise ValidationError(...)
+    def clean(self): 
+        super().clean()
+        # Skip validation for empty inline forms
+        if self.lote_consumido_id is None or self.registro_impresion_id is None:
+            return
+        # Validar que el lote corresponda al sustrato de la OP
+        if self.lote_consumido_id and self.registro_impresion_id:
+            op = self.registro_impresion.orden_produccion
+            if self.lote_consumido.materia_prima_id != op.sustrato_id:
+                raise ValidationError({
+                    'lote_consumido': f'El lote debe ser del sustrato especificado en la OP ({op.sustrato})'
+                })
+        # Validar stock disponible
+        if (
+            self.lote_consumido_id and
+            self.cantidad_kg_consumida is not None and
+            hasattr(self.lote_consumido, 'cantidad_actual') and
+            self.lote_consumido.cantidad_actual is not None and
+            self.cantidad_kg_consumida > self.lote_consumido.cantidad_actual
+        ):  
+            raise ValidationError({
+                'cantidad_kg_consumida': f'Cantidad excede el stock disponible ({self.lote_consumido.cantidad_actual} Kg)'
+            })
 
-    def save(self, *args, **kwargs): # ... (Lógica de consumo) ...
+    def save(self, *args, **kwargs): 
         user = kwargs.pop('user', None); is_new = self.pk is None
         if is_new and user: self.registrado_por = user
         # No llamar a full_clean() aquí directamente si se llama desde save_formset
@@ -267,13 +297,28 @@ class DesperdicioRefilado(models.Model):
 
 class ConsumoWipRefilado(models.Model):
     registro_refilado = models.ForeignKey(Refilado, on_delete=models.CASCADE, related_name='consumos_wip')
-    lote_consumido = models.ForeignKey('inventario.LoteProductoEnProceso', on_delete=models.PROTECT, verbose_name="Lote WIP Consumido", limit_choices_to={'estado': 'DISPONIBLE'})
-    cantidad_kg_consumida = models.DecimalField(max_digits=12, decimal_places=3, validators=[MinValueValidator(Decimal('0.01'))], verbose_name="Cantidad Consumida (Kg)")
+    lote_consumido = models.ForeignKey(
+        'inventario.LoteProductoEnProceso', 
+        on_delete=models.PROTECT, 
+        verbose_name="Lote WIP Consumido", 
+        limit_choices_to={'estado': 'DISPONIBLE'}
+    )
+    cantidad_kg_consumida = models.DecimalField(
+        max_digits=12, decimal_places=3, 
+        validators=[MinValueValidator(Decimal('0.01'))], 
+        verbose_name="Cantidad Consumida (Kg)"
+    )
     registrado_en = models.DateTimeField(auto_now_add=True)
     registrado_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, related_name='+', null=True, blank=True)
 
     def clean(self): # ... (Validación de stock) ...
          super().clean()
+         # Validar que el lote pertenezca a la misma OP
+         if self.lote_consumido and self.registro_refilado:
+             if self.lote_consumido.orden_produccion_id != self.registro_refilado.orden_produccion_id:
+                 raise ValidationError({
+                     'lote_consumido': 'El lote debe pertenecer a la misma Orden de Producción'
+                 })
          if self.lote_consumido and hasattr(self.lote_consumido, 'cantidad_actual') and self.cantidad_kg_consumida > self.lote_consumido.cantidad_actual: raise ValidationError(...)
 
     def save(self, *args, **kwargs): # ... (Lógica de consumo) ...
@@ -407,18 +452,18 @@ class ConsumoMpSellado(models.Model):
     registrado_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, related_name='+', null=True, blank=True)
 
     def clean(self): # ... (Validación de stock) ...
-         super().clean()
-         if self.lote_consumido and hasattr(self.lote_consumido, 'cantidad_actual') and self.cantidad_consumida > self.lote_consumido.cantidad_actual: raise ValidationError(...)
+        super().clean()
+        if self.lote_consumido and hasattr(self.lote_consumido, 'cantidad_actual') and self.cantidad_consumida > self.lote_consumido.cantidad_actual: raise ValidationError(...)
 
     def save(self, *args, **kwargs): # ... (Lógica de consumo) ...
         user = kwargs.pop('user', None); is_new = self.pk is None
         if is_new and user: self.registrado_por = user
         # self.full_clean()
         if self.lote_consumido and self.cantidad_consumida > 0:
-             usuario_accion = user or self.registrado_por or User.objects.filter(is_superuser=True).first()
-             if not usuario_accion: raise ValueError("Usuario requerido.")
-             try: self.lote_consumido.consumir(cantidad_consumir=self.cantidad_consumida, proceso_ref=self.registro_sellado, usuario=usuario_accion, observaciones=f"Consumo MP auto Reg.Consumo Sellado ID {self.id or 'nuevo'}")
-             except (ValidationError, ValueError) as e: logger.error(f"ERROR (ConsumoMpSellado.save): {e}"); raise e
+            usuario_accion = user or self.registrado_por or User.objects.filter(is_superuser=True).first()
+            if not usuario_accion: raise ValueError("Usuario requerido.")
+            try: self.lote_consumido.consumir(cantidad_consumir=self.cantidad_consumida, proceso_ref=self.registro_sellado, usuario=usuario_accion, observaciones=f"Consumo MP auto Reg.Consumo Sellado ID {self.id or 'nuevo'}")
+            except (ValidationError, ValueError) as e: logger.error(f"ERROR (ConsumoMpSellado.save): {e}"); raise e
         super().save(*args, **kwargs)
 
     def __str__(self): return f"Consumo MP {self.cantidad_consumida} Lote {self.lote_consumido_id} en Sellado {self.registro_sellado_id}"
@@ -535,3 +580,18 @@ class ConsumoMpDoblado(models.Model):
 
 # --- SEÑALES (Opcional, si almacenas indicadores OEE en los modelos principales) ---
 # ...
+
+class OrdenProduccionProceso(models.Model):
+    """Define la secuencia de procesos por los que pasa una Orden de Producción."""
+    orden_produccion = models.ForeignKey('OrdenProduccion', on_delete=models.CASCADE, related_name='procesos_secuencia')
+    proceso = models.ForeignKey('configuracion.Proceso', on_delete=models.PROTECT)
+    secuencia = models.PositiveIntegerField(help_text="Orden/secuencia del proceso en la OP (1=primero, 2=segundo, ...)")
+
+    class Meta:
+        unique_together = ('orden_produccion', 'proceso')
+        ordering = ['orden_produccion', 'secuencia']
+        verbose_name = "Secuencia de Proceso en OP"
+        verbose_name_plural = "Secuencias de Procesos en OP"
+
+    def __str__(self):
+        return f"{self.orden_produccion} - {self.secuencia}. {self.proceso}"

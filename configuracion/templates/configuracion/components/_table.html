@@ -1,0 +1,81 @@
+{% load static %}
+<div class="table-responsive">
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                {% for header in headers %}
+                <th>{{ header }}</th>
+                {% endfor %}
+                {% if show_actions %}
+                <th>Acciones</th>
+                {% endif %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr>
+                {% for field in item.fields %}
+                <td>
+                    {% if field.type == 'badge' %}
+                    <span class="badge {{ field.class }}">{{ field.value }}</span>
+                    {% else %}
+                    {{ field.value|default:"-" }}
+                    {% endif %}
+                </td>
+                {% endfor %}
+                {% if show_actions %}
+                <td>
+                    {% if 'view' in actions %}
+                    <a href="{% url actions.view item.id %}" class="btn btn-sm btn-info" title="Ver detalle">
+                        <i class="bi bi-eye"></i>
+                    </a>
+                    {% endif %}
+                    {% if 'edit' in actions %}
+                    <a href="{% url actions.edit item.id %}" class="btn btn-sm btn-primary" title="Editar">
+                        <i class="bi bi-pencil"></i>
+                    </a>
+                    {% endif %}
+                    {% if 'delete' in actions %}
+                    <button type="button" class="btn btn-sm btn-danger" title="Eliminar" 
+                            data-bs-toggle="modal" data-bs-target="#deleteModal{{ item.id }}">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                    {% endif %}
+                </td>
+                {% endif %}
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="{{ headers|length|add:show_actions|default:1 }}" class="text-center">
+                    No hay registros
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if show_actions and 'delete' in actions %}
+{% for item in items %}
+<div class="modal fade" id="deleteModal{{ item.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmar Eliminación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                ¿Está seguro que desea eliminar {{ item.name }}?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form action="{% url actions.delete item.id %}" method="post" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endif %}

@@ -1,0 +1,383 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ARCOPACK{% endblock %}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <style>
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 100;
+            padding: 48px 0 0;
+            box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+            background-color: #f8f9fa;
+        }
+
+        .sidebar-sticky {
+            position: relative;
+            top: 0;
+            height: calc(100vh - 48px);
+            padding-top: .5rem;
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+
+        /* Navbar */
+        .navbar {
+            box-shadow: 0 2px 4px rgba(0,0,0,.1);
+        }
+
+        /* Main content */
+        .main-content {
+            margin-left: 240px;
+            padding: 2rem;
+        }
+
+        /* Cards */
+        .card {
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            margin-bottom: 1rem;
+        }
+
+        .card-header {
+            background-color: #f8f9fa;
+            border-bottom: 1px solid rgba(0,0,0,.125);
+        }
+
+        /* Tables */
+        .table th {
+            background-color: #f8f9fa;
+        }
+
+        /* Custom colors */
+        .bg-primary {
+            background-color: #0d6efd !important;
+        }
+
+        .bg-success {
+            background-color: #198754 !important;
+        }
+
+        .bg-warning {
+            background-color: #ffc107 !important;
+        }
+
+        .bg-danger {
+            background-color: #dc3545 !important;
+        }
+
+        /* Form styles */
+        .form-control:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        }
+
+        /* Progress bars */
+        .progress {
+            height: 0.5rem;
+        }
+
+        /* Badges */
+        .badge {
+            padding: 0.35em 0.65em;
+        }
+
+        /* Print styles */
+        @media print {
+            .sidebar, .navbar {
+                display: none !important;
+            }
+            .main-content {
+                margin-left: 0 !important;
+            }
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{% url 'root' %}">
+                <i class="fas fa-box"></i> ARCOPACK
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="notificationsDropdown" role="button" 
+                           data-bs-toggle="dropdown">
+                            <i class="fas fa-bell"></i>
+                            {% if notificaciones_no_leidas %}
+                            <span class="badge bg-danger">{{ notificaciones_no_leidas }}</span>
+                            {% endif %}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            {% for notif in notificaciones %}
+                            <li>
+                                <a class="dropdown-item {% if not notif.leida %}fw-bold{% endif %}" 
+                                   href="{{ notif.url }}">
+                                    {{ notif.mensaje }}
+                                    <small class="text-muted d-block">{{ notif.fecha|timesince }}</small>
+                                </a>
+                            </li>
+                            {% empty %}
+                            <li><span class="dropdown-item">No hay notificaciones</span></li>
+                            {% endfor %}
+                            {% if notificaciones %}
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item text-center" href="{% url 'notificaciones:list' %}">
+                                    Ver todas
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" 
+                           data-bs-toggle="dropdown">
+                            <i class="fas fa-user"></i> {{ user.get_full_name|default:user.username }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <a class="dropdown-item" href="{% url 'users:profile' %}">
+                                    <i class="fas fa-user-cog"></i> Mi Perfil
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'users:change-password' %}">
+                                    <i class="fas fa-key"></i> Cambiar Contraseña
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item text-danger" href="{% url 'users:logout' %}">
+                                    <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Sidebar -->
+    <nav class="col-md-3 col-lg-2 d-md-block sidebar">
+        <div class="sidebar-sticky">
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'root' %}">
+                        <i class="fas fa-tachometer-alt"></i> Inicio
+                    </a>
+                </li>
+                
+                <!-- Producción -->
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.app_name == 'produccion' %}active{% endif %}"
+                       href="#submenuProduccion" data-bs-toggle="collapse">
+                        <i class="fas fa-industry"></i> Producción
+                    </a>
+                    <div class="collapse {% if request.resolver_match.app_name == 'produccion' %}show{% endif %}" 
+                         id="submenuProduccion">
+                        <ul class="nav flex-column ms-3">
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'produccion:produccion_orden_list' %}">
+                                    Órdenes de Producción
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'produccion:proceso-list' %}">
+                                    Procesos
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'produccion:resultados' %}">
+                                    Resultados
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+
+                <!-- Inventario -->
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.app_name == 'inventario' %}active{% endif %}"
+                       href="#submenuInventario" data-bs-toggle="collapse">
+                        <i class="fas fa-boxes"></i> Inventario
+                    </a>
+                    <div class="collapse {% if request.resolver_match.app_name == 'inventario' %}show{% endif %}" 
+                         id="submenuInventario">
+                        <ul class="nav flex-column ms-3">
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'inventario:materia-prima-list' %}">
+                                    Materias Primas
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'inventario:lote-list' %}">
+                                    Lotes
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'inventario:movimiento-list' %}">
+                                    Movimientos
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+
+                <!-- Productos -->
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.app_name == 'productos' %}active{% endif %}"
+                       href="#submenuProductos" data-bs-toggle="collapse">
+                        <i class="fas fa-box-open"></i> Productos
+                    </a>
+                    <div class="collapse {% if request.resolver_match.app_name == 'productos' %}show{% endif %}" 
+                         id="submenuProductos">
+                        <ul class="nav flex-column ms-3">
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'productos:producto-list' %}">
+                                    Productos
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'productos:categoria-list' %}">
+                                    Categorías
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+
+                <!-- Clientes -->
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.app_name == 'clientes' %}active{% endif %}"
+                       href="{% url 'clientes:cliente-list' %}">
+                        <i class="fas fa-users"></i> Clientes
+                    </a>
+                </li>
+
+                <!-- Personal -->
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.app_name == 'personal' %}active{% endif %}"
+                       href="{% url 'personal:empleado-list' %}">
+                        <i class="fas fa-user-tie"></i> Personal
+                    </a>
+                </li>
+
+                <!-- Configuración -->
+                {% if user.is_staff %}
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.app_name == 'configuracion' %}active{% endif %}"
+                       href="#submenuConfig" data-bs-toggle="collapse">
+                        <i class="fas fa-cog"></i> Configuración
+                    </a>
+                    <div class="collapse {% if request.resolver_match.app_name == 'configuracion' %}show{% endif %}" 
+                         id="submenuConfig">
+                        <ul class="nav flex-column ms-3">
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'configuracion:unidad-medida-list' %}">
+                                    Unidades de Medida
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'configuracion:categoria-mp-list' %}">
+                                    Categorías MP
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'configuracion:ubicacion-list' %}">
+                                    Ubicaciones
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'configuracion:proceso-list' %}">
+                                    Procesos
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'configuracion:maquina-list' %}">
+                                    Máquinas
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'admin:index' %}">
+                                    <i class="fas fa-tools"></i> Admin
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Mensajes -->
+        {% if messages %}
+        <div class="messages mb-4">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Contenido Principal -->
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Custom JS -->
+    <script>
+        // Activar tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+
+        // Mantener sidebar activa
+        document.addEventListener('DOMContentLoaded', function() {
+            var currentPath = window.location.pathname;
+            document.querySelectorAll('.sidebar .nav-link').forEach(function(link) {
+                if (currentPath.startsWith(link.getAttribute('href'))) {
+                    link.classList.add('active');
+                    var parent = link.closest('.collapse');
+                    if (parent) {
+                        parent.classList.add('show');
+                    }
+                }
+            });
+        });
+
+        // Auto-cerrar mensajes
+        window.setTimeout(function() {
+            $('.alert').alert('close');
+        }, 5000);
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,47 @@
+{% comment %}
+Componente para mostrar una orden de producción como una tarjeta
+Uso: {% include "produccion/components/_orden_card.html" with orden=orden %}
+{% endcomment %}
+{% load static %}
+
+<div class="card orden-card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">
+            <a href="{% url 'produccion:produccion_orden_detail' orden.pk %}" class="text-decoration-none">
+                {{ orden.op_numero }}
+            </a>
+        </h5>
+        <span class="badge bg-{{ orden.get_etapa_actual_display|lower }} estado-badge">
+            {{ orden.get_etapa_actual_display }}
+        </span>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <p class="mb-1"><strong>Cliente:</strong> {{ orden.cliente.razon_social }}</p>
+                <p class="mb-1"><strong>Producto:</strong> {{ orden.producto.codigo }} - {{ orden.producto.nombre }}</p>
+                <p class="mb-1"><strong>Sustrato:</strong> {{ orden.sustrato.nombre }}</p>
+            </div>
+            <div class="col-md-6">
+                <p class="mb-1"><strong>Cantidad:</strong> {{ orden.cantidad_solicitada_kg|floatformat:2 }} kg</p>
+                <p class="mb-1"><strong>Producido:</strong> {{ orden.cantidad_producida_kg|floatformat:2 }} kg</p>
+                <p class="mb-1"><strong>Entrega:</strong> {{ orden.fecha_compromiso_entrega|date:"d/m/Y" }}</p>
+            </div>
+        </div>
+        {% if orden.procesos.exists %}
+        <div class="mt-3">
+            <strong>Procesos:</strong><br>
+            {% for proceso in orden.procesos.all %}
+            <span class="badge bg-secondary proceso-badge me-1">
+                {{ proceso.nombre }}
+            </span>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    {% if orden.observaciones_generales %}
+    <div class="card-footer">
+        <small class="text-muted">{{ orden.observaciones_generales|truncatechars:100 }}</small>
+    </div>
+    {% endif %}
+</div>

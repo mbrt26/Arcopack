@@ -1,0 +1,197 @@
+{% extends "produccion/layouts/produccion_base.html" %}
+
+{% block produccion_content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">{{ orden.pk|yesno:"Editar,Nueva" }} Orden de Producción</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" class="needs-validation" novalidate>
+                    {% csrf_token %}
+                    
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {% for error in form.non_field_errors %}
+                        {{ error }}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <div class="row mb-4">
+                        <!-- Información General -->
+                        <div class="col-md-6">
+                            <h6 class="mb-3">Información General</h6>
+                            
+                            <div class="mb-3">
+                                <label for="{{ form.op_numero.id_for_label }}" class="form-label">Número OP</label>
+                                {{ form.op_numero }}
+                                {% if form.op_numero.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.op_numero.errors|join:", " }}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="{{ form.cliente.id_for_label }}" class="form-label">Cliente</label>
+                                {{ form.cliente }}
+                                {% if form.cliente.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.cliente.errors|join:", " }}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="{{ form.producto.id_for_label }}" class="form-label">Producto</label>
+                                {{ form.producto }}
+                                {% if form.producto.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.producto.errors|join:", " }}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="{{ form.sustrato.id_for_label }}" class="form-label">Sustrato</label>
+                                {{ form.sustrato }}
+                                {% if form.sustrato.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.sustrato.errors|join:", " }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Cantidades y Fechas -->
+                        <div class="col-md-6">
+                            <h6 class="mb-3">Cantidades y Fechas</h6>
+
+                            <div class="mb-3">
+                                <label for="{{ form.cantidad_solicitada_kg.id_for_label }}" class="form-label">Cantidad Solicitada (kg)</label>
+                                {{ form.cantidad_solicitada_kg }}
+                                {% if form.cantidad_solicitada_kg.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.cantidad_solicitada_kg.errors|join:", " }}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="{{ form.fecha_compromiso_entrega.id_for_label }}" class="form-label">Fecha Compromiso Entrega</label>
+                                {{ form.fecha_compromiso_entrega }}
+                                {% if form.fecha_compromiso_entrega.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.fecha_compromiso_entrega.errors|join:", " }}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="{{ form.fecha_estimada_inicio.id_for_label }}" class="form-label">Fecha Estimada Inicio</label>
+                                {{ form.fecha_estimada_inicio }}
+                                {% if form.fecha_estimada_inicio.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.fecha_estimada_inicio.errors|join:", " }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Procesos -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="mb-3">Procesos</h6>
+                            
+                            <div class="mb-3">
+                                {{ form.procesos }}
+                                {% if form.procesos.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.procesos.errors|join:", " }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Observaciones -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h6 class="mb-3">Observaciones Generales</h6>
+                            <div class="mb-3">
+                                {{ form.observaciones_generales }}
+                                {% if form.observaciones_generales.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.observaciones_generales.errors|join:", " }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="mb-3">Observaciones de Producción</h6>
+                            <div class="mb-3">
+                                {{ form.observaciones_produccion }}
+                                {% if form.observaciones_produccion.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.observaciones_produccion.errors|join:", " }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Botones -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="d-flex gap-2 justify-content-end">
+                                <a href="{% url 'produccion:produccion_orden_list' %}" class="btn btn-secondary">
+                                    <i class="fas fa-times"></i> Cancelar
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Guardar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+    // Inicializar datepickers
+    document.addEventListener('DOMContentLoaded', function() {
+        const dateInputs = document.querySelectorAll('input[type="date"]');
+        dateInputs.forEach(input => {
+            input.classList.add('form-control');
+        });
+
+        // Inicializar select2 si está disponible
+        if (typeof $.fn.select2 !== 'undefined') {
+            $('#id_cliente').select2({
+                theme: 'bootstrap-5',
+                placeholder: 'Seleccione un cliente'
+            });
+            $('#id_producto').select2({
+                theme: 'bootstrap-5',
+                placeholder: 'Seleccione un producto'
+            });
+            $('#id_sustrato').select2({
+                theme: 'bootstrap-5',
+                placeholder: 'Seleccione un sustrato'
+            });
+            $('#id_procesos').select2({
+                theme: 'bootstrap-5',
+                placeholder: 'Seleccione los procesos'
+            });
+        }
+    });
+</script>
+{% endblock %}
+{% endblock %}

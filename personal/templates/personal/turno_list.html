@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Turnos{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">Gestión de Turnos</h1>
+        <a href="{% url 'personal:turno_create' %}" class="btn btn-primary">
+            <i class="bi bi-plus-lg"></i> Asignar Turno
+        </a>
+    </div>
+
+    {% include "components/_messages.html" %}
+    {% include "components/_search_filters.html" with filter=filter %}
+
+    <div class="row mb-4">
+        <div class="col-md-6 col-xl-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2">Turnos Activos</h6>
+                    <h2 class="card-title mb-0">{{ turnos_activos_count }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2">Empleados en Turno</h6>
+                    <h2 class="card-title mb-0">{{ empleados_en_turno_count }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2">Turnos del Mes</h6>
+                    <h2 class="card-title mb-0">{{ turnos_mes_count }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2">Próximos Turnos</h6>
+                    <h2 class="card-title mb-0">{{ proximos_turnos_count }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            {% with headers=turno_headers items=turnos show_actions=True actions=turno_actions %}
+            {% include "personal/components/_table.html" %}
+            {% endwith %}
+        </div>
+    </div>
+
+    {% include "components/_pagination.html" with page_obj=page_obj %}
+</div>
+{% endblock %}

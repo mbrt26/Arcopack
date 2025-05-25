@@ -1,0 +1,168 @@
+{% extends "produccion/layouts/produccion_base.html" %}
+
+{% block produccion_content %}
+<div class="row">
+    <!-- Información General -->
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Información General</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <tr>
+                        <th>Número OP:</th>
+                        <td>{{ orden.op_numero }}</td>
+                    </tr>
+                    <tr>
+                        <th>Estado:</th>
+                        <td>
+                            <span class="badge bg-{{ orden.get_etapa_actual_display|lower }} estado-badge">
+                                {{ orden.get_etapa_actual_display }}
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Cliente:</th>
+                        <td>{{ orden.cliente.razon_social }}</td>
+                    </tr>
+                    <tr>
+                        <th>Producto:</th>
+                        <td>{{ orden.producto.codigo }} - {{ orden.producto.nombre }}</td>
+                    </tr>
+                    <tr>
+                        <th>Sustrato:</th>
+                        <td>{{ orden.sustrato.nombre }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cantidades y Fechas -->
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Cantidades y Fechas</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <tr>
+                        <th>Cantidad Solicitada:</th>
+                        <td>{{ orden.cantidad_solicitada_kg|floatformat:2 }} kg</td>
+                    </tr>
+                    <tr>
+                        <th>Cantidad Producida:</th>
+                        <td>{{ orden.cantidad_producida_kg|floatformat:2 }} kg</td>
+                    </tr>
+                    <tr>
+                        <th>Fecha Creación:</th>
+                        <td>{{ orden.fecha_creacion|date:"d/m/Y H:i" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Fecha Compromiso:</th>
+                        <td>{{ orden.fecha_compromiso_entrega|date:"d/m/Y" }}</td>
+                    </tr>
+                    {% if orden.fecha_real_inicio %}
+                    <tr>
+                        <th>Inicio Real:</th>
+                        <td>{{ orden.fecha_real_inicio|date:"d/m/Y" }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if orden.fecha_real_terminacion %}
+                    <tr>
+                        <th>Terminación Real:</th>
+                        <td>{{ orden.fecha_real_terminacion|date:"d/m/Y" }}</td>
+                    </tr>
+                    {% endif %}
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Observaciones -->
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Observaciones</h5>
+            </div>
+            <div class="card-body">
+                <h6>Generales:</h6>
+                <p class="mb-3">{{ orden.observaciones_generales|default:"Sin observaciones generales"|linebreaks }}</p>
+                
+                <h6>Producción:</h6>
+                <p class="mb-0">{{ orden.observaciones_produccion|default:"Sin observaciones de producción"|linebreaks }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Secuencia de Procesos -->
+<div class="row">
+    <div class="col-12">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Secuencia de Procesos</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex flex-wrap gap-3">
+                    {% for proceso in orden.procesos.all %}
+                    <div class="card">
+                        <div class="card-body">
+                            <h6 class="card-title">{{ proceso.nombre }}</h6>
+                            <p class="mb-0"><small class="text-muted">Secuencia: {{ proceso.secuencia }}</small></p>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted mb-0">No hay procesos definidos para esta orden.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Botones de Acción -->
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex gap-2 justify-content-end">
+            <a href="{% url 'produccion:produccion_orden_list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Volver
+            </a>
+            <a href="{% url 'produccion:orden-update' orden.pk %}" class="btn btn-primary">
+                <i class="fas fa-edit"></i> Editar
+            </a>
+            {% if orden.is_active and orden.etapa_actual != 'ANUL' %}
+            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#anularModal">
+                <i class="fas fa-ban"></i> Anular
+            </button>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Anulación -->
+{% if orden.is_active and orden.etapa_actual != 'ANUL' %}
+<div class="modal fade" id="anularModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Anular Orden de Producción</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Está seguro que desea anular la orden de producción {{ orden.op_numero }}?</p>
+                <p class="text-danger mb-0">Esta acción no se puede deshacer.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form method="post" action="{% url 'produccion:orden-anular' orden.pk %}" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Confirmar Anulación</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

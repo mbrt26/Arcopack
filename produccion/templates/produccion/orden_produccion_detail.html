@@ -1,0 +1,291 @@
+{% extends "base.html" %}
+
+{% block title %}Orden de Producción #{{ orden.numero }} - ARCOPACK{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Encabezado -->
+    <div class="row mb-4">
+        <div class="col">
+            <h2>
+                <i class="fas fa-industry"></i> 
+                Orden de Producción #{{ orden.numero }}
+                <span class="badge {% if orden.estado == 'PENDIENTE' %}bg-warning{% elif orden.estado == 'EN_PROCESO' %}bg-primary{% elif orden.estado == 'COMPLETADA' %}bg-success{% else %}bg-danger{% endif %}">
+                    {{ orden.get_estado_display }}
+                </span>
+            </h2>
+        </div>
+        <div class="col text-end">
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="window.print()">
+                    <i class="fas fa-print"></i> Imprimir
+                </button>
+                {% if orden.estado == 'PENDIENTE' %}
+                    <a href="{% url 'produccion:orden-produccion-update' orden.id %}" class="btn btn-warning">
+                        <i class="fas fa-edit"></i> Editar
+                    </a>
+                    <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#cancelarModal">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Información General -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-info-circle"></i> Información General
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-4">Producto:</dt>
+                        <dd class="col-sm-8">{{ orden.producto.nombre }}</dd>
+
+                        <dt class="col-sm-4">Cliente:</dt>
+                        <dd class="col-sm-8">{{ orden.cliente.razon_social }}</dd>
+
+                        <dt class="col-sm-4">Cantidad:</dt>
+                        <dd class="col-sm-8">{{ orden.cantidad }} {{ orden.producto.unidad_medida.codigo }}</dd>
+
+                        <dt class="col-sm-4">Fecha Inicio:</dt>
+                        <dd class="col-sm-8">{{ orden.fecha_inicio|date:"d/m/Y" }}</dd>
+
+                        <dt class="col-sm-4">Fecha Fin:</dt>
+                        <dd class="col-sm-8">{{ orden.fecha_fin|date:"d/m/Y"|default:"No definida" }}</dd>
+
+                        <dt class="col-sm-4">Prioridad:</dt>
+                        <dd class="col-sm-8">{{ orden.get_prioridad_display }}</dd>
+
+                        <dt class="col-sm-4">Creado por:</dt>
+                        <dd class="col-sm-8">{{ orden.creado_por.username }}</dd>
+
+                        <dt class="col-sm-4">Observaciones:</dt>
+                        <dd class="col-sm-8">{{ orden.observaciones|default:"Sin observaciones" }}</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <!-- Progreso y Estadísticas -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-chart-line"></i> Progreso y Estadísticas
+                </div>
+                <div class="card-body">
+                    <!-- Progreso General -->
+                    <h6>Progreso General</h6>
+                    <div class="progress mb-4">
+                        {% with completados=orden.procesos_completados total=orden.total_procesos %}
+                        <div class="progress-bar" role="progressbar" 
+                             style="width: {% widthratio completados total 100 %}%"
+                             aria-valuenow="{{ completados }}" 
+                             aria-valuemin="0" 
+                             aria-valuemax="{{ total }}">
+                            {{ completados }}/{{ total }} Procesos
+                        </div>
+                        {% endwith %}
+                    </div>
+
+                    <!-- Estadísticas de Producción -->
+                    <div class="row text-center">
+                        <div class="col-sm-4">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h3>{{ orden.cantidad_producida }}</h3>
+                                    <small>Unidades Producidas</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-4">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h3>{{ orden.desperdicio_total }}</h3>
+                                    <small>Kg Desperdicio</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-4">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h3>{{ orden.tiempo_total_paros }}</h3>
+                                    <small>Min. Paros</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Procesos de Producción -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-tasks"></i> Procesos de Producción
+        </div>
+        <div class="card-body">
+            <div class="timeline">
+                {% for proceso in orden.procesos.all %}
+                <div class="timeline-item">
+                    <div class="timeline-badge {% if proceso.completado %}bg-success{% elif proceso.en_proceso %}bg-primary{% else %}bg-light{% endif %}">
+                        <i class="fas {% if proceso.completado %}fa-check{% elif proceso.en_proceso %}fa-cog fa-spin{% else %}fa-clock{% endif %}"></i>
+                    </div>
+                    <div class="timeline-content">
+                        <h5>{{ proceso.proceso.nombre }}</h5>
+                        <p class="text-muted">Secuencia: {{ proceso.secuencia }}</p>
+                        
+                        {% if proceso.registro %}
+                            <!-- Detalles del Registro -->
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <strong>Operador:</strong> {{ proceso.registro.operador.username }}
+                                        </div>
+                                        <div class="col-md-4">
+                                            <strong>Inicio:</strong> {{ proceso.registro.inicio|date:"d/m/Y H:i" }}
+                                        </div>
+                                        <div class="col-md-4">
+                                            <strong>Fin:</strong> {{ proceso.registro.fin|date:"d/m/Y H:i"|default:"-" }}
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Detalles específicos por tipo de proceso -->
+                                    {% if proceso.proceso.codigo == 'IMP' %}
+                                        <!-- Detalles de Impresión -->
+                                        {% with registro=proceso.registro %}
+                                        <div class="mt-3">
+                                            <h6>Detalles de Impresión</h6>
+                                            <div class="row">
+                                                <div class="col-md-4">
+                                                    <strong>Máquina:</strong> {{ registro.maquina.nombre }}
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <strong>Metros Impresos:</strong> {{ registro.metros_impresos }}
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <strong>Kg Impresos:</strong> {{ registro.kg_impresos }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% endwith %}
+                                    {% elif proceso.proceso.codigo == 'REF' %}
+                                        <!-- Detalles de Refilado -->
+                                        {% with registro=proceso.registro %}
+                                        <div class="mt-3">
+                                            <h6>Detalles de Refilado</h6>
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <strong>Kg Producidos:</strong> {{ registro.kg_producidos }}
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <strong>Kg Desperdicio:</strong> {{ registro.kg_desperdicio }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% endwith %}
+                                    {% endif %}
+                                    
+                                    <!-- Botones de acción -->
+                                    <div class="mt-3">
+                                        <a href="{% url 'produccion:registro-detail' proceso.registro.id %}" 
+                                           class="btn btn-sm btn-info">
+                                            <i class="fas fa-eye"></i> Ver Detalle
+                                        </a>
+                                        {% if not proceso.registro.fin %}
+                                        <a href="{% url 'produccion:registro-update' proceso.registro.id %}" 
+                                           class="btn btn-sm btn-warning">
+                                            <i class="fas fa-edit"></i> Actualizar
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% else %}
+                            {% if proceso.puede_iniciar %}
+                            <a href="{% url 'produccion:registro-create' orden.id proceso.id %}" 
+                               class="btn btn-primary">
+                                <i class="fas fa-play"></i> Iniciar Proceso
+                            </a>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Cancelación -->
+<div class="modal fade" id="cancelarModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Cancelar Orden #{{ orden.numero }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'produccion:orden-produccion-cancel' orden.id %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <p>¿Está seguro que desea cancelar esta orden de producción?</p>
+                    <div class="mb-3">
+                        <label class="form-label">Motivo de Cancelación</label>
+                        <textarea name="motivo" class="form-control" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+                    <button type="submit" class="btn btn-danger">Sí, Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Estilos para la línea de tiempo */
+.timeline {
+    position: relative;
+    padding: 20px 0;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50px;
+    height: 100%;
+    width: 2px;
+    background: #e9ecef;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 30px;
+}
+
+.timeline-badge {
+    position: absolute;
+    left: 43px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    text-align: center;
+    color: white;
+    border: 2px solid white;
+}
+
+.timeline-content {
+    margin-left: 90px;
+    padding: 10px;
+    border-radius: 4px;
+}
+</style>
+{% endblock %}

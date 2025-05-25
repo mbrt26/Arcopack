@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>{{ page_title }}</h1>
+    </div>
+
+    {% if procesos %}
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for proceso in procesos %}
+        <div class="col">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        {{ proceso.nombre }}
+                        <span class="badge bg-secondary">Orden: {{ proceso.orden_flujo }}</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">{{ proceso.descripcion|default:"Sin descripción" }}</p>
+                    
+                    <div class="mt-3">
+                        <h6>Máquinas Asignadas:</h6>
+                        {% if proceso.maquinas.exists %}
+                        <ul class="list-unstyled">
+                            {% for maquina in proceso.maquinas.all %}
+                            <li>
+                                <i class="fas fa-cog"></i> {{ maquina.codigo }} - {{ maquina.nombre }}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                        {% else %}
+                        <p class="text-muted">No hay máquinas asignadas</p>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <a href="{% url 'produccion:'|add:proceso.nombre|lower|add:'-kanban' %}" class="btn btn-primary">
+                        <i class="fas fa-columns"></i> Ver Tablero
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        No hay procesos configurados.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

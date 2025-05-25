@@ -1,0 +1,121 @@
+{% extends "produccion/layouts/kanban_layout.html" %}
+
+{% block kanban_columns %}
+<!-- Pendientes -->
+<div class="kanban-column">
+    <div class="kanban-column-header">
+        <h5 class="mb-0">Pendientes</h5>
+        <span class="badge bg-secondary">{{ ordenes_pendientes|length }}</span>
+    </div>
+    <div class="kanban-column-content">
+        {% for orden in ordenes_pendientes %}
+        <div class="proceso-item">
+            {% include "produccion/components/_orden_card.html" with orden=orden %}
+            {% if orden.lotes_wip_disponibles %}
+            <div class="alert alert-info mt-2 mb-0">
+                <small>
+                    <strong>Disponible:</strong><br>
+                    {% for lote in orden.lotes_wip_disponibles %}
+                    {{ lote.lote_id }}: {{ lote.cantidad_actual|floatformat:2 }} kg<br>
+                    {% endfor %}
+                </small>
+            </div>
+            {% endif %}
+        </div>
+        {% empty %}
+        <p class="text-muted text-center">No hay órdenes pendientes</p>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- En Proceso -->
+<div class="kanban-column">
+    <div class="kanban-column-header">
+        <h5 class="mb-0">En Proceso</h5>
+        <span class="badge bg-primary">{{ ordenes_proceso|length }}</span>
+    </div>
+    <div class="kanban-column-content">
+        {% for orden in ordenes_proceso %}
+        <div class="proceso-item">
+            {% include "produccion/components/_orden_card.html" with orden=orden %}
+            {% if orden.registro_actual %}
+            <div class="mt-2">
+                {% include "produccion/components/_proceso_status.html" with proceso=orden.registro_actual %}
+                {% if orden.registro_actual.consumos_wip.exists %}
+                <div class="alert alert-info mt-2 mb-0">
+                    <small>
+                        <strong>Consumos:</strong><br>
+                        {% for consumo in orden.registro_actual.consumos_wip.all %}
+                        {{ consumo.lote_consumido.lote_id }}: {{ consumo.cantidad_kg_consumida|floatformat:2 }} kg<br>
+                        {% endfor %}
+                    </small>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+        {% empty %}
+        <p class="text-muted text-center">No hay órdenes en proceso</p>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Pausados -->
+<div class="kanban-column">
+    <div class="kanban-column-header">
+        <h5 class="mb-0">Pausados</h5>
+        <span class="badge bg-warning">{{ ordenes_pausadas|length }}</span>
+    </div>
+    <div class="kanban-column-content">
+        {% for orden in ordenes_pausadas %}
+        <div class="proceso-item">
+            {% include "produccion/components/_orden_card.html" with orden=orden %}
+            {% if orden.registro_actual %}
+            <div class="mt-2">
+                {% include "produccion/components/_proceso_status.html" with proceso=orden.registro_actual %}
+                {% if orden.paro_actual %}
+                <div class="alert alert-warning mt-2 mb-0">
+                    <small>
+                        <strong>Motivo:</strong> {{ orden.paro_actual.causa_paro }}<br>
+                        <strong>Inicio:</strong> {{ orden.paro_actual.hora_inicio_paro|date:"d/m/Y H:i" }}
+                    </small>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+        {% empty %}
+        <p class="text-muted text-center">No hay órdenes pausadas</p>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Terminados -->
+<div class="kanban-column">
+    <div class="kanban-column-header">
+        <h5 class="mb-0">Terminados</h5>
+        <span class="badge bg-success">{{ ordenes_terminadas|length }}</span>
+    </div>
+    <div class="kanban-column-content">
+        {% for orden in ordenes_terminadas %}
+        <div class="proceso-item">
+            {% include "produccion/components/_orden_card.html" with orden=orden %}
+            {% if orden.registro_actual %}
+            <div class="mt-2">
+                {% include "produccion/components/_proceso_status.html" with proceso=orden.registro_actual %}
+                {% if orden.produccion_total %}
+                <div class="alert alert-success mt-2 mb-0">
+                    <small>
+                        <strong>Producción Total:</strong> {{ orden.produccion_total|floatformat:2 }} kg
+                    </small>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+        {% empty %}
+        <p class="text-muted text-center">No hay órdenes terminadas</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

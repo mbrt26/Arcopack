@@ -1,0 +1,302 @@
+{% extends "base.html" %}
+
+{% block title %}{% if object %}Actualizar{% else %}Nuevo{% endif %} Registro de Impresión - ARCOPACK{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h2>
+                <i class="fas fa-print"></i> 
+                {% if object %}Actualizar{% else %}Nuevo{% endif %} Registro de Impresión
+            </h2>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-file-alt"></i> Formulario de Registro
+                </div>
+                <div class="card-body">
+                    <form method="post" id="registroForm">
+                        {% csrf_token %}
+                        
+                        <!-- Campos principales -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Máquina</label>
+                                {{ form.maquina }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Operador</label>
+                                {{ form.operador }}
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Fecha/Hora Inicio</label>
+                                {{ form.inicio }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Fecha/Hora Fin</label>
+                                {{ form.fin }}
+                            </div>
+                        </div>
+
+                        <!-- Consumo de Sustrato -->
+                        <h5 class="mt-4">Consumo de Sustrato</h5>
+                        <div id="consumo-sustrato-formset">
+                            {{ consumo_sustrato_formset.management_form }}
+                            {% for form in consumo_sustrato_formset %}
+                            <div class="consumo-form border rounded p-3 mb-3">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <label class="form-label">Lote</label>
+                                        {{ form.lote_consumido }}
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Metros</label>
+                                        {{ form.metros_consumidos }}
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Kg</label>
+                                        {{ form.kg_consumidos }}
+                                    </div>
+                                </div>
+                                {% if not forloop.first %}
+                                <button type="button" class="btn btn-sm btn-danger mt-2 remove-form">
+                                    <i class="fas fa-trash"></i> Eliminar
+                                </button>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <button type="button" class="btn btn-secondary" id="add-consumo">
+                            <i class="fas fa-plus"></i> Agregar Consumo
+                        </button>
+
+                        <!-- Consumo de Tintas -->
+                        <h5 class="mt-4">Consumo de Tintas</h5>
+                        <div id="consumo-tinta-formset">
+                            {{ consumo_tinta_formset.management_form }}
+                            {% for form in consumo_tinta_formset %}
+                            <div class="tinta-form border rounded p-3 mb-3">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <label class="form-label">Tinta</label>
+                                        {{ form.tinta }}
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Lote</label>
+                                        {{ form.lote_tinta }}
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Cantidad (Kg)</label>
+                                        {{ form.cantidad_kg }}
+                                    </div>
+                                </div>
+                                {% if not forloop.first %}
+                                <button type="button" class="btn btn-sm btn-danger mt-2 remove-form">
+                                    <i class="fas fa-trash"></i> Eliminar
+                                </button>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <button type="button" class="btn btn-secondary" id="add-tinta">
+                            <i class="fas fa-plus"></i> Agregar Tinta
+                        </button>
+
+                        <!-- Paros de Producción -->
+                        <h5 class="mt-4">Paros de Producción</h5>
+                        <div id="paro-formset">
+                            {{ paro_formset.management_form }}
+                            {% for form in paro_formset %}
+                            <div class="paro-form border rounded p-3 mb-3">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <label class="form-label">Causa</label>
+                                        {{ form.causa_paro }}
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Duración (min)</label>
+                                        {{ form.duracion_minutos }}
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Observaciones</label>
+                                        {{ form.observaciones }}
+                                    </div>
+                                </div>
+                                {% if not forloop.first %}
+                                <button type="button" class="btn btn-sm btn-danger mt-2 remove-form">
+                                    <i class="fas fa-trash"></i> Eliminar
+                                </button>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <button type="button" class="btn btn-secondary" id="add-paro">
+                            <i class="fas fa-plus"></i> Agregar Paro
+                        </button>
+
+                        <!-- Desperdicios -->
+                        <h5 class="mt-4">Desperdicios</h5>
+                        <div id="desperdicio-formset">
+                            {{ desperdicio_formset.management_form }}
+                            {% for form in desperdicio_formset %}
+                            <div class="desperdicio-form border rounded p-3 mb-3">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <label class="form-label">Tipo</label>
+                                        {{ form.tipo_desperdicio }}
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Cantidad (Kg)</label>
+                                        {{ form.cantidad_kg }}
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Cantidad (Metros)</label>
+                                        {{ form.cantidad_metros }}
+                                    </div>
+                                </div>
+                                <div class="row mt-2">
+                                    <div class="col">
+                                        <label class="form-label">Observaciones</label>
+                                        {{ form.observaciones }}
+                                    </div>
+                                </div>
+                                {% if not forloop.first %}
+                                <button type="button" class="btn btn-sm btn-danger mt-2 remove-form">
+                                    <i class="fas fa-trash"></i> Eliminar
+                                </button>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <button type="button" class="btn btn-secondary" id="add-desperdicio">
+                            <i class="fas fa-plus"></i> Agregar Desperdicio
+                        </button>
+
+                        <!-- Botones de acción -->
+                        <div class="mt-4 text-end">
+                            <a href="{% url 'produccion:orden-produccion-detail' orden.id %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Guardar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel lateral de información -->
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-info-circle"></i> Información de la Orden
+                </div>
+                <div class="card-body">
+                    <dl>
+                        <dt>Número de Orden:</dt>
+                        <dd>{{ orden.numero }}</dd>
+
+                        <dt>Producto:</dt>
+                        <dd>{{ orden.producto.nombre }}</dd>
+
+                        <dt>Cantidad:</dt>
+                        <dd>{{ orden.cantidad }} {{ orden.producto.unidad_medida.codigo }}</dd>
+
+                        <dt>Estado:</dt>
+                        <dd>
+                            <span class="badge {% if orden.estado == 'PENDIENTE' %}bg-warning{% elif orden.estado == 'EN_PROCESO' %}bg-primary{% elif orden.estado == 'COMPLETADA' %}bg-success{% else %}bg-danger{% endif %}">
+                                {{ orden.get_estado_display }}
+                            </span>
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+
+            <!-- Parámetros de Impresión -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-cogs"></i> Parámetros de Impresión
+                </div>
+                <div class="card-body">
+                    <dl>
+                        <dt>Tipo de Tinta:</dt>
+                        <dd>{{ orden.producto.tipo_tinta.nombre }}</dd>
+
+                        <dt>Rodillo Anilox:</dt>
+                        <dd>{{ orden.producto.rodillo_anilox.nombre }}</dd>
+
+                        <dt>Observaciones:</dt>
+                        <dd>{{ orden.observaciones|default:"Sin observaciones" }}</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Función para clonar formsets
+function cloneForm(formsetContainer, addButton) {
+    const forms = formsetContainer.getElementsByClassName('form-row');
+    const totalForms = formsetContainer.querySelector('[id$="-TOTAL_FORMS"]');
+    const newForm = forms[0].cloneNode(true);
+    
+    // Actualizar IDs y nombres de los campos
+    const formRegex = RegExp(`-${forms.length-1}-`,'g');
+    newForm.innerHTML = newForm.innerHTML.replace(formRegex, `-${forms.length}-`);
+    
+    // Limpiar valores
+    newForm.querySelectorAll('input, select, textarea').forEach(input => {
+        input.value = '';
+    });
+    
+    formsetContainer.insertBefore(newForm, addButton);
+    totalForms.value = forms.length + 1;
+}
+
+// Event listeners para agregar nuevos formsets
+document.getElementById('add-consumo').addEventListener('click', function() {
+    cloneForm(document.getElementById('consumo-sustrato-formset'), this);
+});
+
+document.getElementById('add-tinta').addEventListener('click', function() {
+    cloneForm(document.getElementById('consumo-tinta-formset'), this);
+});
+
+document.getElementById('add-paro').addEventListener('click', function() {
+    cloneForm(document.getElementById('paro-formset'), this);
+});
+
+document.getElementById('add-desperdicio').addEventListener('click', function() {
+    cloneForm(document.getElementById('desperdicio-formset'), this);
+});
+
+// Event listener para eliminar formsets
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('remove-form')) {
+        const formRow = e.target.closest('.form-row');
+        const formset = formRow.parentNode;
+        const totalForms = formset.querySelector('[id$="-TOTAL_FORMS"]');
+        
+        formRow.remove();
+        totalForms.value = parseInt(totalForms.value) - 1;
+    }
+});
+
+// Validación del formulario
+document.getElementById('registroForm').addEventListener('submit', function(e) {
+    // Implementar validaciones personalizadas aquí
+});
+</script>
+{% endblock %}

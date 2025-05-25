@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Importar Productos{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-xl-8">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h3 class="card-title mb-0">Importar Productos</h3>
+                        <a href="{% url 'productos:producto_list' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Volver
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% include "productos/components/_form_errors.html" %}
+
+                    <div class="alert alert-info">
+                        <h5 class="alert-heading">Instrucciones</h5>
+                        <ol class="mb-0">
+                            <li>Descargue la plantilla Excel haciendo clic en el botón "Descargar Plantilla"</li>
+                            <li>Complete la información de los productos en la plantilla</li>
+                            <li>Guarde el archivo y súbalo usando el formulario de abajo</li>
+                            <li>El sistema validará los datos y creará los productos</li>
+                        </ol>
+                    </div>
+
+                    <div class="mb-4">
+                        <a href="{% url 'productos:download_template' %}" class="btn btn-success">
+                            <i class="bi bi-file-earmark-excel"></i> Descargar Plantilla
+                        </a>
+                    </div>
+
+                    <form method="post" enctype="multipart/form-data" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.file.id_for_label }}" class="form-label">Archivo Excel *</label>
+                            {{ form.file }}
+                            {% if form.file.errors %}
+                            <div class="invalid-feedback">{{ form.file.errors.0 }}</div>
+                            {% endif %}
+                            <div class="form-text">
+                                Formatos soportados: .xlsx, .xls
+                            </div>
+                        </div>
+
+                        <div class="form-check mb-3">
+                            {{ form.update_existing }}
+                            <label class="form-check-label" for="{{ form.update_existing.id_for_label }}">
+                                Actualizar productos existentes
+                            </label>
+                            <div class="form-text">
+                                Si esta opción está marcada, los productos existentes serán actualizados con la información del archivo.
+                                Si no está marcada, los productos existentes serán ignorados.
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-upload"></i> Importar
+                            </button>
+                        </div>
+                    </form>
+
+                    {% if import_results %}
+                    <div class="mt-4">
+                        <h5>Resultados de la Importación</h5>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Estado</th>
+                                        <th>Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Productos Creados</td>
+                                        <td>{{ import_results.created }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Productos Actualizados</td>
+                                        <td>{{ import_results.updated }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Errores</td>
+                                        <td>{{ import_results.errors }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {% if import_results.error_details %}
+                        <div class="alert alert-danger mt-3">
+                            <h6>Detalles de los Errores:</h6>
+                            <ul class="mb-0">
+                                {% for error in import_results.error_details %}
+                                <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

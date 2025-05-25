@@ -3,21 +3,24 @@
 import logging
 from decimal import Decimal
 from django.db import models, transaction
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.core.validators import MinValueValidator
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.conf import settings
 from django.utils import timezone
-from django.contrib.auth import get_user_model # <<< ¡ASEGÚRATE QUE ESTA LÍNEA ESTÉ AQUÍ!
+
 
 # --- Importar modelos de OTRAS apps ---
 from configuracion.models import UnidadMedida, Ubicacion, Proveedor, CategoriaMateriaPrima, TipoTinta
 # from productos.models import ProductoTerminado
 # from produccion.models import OrdenProduccion
 
-User = get_user_model() # Ahora funcionará
+
+User = get_user_model() # Ahora esta línea funcionará
 logger = logging.getLogger(__name__)
+
 
 # =============================================
 # === MODELOS MAESTROS DE ITEMS ===
@@ -199,10 +202,22 @@ class LoteMateriaPrima(LoteBase):
     documento_recepcion = models.CharField(max_length=100, blank=True, verbose_name="Documento Recepción")
     costo_unitario = models.DecimalField(max_digits=14, decimal_places=4, null=True, blank=True, validators=[MinValueValidator(Decimal('0.0'))], verbose_name="Costo Unitario Lote")
 
+    orden_produccion = models.ForeignKey(
+        'produccion.OrdenProduccion',   # ← referencia perezosa (string)
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='lotes_mp_asignados',
+        help_text="OP a la que se reservó este lote (si aplica).",
+    )
+
+    
+
     @property
     def unidad_medida_lote(self): return self.materia_prima.unidad_medida
     @property
     def item_principal(self): return self.materia_prima
+
+
 
     def consumir(self, cantidad_consumir, proceso_ref, usuario, **kwargs):
         if not usuario or not usuario.is_authenticated: raise ValueError("Usuario requerido.")
@@ -237,6 +252,13 @@ class LoteProductoEnProceso(LoteBase):
     unidad_medida_secundaria = models.ForeignKey(UnidadMedida, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
     fecha_produccion = models.DateTimeField(default=timezone.now, verbose_name="Fecha Producción")
 
+    def save(self, *args, **kwargs):
+        # Si es un objeto nuevo, inicializa cantidad_actual = cantidad_producida_primaria
+        if self.pk is None and self.cantidad_producida_primaria is not None:
+            self.cantidad_actual = self.cantidad_producida_primaria
+        # Llama al save de LoteBase (que maneja auditoría y movimiento inicial)
+        super().save(*args, **kwargs)
+
     @property
     def unidad_medida_lote(self): return self.unidad_medida_primaria
     @property
@@ -258,6 +280,9 @@ class LoteProductoEnProceso(LoteBase):
         self.registrar_movimiento('CONSUMO_WIP', cantidad_consumir, usuario=usuario, proceso_referencia=proceso_ref, observaciones=obs, **kwargs)
         logger.info(f"Consumidos {cantidad_consumir} {self.unidad_medida_lote.codigo} de Lote WIP {self.lote_id}. Restante: {self.cantidad_actual}.")
         return True
+    
+    
+    # ------------------------------------
 
     def __str__(self):
         prod_codigo = getattr(self.producto_terminado, 'codigo', 'N/A')
@@ -275,6 +300,13 @@ class LoteProductoTerminado(LoteBase):
     cantidad_producida = models.DecimalField(max_digits=14, decimal_places=4, verbose_name="Cantidad Producida") # Unidad de producto.unidad_medida
     fecha_produccion = models.DateTimeField(default=timezone.now, verbose_name="Fecha Producción")
     fecha_vencimiento = models.DateField(null=True, blank=True, verbose_name="Fecha Vencimiento")
+
+    def save(self, *args, **kwargs):
+        # Si es nuevo, inicializa cantidad_actual = cantidad_producida
+        if self.pk is None and self.cantidad_producida is not None:
+            self.cantidad_actual = self.cantidad_producida
+        # Llama al save de LoteBase
+        super().save(*args, **kwargs)
 
     @property
     def unidad_medida_lote(self): return self.producto_terminado.unidad_medida

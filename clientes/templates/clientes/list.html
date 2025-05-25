@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Listado de Clientes{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">Clientes</h1>
+        <a href="{% url 'clientes:create' %}" class="btn btn-primary">
+            <i class="bi bi-plus-lg"></i> Nuevo Cliente
+        </a>
+    </div>
+
+    {% include "components/_messages.html" %}
+    {% include "components/_search_filters.html" %}
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>NIT/CC</th>
+                            <th>Razón Social</th>
+                            <th>Ciudad</th>
+                            <th>Teléfono</th>
+                            <th>Email</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cliente in object_list %}
+                        <tr>
+                            <td>{{ cliente.nit }}</td>
+                            <td>{{ cliente.razon_social }}</td>
+                            <td>{{ cliente.ciudad }}</td>
+                            <td>{{ cliente.telefono }}</td>
+                            <td>{{ cliente.email }}</td>
+                            <td>
+                                <span class="badge {% if cliente.is_active %}bg-success{% else %}bg-danger{% endif %}">
+                                    {{ cliente.is_active|yesno:"Activo,Inactivo" }}
+                                </span>
+                            </td>
+                            <td>
+                                <a href="{% url 'clientes:detail' cliente.pk %}" class="btn btn-sm btn-info" title="Ver detalle">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{% url 'clientes:update' cliente.pk %}" class="btn btn-sm btn-primary" title="Editar">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center">No hay clientes registrados</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    {% include "components/_pagination.html" %}
+</div>
+{% endblock %}

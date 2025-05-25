@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block title %}{{ object.razon_social }} - ARCOPACK{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4 align-items-center">
+        <div class="col">
+            <h2>
+                <i class="fas fa-user"></i> {{ object.razon_social }}
+                <span class="badge {% if object.is_active %}bg-success{% else %}bg-danger{% endif %}">
+                    {{ object.is_active|yesno:"Activo,Inactivo" }}
+                </span>
+            </h2>
+        </div>
+        <div class="col text-end">
+            <a href="{% url 'clientes:cliente-update' object.pk %}" class="btn btn-warning">
+                <i class="fas fa-edit"></i> Editar
+            </a>
+            <a href="{% url 'clientes:cliente-list' %}" class="btn btn-secondary">
+                <i class="fas fa-list"></i> Volver al Listado
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Información Principal -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-info-circle"></i> Información Principal
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <tr>
+                            <th class="w-25">NIT / Documento:</th>
+                            <td>{{ object.nit }}</td>
+                        </tr>
+                        <tr>
+                            <th>Código Cliente:</th>
+                            <td>{{ object.codigo_cliente|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Razón Social:</th>
+                            <td>{{ object.razon_social }}</td>
+                        </tr>
+                        <tr>
+                            <th>Nombre Comercial:</th>
+                            <td>{{ object.nombre_comercial|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Origen Datos:</th>
+                            <td>{{ object.get_origen_datos_display }}</td>
+                        </tr>
+                        {% if object.ultima_sincronizacion %}
+                        <tr>
+                            <th>Última Sincronización:</th>
+                            <td>{{ object.ultima_sincronizacion|date:"d/m/Y H:i" }}</td>
+                        </tr>
+                        {% endif %}
+                    </table>
+                </div>
+            </div>
+
+            <!-- Información Comercial -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-dollar-sign"></i> Información Comercial
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <tr>
+                            <th class="w-25">Condiciones de Pago:</th>
+                            <td>{{ object.condiciones_pago|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Cupo de Crédito:</th>
+                            <td>$ {{ object.cupo_credito|floatformat:2|default:"0.00" }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contacto y Ubicación -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-map-marker-alt"></i> Ubicación
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <tr>
+                            <th class="w-25">Dirección:</th>
+                            <td>{{ object.direccion_principal|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Ciudad:</th>
+                            <td>{{ object.ciudad|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Departamento:</th>
+                            <td>{{ object.departamento|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <th>País:</th>
+                            <td>{{ object.pais|default:"Colombia" }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Información de Contacto -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-address-book"></i> Información de Contacto
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <tr>
+                            <th class="w-25">Teléfono:</th>
+                            <td>{{ object.telefono_principal|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Email:</th>
+                            <td>
+                                {% if object.email_principal %}
+                                    <a href="mailto:{{ object.email_principal }}">{{ object.email_principal }}</a>
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Contacto Principal:</th>
+                            <td>{{ object.nombre_contacto_principal|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Email Contacto:</th>
+                            <td>
+                                {% if object.email_contacto_principal %}
+                                    <a href="mailto:{{ object.email_contacto_principal }}">{{ object.email_contacto_principal }}</a>
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Información de Auditoría -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-history"></i> Información de Auditoría
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Creado por:</strong> {{ object.creado_por|default:"Sistema" }}</p>
+                    <p><strong>Fecha de creación:</strong> {{ object.creado_en|date:"d/m/Y H:i" }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Última modificación por:</strong> {{ object.actualizado_por|default:"Sistema" }}</p>
+                    <p><strong>Fecha de última modificación:</strong> {{ object.actualizado_en|date:"d/m/Y H:i" }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

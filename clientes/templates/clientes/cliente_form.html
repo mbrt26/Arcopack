@@ -1,0 +1,236 @@
+{% extends "base.html" %}
+
+{% block title %}{% if form.instance.pk %}Editar{% else %}Nuevo{% endif %} Cliente - ARCOPACK{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h2>
+                <i class="fas fa-{% if form.instance.pk %}edit{% else %}plus{% endif %}"></i> 
+                {% if form.instance.pk %}Editar{% else %}Nuevo{% endif %} Cliente
+            </h2>
+        </div>
+    </div>
+
+    <form method="post" id="clienteForm">
+        {% csrf_token %}
+        <div class="row">
+            <!-- Identificación -->
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <i class="fas fa-id-card"></i> Identificación
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">NIT / Documento ID *</label>
+                            {{ form.nit }}
+                            {% if form.nit.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.nit.errors|join:", " }}
+                                </div>
+                            {% endif %}
+                            {% if form.nit.help_text %}
+                                <div class="form-text">{{ form.nit.help_text }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Código Cliente</label>
+                            {{ form.codigo_cliente }}
+                            {% if form.codigo_cliente.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.codigo_cliente.errors|join:", " }}
+                                </div>
+                            {% endif %}
+                            {% if form.codigo_cliente.help_text %}
+                                <div class="form-text">{{ form.codigo_cliente.help_text }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Razón Social *</label>
+                            {{ form.razon_social }}
+                            {% if form.razon_social.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.razon_social.errors|join:", " }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Nombre Comercial</label>
+                            {{ form.nombre_comercial }}
+                            {% if form.nombre_comercial.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.nombre_comercial.errors|join:", " }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Información Comercial -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <i class="fas fa-dollar-sign"></i> Información Comercial
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">Condiciones de Pago</label>
+                            {{ form.condiciones_pago }}
+                            {% if form.condiciones_pago.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.condiciones_pago.errors|join:", " }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Cupo de Crédito</label>
+                            {{ form.cupo_credito }}
+                            {% if form.cupo_credito.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.cupo_credito.errors|join:", " }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                {{ form.is_active }}
+                                <label class="form-check-label">Cliente Activo</label>
+                            </div>
+                            {% if form.is_active.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.is_active.errors|join:", " }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contacto y Ubicación -->
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <i class="fas fa-map-marker-alt"></i> Ubicación
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">Dirección Principal</label>
+                            {{ form.direccion_principal }}
+                            {% if form.direccion_principal.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.direccion_principal.errors|join:", " }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Ciudad</label>
+                                {{ form.ciudad }}
+                                {% if form.ciudad.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.ciudad.errors|join:", " }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Departamento</label>
+                                {{ form.departamento }}
+                                {% if form.departamento.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.departamento.errors|join:", " }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">País</label>
+                            {{ form.pais }}
+                            {% if form.pais.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.pais.errors|join:", " }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Información de Contacto -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <i class="fas fa-address-book"></i> Información de Contacto
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">Teléfono Principal</label>
+                            {{ form.telefono_principal }}
+                            {% if form.telefono_principal.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.telefono_principal.errors|join:", " }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Email Principal</label>
+                            {{ form.email_principal }}
+                            {% if form.email_principal.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.email_principal.errors|join:", " }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Nombre Contacto Principal</label>
+                            {{ form.nombre_contacto_principal }}
+                            {% if form.nombre_contacto_principal.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.nombre_contacto_principal.errors|join:", " }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Email Contacto Principal</label>
+                            {{ form.email_contacto_principal }}
+                            {% if form.email_contacto_principal.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.email_contacto_principal.errors|join:", " }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botones de acción -->
+        <div class="row mb-4">
+            <div class="col text-end">
+                <a href="{% url 'clientes:cliente-list' %}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> Cancelar
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Guardar
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('clienteForm').addEventListener('submit', function(e) {
+    // Validaciones personalizadas aquí si son necesarias
+});
+</script>
+{% endblock %}

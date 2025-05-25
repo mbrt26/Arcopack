@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ cliente.razon_social }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    {% include "components/_messages.html" %}
+
+    <div class="card">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h3 class="card-title mb-0">{{ cliente.razon_social }}</h3>
+                <div>
+                    <a href="{% url 'clientes:update' cliente.pk %}" class="btn btn-primary">
+                        <i class="bi bi-pencil"></i> Editar
+                    </a>
+                    <a href="{% url 'clientes:list' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Volver
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>Información General</h5>
+                    <table class="table table-sm">
+                        <tr>
+                            <th width="30%">NIT/CC:</th>
+                            <td>{{ cliente.nit }}</td>
+                        </tr>
+                        <tr>
+                            <th>Razón Social:</th>
+                            <td>{{ cliente.razon_social }}</td>
+                        </tr>
+                        <tr>
+                            <th>Nombre Comercial:</th>
+                            <td>{{ cliente.nombre_comercial|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Estado:</th>
+                            <td>
+                                <span class="badge {% if cliente.is_active %}bg-success{% else %}bg-danger{% endif %}">
+                                    {{ cliente.is_active|yesno:"Activo,Inactivo" }}
+                                </span>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <h5>Información de Contacto</h5>
+                    <table class="table table-sm">
+                        <tr>
+                            <th width="30%">Ciudad:</th>
+                            <td>{{ cliente.ciudad }}</td>
+                        </tr>
+                        <tr>
+                            <th>Dirección:</th>
+                            <td>{{ cliente.direccion|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Teléfono:</th>
+                            <td>{{ cliente.telefono|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Email:</th>
+                            <td>{{ cliente.email|default:"-" }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            {% if cliente.observaciones %}
+            <div class="row mt-4">
+                <div class="col-12">
+                    <h5>Observaciones</h5>
+                    <p class="mb-0">{{ cliente.observaciones }}</p>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="row mt-4">
+                <div class="col-12">
+                    <h5>Información del Sistema</h5>
+                    <table class="table table-sm">
+                        <tr>
+                            <th width="15%">Creado:</th>
+                            <td>{{ cliente.creado_en }} por {{ cliente.creado_por }}</td>
+                            <th width="15%">Actualizado:</th>
+                            <td>{{ cliente.actualizado_en }} por {{ cliente.actualizado_por }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if related_orders %}
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Órdenes de Producción Recientes</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>OP #</th>
+                            <th>Producto</th>
+                            <th>Cantidad</th>
+                            <th>Fecha</th>
+                            <th>Estado</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for orden in related_orders %}
+                        <tr>
+                            <td>{{ orden.op_numero }}</td>
+                            <td>{{ orden.producto }}</td>
+                            <td>{{ orden.cantidad_solicitada_kg }} kg</td>
+                            <td>{{ orden.fecha_creacion|date:"d/m/Y" }}</td>
+                            <td>{{ orden.get_etapa_actual_display }}</td>
+                            <td>
+                                <a href="{% url 'produccion:orden_detail' orden.pk %}" class="btn btn-sm btn-info">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

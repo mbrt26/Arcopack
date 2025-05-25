@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ object.pk|yesno:"Editar,Nuevo" }} Empleado{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-xl-8">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h3 class="card-title mb-0">{{ object.pk|yesno:"Editar,Nuevo" }} Empleado</h3>
+                        <a href="{% url 'personal:empleado_list' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Volver
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% include "personal/components/_form_errors.html" %}
+                    
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.nombres.id_for_label }}" class="form-label">Nombres *</label>
+                                {{ form.nombres }}
+                                {% if form.nombres.errors %}
+                                <div class="invalid-feedback">{{ form.nombres.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.apellidos.id_for_label }}" class="form-label">Apellidos *</label>
+                                {{ form.apellidos }}
+                                {% if form.apellidos.errors %}
+                                <div class="invalid-feedback">{{ form.apellidos.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.cedula.id_for_label }}" class="form-label">Cédula *</label>
+                                {{ form.cedula }}
+                                {% if form.cedula.errors %}
+                                <div class="invalid-feedback">{{ form.cedula.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.codigo_empleado.id_for_label }}" class="form-label">Código Empleado *</label>
+                                {{ form.codigo_empleado }}
+                                {% if form.codigo_empleado.errors %}
+                                <div class="invalid-feedback">{{ form.codigo_empleado.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.cargo.id_for_label }}" class="form-label">Cargo *</label>
+                                {{ form.cargo }}
+                                {% if form.cargo.errors %}
+                                <div class="invalid-feedback">{{ form.cargo.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.area.id_for_label }}" class="form-label">Área *</label>
+                                {{ form.area }}
+                                {% if form.area.errors %}
+                                <div class="invalid-feedback">{{ form.area.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.fecha_ingreso.id_for_label }}" class="form-label">Fecha de Ingreso *</label>
+                                {{ form.fecha_ingreso }}
+                                {% if form.fecha_ingreso.errors %}
+                                <div class="invalid-feedback">{{ form.fecha_ingreso.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.fecha_retiro.id_for_label }}" class="form-label">Fecha de Retiro</label>
+                                {{ form.fecha_retiro }}
+                                {% if form.fecha_retiro.errors %}
+                                <div class="invalid-feedback">{{ form.fecha_retiro.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <label for="{{ form.usuario_sistema.id_for_label }}" class="form-label">Usuario del Sistema</label>
+                                {{ form.usuario_sistema }}
+                                {% if form.usuario_sistema.errors %}
+                                <div class="invalid-feedback">{{ form.usuario_sistema.errors.0 }}</div>
+                                {% endif %}
+                                <div class="form-text">
+                                    Si el empleado necesita acceso al sistema, seleccione su usuario aquí.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <div class="form-check">
+                                    {{ form.is_active }}
+                                    <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                        Empleado Activo
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save"></i> Guardar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    // Initialize datepickers
+    const dateInputs = document.querySelectorAll('input[type="date"]');
+    dateInputs.forEach(input => {
+        input.classList.add('form-control');
+    });
+</script>
+{% endblock %}
+{% endblock %}

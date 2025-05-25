@@ -14,11 +14,29 @@ from django.db.models import Max
 from inventario.models import LoteMateriaPrima, LoteProductoEnProceso, LoteProductoTerminado, MovimientoInventario, Tinta
 from .models import OrdenProduccion, RegistroImpresion, Refilado, Sellado, Doblado
 from configuracion.models import Ubicacion, UnidadMedida, Proceso
-from productos.models import ProductoTerminado
 # from personal.models import Colaborador # Necesario si se usa en type hints o lógica
 
 User = get_user_model()
 logger = logging.getLogger(__name__) # Configura logging en settings.py
+
+# =============================================
+# === HELPER FUNCTIONS ===
+# =============================================
+
+def _registrar_movimiento_produccion(
+    *, lote, tipo_movimiento: str, cantidad: Decimal, 
+    proceso_ref, ubicacion_destino, usuario: User
+) -> None:
+    """Helper para registrar movimientos de producción (WIP/PT)."""
+    proceso_tipo = proceso_ref.__class__.__name__
+    lote.registrar_movimiento(
+        tipo_movimiento=tipo_movimiento,
+        cantidad=cantidad,
+        usuario=usuario,
+        ubicacion_destino=ubicacion_destino,
+        proceso_referencia=proceso_ref,
+        observaciones=f"Producción {proceso_tipo} ({tipo_movimiento[-2:]}) {proceso_ref.id}"
+    )
 
 # =============================================
 # === HELPER FUNCTION FOR WIP/PT DECISION ===
@@ -34,25 +52,32 @@ def es_ultimo_proceso_op(orden_produccion: OrdenProduccion, nombre_proceso_actua
         return False # No se puede determinar sin OP
 
     try:
-        proceso_actual_obj = Proceso.objects.get(nombre__iexact=nombre_proceso_actual) # Usar iexact
+        proceso_actual_obj = Proceso.objects.get(nombre=nombre_proceso_actual) # Búsqueda exacta
         procesos_requeridos = orden_produccion.procesos.all()
 
         if procesos_requeridos.exists():
             max_orden_flujo = procesos_requeridos.aggregate(max_orden=Max('orden_flujo'))['max_orden']
             if proceso_actual_obj.orden_flujo == max_orden_flujo:
-                logger.debug(f"Proceso '{nombre_proceso_actual}' (Orden: {proceso_actual_obj.orden_flujo}) es el último para OP {orden_produccion.op_numero} (Max Orden: {max_orden_flujo}).")
+                logger.debug("Proceso '%s' (Orden: %d) es el último para OP %s (Max Orden: %d)",
+                           nombre_proceso_actual, proceso_actual_obj.orden_flujo,
+                           orden_produccion.op_numero, max_orden_flujo)
                 return True
             else:
-                logger.debug(f"Proceso '{nombre_proceso_actual}' (Orden: {proceso_actual_obj.orden_flujo}) NO es el último para OP {orden_produccion.op_numero} (Max Orden: {max_orden_flujo}).")
+                logger.debug("Proceso '%s' (Orden: %d) NO es el último para OP %s (Max Orden: %d)",
+                           nombre_proceso_actual, proceso_actual_obj.orden_flujo,
+                           orden_produccion.op_numero, max_orden_flujo)
                 return False
         else:
-            logger.warning(f"OP {orden_produccion.op_numero} no tiene procesos definidos en el campo 'procesos'. Asumiendo que '{nombre_proceso_actual}' no es el último.")
+            logger.warning("OP %s no tiene procesos definidos en el campo 'procesos'. Asumiendo que '%s' no es el último.",
+                         orden_produccion.op_numero, nombre_proceso_actual)
             return False
     except Proceso.DoesNotExist:
-         logger.error(f"Error crítico: Proceso con nombre '{nombre_proceso_actual}' no encontrado en configuración.")
+         logger.error("Error crítico: Proceso con nombre '%s' no encontrado en configuración.",
+                     nombre_proceso_actual)
          return False
     except Exception as e:
-         logger.error(f"Error inesperado determinando último proceso ('{nombre_proceso_actual}') para OP {orden_produccion.op_numero}: {e}")
+         logger.error("Error inesperado determinando último proceso ('%s') para OP %s: %s",
+                     nombre_proceso_actual, orden_produccion.op_numero, e)
          return False
 
 # =============================================
@@ -111,7 +136,7 @@ def registrar_produccion_rollo_impreso(
             cantidad_producida=kg_producidos, cantidad_actual=kg_producidos,
             ubicacion=ubicacion_destino, estado='DISPONIBLE', fecha_produccion=timezone.now(),
             observaciones=observaciones_lote, creado_por=usuario, actualizado_por=usuario)
-        nuevo_lote_pt.registrar_movimiento(tipo_movimiento='PRODUCCION_PT', cantidad=kg_producidos, usuario=usuario, ubicacion_destino=ubicacion_destino, proceso_referencia=registro_impresion, observaciones=f"Producción Impresión (PT) {registro_impresion.id}")
+        _registrar_movimiento_produccion(lote=nuevo_lote_pt, tipo_movimiento='PRODUCCION_PT', cantidad=kg_producidos, usuario=usuario, ubicacion_destino=ubicacion_destino, proceso_ref=registro_impresion)
         logger.info(f"Lote PT (Impresión) '{lote_salida_id}' creado ({kg_producidos} Kg).")
         return nuevo_lote_pt
     else:
@@ -124,7 +149,7 @@ def registrar_produccion_rollo_impreso(
             cantidad_actual=kg_producidos, ubicacion=ubicacion_destino, estado='DISPONIBLE',
             fecha_produccion=timezone.now(), observaciones=observaciones_lote,
             creado_por=usuario, actualizado_por=usuario)
-        nuevo_lote_wip.registrar_movimiento(tipo_movimiento='PRODUCCION_WIP', cantidad=kg_producidos, usuario=usuario, ubicacion_destino=ubicacion_destino, proceso_referencia=registro_impresion, observaciones=f"Producción Impresión (WIP) {registro_impresion.id}")
+        _registrar_movimiento_produccion(lote=nuevo_lote_wip, tipo_movimiento='PRODUCCION_WIP', cantidad=kg_producidos, usuario=usuario, ubicacion_destino=ubicacion_destino, proceso_ref=registro_impresion)
         logger.info(f"Lote WIP (Impresión) '{lote_salida_id}' creado ({kg_producidos} Kg).")
         return nuevo_lote_wip
 
@@ -137,12 +162,14 @@ def consumir_rollo_entrada_refilado(*, refilado: Refilado, lote_entrada_id: str,
     """Consume Lote WIP para Refilado."""
     if cantidad_kg <= 0: raise ValueError("Cantidad a consumir debe ser positiva.")
     if not usuario or not usuario.is_authenticated: raise ValueError("Usuario inválido.")
-    logger.info(f"Consumiendo {cantidad_kg} Kg Lote WIP '{lote_entrada_id}' para Refilado ID {refilado.id} por Usuario ID {usuario.id}")
+    logger.info("Consumiendo %s Kg Lote WIP '%s' para Refilado ID %d por Usuario ID %d",
+                cantidad_kg, lote_entrada_id, refilado.id, usuario.id)
     try: lote_a_consumir = LoteProductoEnProceso.objects.select_for_update().get(lote_id=lote_entrada_id)
     except LoteProductoEnProceso.DoesNotExist: msg = f"Lote WIP entrada '{lote_entrada_id}' no encontrado."; logger.error(msg); raise ValidationError(msg)
     try: lote_a_consumir.consumir(cantidad_consumir=cantidad_kg, proceso_ref=refilado, usuario=usuario)
-    except (ValidationError, ValueError) as e: logger.error(f"Error al consumir Lote WIP '{lote_entrada_id}': {e}"); raise e
-    logger.info(f"Consumo exitoso Lote WIP '{lote_entrada_id}'. Restante: {lote_a_consumir.cantidad_actual}")
+    except (ValidationError, ValueError) as e: logger.error("Error al consumir Lote WIP '%s': %s", lote_entrada_id, e); raise e
+    logger.info("Consumo exitoso Lote WIP '%s'. Restante: %s",
+                lote_entrada_id, lote_a_consumir.cantidad_actual)
     return lote_a_consumir
 
 @transaction.atomic
@@ -191,7 +218,7 @@ def registrar_produccion_rollo_refilado(
             cantidad_producida=kg_producidos, cantidad_actual=kg_producidos,
             ubicacion=ubicacion_destino, estado='DISPONIBLE', fecha_produccion=timezone.now(),
             observaciones=observaciones_lote, creado_por=usuario, actualizado_por=usuario)
-        nuevo_lote_pt.registrar_movimiento(tipo_movimiento='PRODUCCION_PT', cantidad=kg_producidos, usuario=usuario, ubicacion_destino=ubicacion_destino, proceso_referencia=refilado, observaciones=f"Producción Refilado (PT) {refilado.id}")
+        _registrar_movimiento_produccion(lote=nuevo_lote_pt, tipo_movimiento='PRODUCCION_PT', cantidad=kg_producidos, usuario=usuario, ubicacion_destino=ubicacion_destino, proceso_ref=refilado)
         logger.info(f"Lote PT (Refilado) '{lote_salida_id}' creado ({kg_producidos} Kg).")
         return nuevo_lote_pt
     else:
@@ -204,7 +231,7 @@ def registrar_produccion_rollo_refilado(
             cantidad_actual=kg_producidos, ubicacion=ubicacion_destino, estado='DISPONIBLE',
             fecha_produccion=timezone.now(), observaciones=observaciones_lote,
             creado_por=usuario, actualizado_por=usuario)
-        nuevo_lote_wip.registrar_movimiento(tipo_movimiento='PRODUCCION_WIP', cantidad=kg_producidos, usuario=usuario, ubicacion_destino=ubicacion_destino, proceso_referencia=refilado, observaciones=f"Producción Refilado (WIP) {refilado.id}")
+        _registrar_movimiento_produccion(lote=nuevo_lote_wip, tipo_movimiento='PRODUCCION_WIP', cantidad=kg_producidos, usuario=usuario, ubicacion_destino=ubicacion_destino, proceso_ref=refilado)
         logger.info(f"Lote WIP (Refilado) '{lote_salida_id}' creado ({kg_producidos} Kg).")
         return nuevo_lote_wip
 
@@ -247,7 +274,8 @@ def registrar_produccion_bolsas_sellado(
     if unidades_producidas <= 0: raise ValueError("Unidades producidas deben ser positivas.")
     if not usuario or not usuario.is_authenticated: raise ValueError("Usuario inválido.")
     if not sellado or not sellado.pk: raise ValueError("Registro de Sellado inválido.")
-    logger.info(f"Registrando producción {unidades_producidas} Unid (ID: {lote_salida_id}) para Sellado ID {sellado.id} por Usuario ID {usuario.id}")
+    logger.info("Registrando producción %d Unid (ID: %s) para Sellado ID %d por Usuario ID %d",
+                unidades_producidas, lote_salida_id, sellado.id, usuario.id)
     try:
         ubicacion_destino = Ubicacion.objects.get(codigo=ubicacion_destino_codigo, is_active=True)
         orden_produccion = sellado.orden_produccion
@@ -262,22 +290,28 @@ def registrar_produccion_bolsas_sellado(
     if es_ultimo_paso:
         if LoteProductoTerminado.objects.filter(lote_id=lote_salida_id).exists(): raise ValidationError(f"ID Lote PT '{lote_salida_id}' ya existe.")
         kg_calculados = None
-        if producto_terminado.sellado_peso_millar and producto_terminado.sellado_peso_millar > 0: kg_calculados = round(Decimal(unidades_producidas / 1000) * producto_terminado.sellado_peso_millar, 4)
+        if producto_terminado.sellado_peso_millar and producto_terminado.sellado_peso_millar > 0:
+            kg_calculados = round(Decimal(unidades_producidas / 1000) * producto_terminado.sellado_peso_millar, 4)
         nuevo_lote_pt = LoteProductoTerminado.objects.create(
             lote_id=lote_salida_id, producto_terminado=producto_terminado, orden_produccion=orden_produccion,
             proceso_final_content_type=ct_registro, proceso_final_object_id=sellado.pk,
             cantidad_producida=unidades_producidas, cantidad_actual=unidades_producidas,
             ubicacion=ubicacion_destino, estado='DISPONIBLE', fecha_produccion=timezone.now(),
             observaciones=observaciones_lote, creado_por=usuario, actualizado_por=usuario)
-        nuevo_lote_pt.registrar_movimiento(tipo_movimiento='PRODUCCION_PT', cantidad=unidades_producidas, usuario=usuario, ubicacion_destino=ubicacion_destino, proceso_referencia=sellado, observaciones=f"Producción Sellado (PT) {sellado.id}")
-        logger.info(f"Lote PT (Sellado) '{lote_salida_id}' creado ({unidades_producidas} {unidad_pt.codigo}). Kg calc: {kg_calculados or 'N/A'}")
+        _registrar_movimiento_produccion(lote=nuevo_lote_pt, tipo_movimiento='PRODUCCION_PT', 
+                                       cantidad=unidades_producidas, usuario=usuario, 
+                                       ubicacion_destino=ubicacion_destino, proceso_ref=sellado)
+        logger.info("Lote PT (Sellado) '%s' creado (%d %s). Kg calc: %s",
+                   lote_salida_id, unidades_producidas, unidad_pt.codigo, kg_calculados or 'N/A')
         return nuevo_lote_pt
     else:
         if LoteProductoEnProceso.objects.filter(lote_id=lote_salida_id).exists(): raise ValidationError(f"ID Lote WIP '{lote_salida_id}' ya existe.")
         try: unidad_unid = UnidadMedida.objects.get(codigo='Unid'); unidad_kg = UnidadMedida.objects.get(codigo='Kg')
         except UnidadMedida.DoesNotExist: raise RuntimeError("Unidad 'Unid' o 'Kg' no encontrada.")
         kg_calculados = None
-        if producto_terminado.sellado_peso_millar and producto_terminado.sellado_peso_millar > 0: kg_calculados = round(Decimal(unidades_producidas / 1000) * producto_terminado.sellado_peso_millar, 4)
+        if producto_terminado.sellado_peso_millar and producto_terminado.sellado_peso_millar > 0:
+            kg_calculados = round(Decimal(unidades_producidas / 1000) * producto_terminado.sellado_peso_millar, 4)
+
         nuevo_lote_wip = LoteProductoEnProceso.objects.create(
             lote_id=lote_salida_id, producto_terminado=producto_terminado, orden_produccion=orden_produccion,
             proceso_origen_content_type=ct_registro, proceso_origen_object_id=sellado.pk,
@@ -286,8 +320,11 @@ def registrar_produccion_bolsas_sellado(
             cantidad_actual=unidades_producidas, ubicacion=ubicacion_destino, estado='DISPONIBLE',
             fecha_produccion=timezone.now(), observaciones=observaciones_lote,
             creado_por=usuario, actualizado_por=usuario)
-        nuevo_lote_wip.registrar_movimiento(tipo_movimiento='PRODUCCION_WIP', cantidad=unidades_producidas, usuario=usuario, ubicacion_destino=ubicacion_destino, proceso_referencia=sellado, observaciones=f"Producción Sellado (WIP) {sellado.id}")
-        logger.info(f"Lote WIP (Sellado) '{lote_salida_id}' creado ({unidades_producidas} {unidad_unid.codigo}).")
+        _registrar_movimiento_produccion(lote=nuevo_lote_wip, tipo_movimiento='PRODUCCION_WIP',
+                                       cantidad=unidades_producidas, usuario=usuario,
+                                       ubicacion_destino=ubicacion_destino, proceso_ref=sellado)
+        logger.info("Lote WIP (Sellado) '%s' creado (%d %s)",
+                   lote_salida_id, unidades_producidas, unidad_unid.codigo)
         return nuevo_lote_wip
 
 # =============================================
@@ -359,7 +396,7 @@ def registrar_produccion_rollo_doblado(
             cantidad_producida=kg_producidos, cantidad_actual=kg_producidos, # Asume PT en Kg
             ubicacion=ubicacion_destino, estado='DISPONIBLE', fecha_produccion=timezone.now(),
             observaciones=observaciones_lote, creado_por=usuario, actualizado_por=usuario)
-        nuevo_lote_pt.registrar_movimiento(tipo_movimiento='PRODUCCION_PT', cantidad=kg_producidos, usuario=usuario, ubicacion_destino=ubicacion_destino, proceso_referencia=doblado, observaciones=f"Producción Doblado (PT) {doblado.id}")
+        _registrar_movimiento_produccion(lote=nuevo_lote_pt, tipo_movimiento='PRODUCCION_PT', cantidad=kg_producidos, usuario=usuario, ubicacion_destino=ubicacion_destino, proceso_ref=doblado)
         logger.info(f"Lote PT (Doblado) '{lote_salida_id}' creado ({kg_producidos} {unidad_pt_usar.codigo}).")
         return nuevo_lote_pt
     else:
@@ -372,6 +409,6 @@ def registrar_produccion_rollo_doblado(
             cantidad_actual=kg_producidos, ubicacion=ubicacion_destino, estado='DISPONIBLE',
             fecha_produccion=timezone.now(), observaciones=observaciones_lote,
             creado_por=usuario, actualizado_por=usuario)
-        nuevo_lote_wip.registrar_movimiento(tipo_movimiento='PRODUCCION_WIP', cantidad=kg_producidos, usuario=usuario, ubicacion_destino=ubicacion_destino, proceso_referencia=doblado, observaciones=f"Producción Doblado (WIP) {doblado.id}")
+        _registrar_movimiento_produccion(lote=nuevo_lote_wip, tipo_movimiento='PRODUCCION_WIP', cantidad=kg_producidos, usuario=usuario, ubicacion_destino=ubicacion_destino, proceso_ref=doblado)
         logger.info(f"Lote WIP (Doblado) '{lote_salida_id}' creado ({kg_producidos} Kg).")
         return nuevo_lote_wip

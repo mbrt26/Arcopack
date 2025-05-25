@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}Clientes - ARCOPACK{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4 align-items-center">
+        <div class="col">
+            <h2><i class="fas fa-users"></i> Clientes</h2>
+        </div>
+        <div class="col text-end">
+            <a href="{% url 'clientes:cliente-create' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Nuevo Cliente
+            </a>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">NIT/Documento</label>
+                    <input type="text" name="nit" class="form-control" value="{{ request.GET.nit }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Razón Social</label>
+                    <input type="text" name="razon_social" class="form-control" value="{{ request.GET.razon_social }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Ciudad</label>
+                    <input type="text" name="ciudad" class="form-control" value="{{ request.GET.ciudad }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">&nbsp;</label>
+                    <div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search"></i> Buscar
+                        </button>
+                        <a href="{% url 'clientes:cliente-list' %}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Limpiar
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Listado -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>NIT/Documento</th>
+                            <th>Código</th>
+                            <th>Razón Social</th>
+                            <th>Ciudad</th>
+                            <th>Teléfono</th>
+                            <th>Email</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cliente in object_list %}
+                        <tr>
+                            <td>{{ cliente.nit }}</td>
+                            <td>{{ cliente.codigo_cliente|default:"-" }}</td>
+                            <td>{{ cliente.razon_social }}</td>
+                            <td>{{ cliente.ciudad }}</td>
+                            <td>{{ cliente.telefono_principal|default:"-" }}</td>
+                            <td>{{ cliente.email_principal|default:"-" }}</td>
+                            <td>
+                                <span class="badge {% if cliente.is_active %}bg-success{% else %}bg-danger{% endif %}">
+                                    {{ cliente.is_active|yesno:"Activo,Inactivo" }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="{% url 'clientes:cliente-detail' cliente.pk %}" 
+                                       class="btn btn-sm btn-info" title="Ver detalle">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'clientes:cliente-update' cliente.pk %}" 
+                                       class="btn btn-sm btn-warning" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center">No se encontraron clientes</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Paginación -->
+            {% if is_paginated %}
+            <nav aria-label="Navegación de páginas" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1">&laquo; Primera</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Anterior</a>
+                    </li>
+                    {% endif %}
+
+                    <li class="page-item active">
+                        <span class="page-link">
+                            Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+                        </span>
+                    </li>
+
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">Siguiente</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Última &raquo;</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

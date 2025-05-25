@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Producción - {{ page_title|default:"ARCOPACK" }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Estilos específicos para producción */
+    .proceso-badge {
+        font-size: 0.8rem;
+        padding: 0.3rem 0.5rem;
+    }
+    
+    .estado-badge {
+        font-weight: bold;
+    }
+    
+    .orden-card {
+        transition: transform 0.2s;
+    }
+    
+    .orden-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 .5rem 1rem rgba(0,0,0,.15);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col">
+            <h2 class="mb-4">{% block page_title %}{{ page_title }}{% endblock %}</h2>
+            
+            {% block produccion_content %}
+            {% endblock %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Scripts específicos para producción
+    document.addEventListener('DOMContentLoaded', function() {
+        // Inicializar tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        });
+    });
+</script>
+{% endblock %}

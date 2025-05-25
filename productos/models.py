@@ -3,6 +3,7 @@
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
+from django.contrib.auth import get_user_model
 from django.conf import settings
 
 # --- Importar modelos de otras apps ---
@@ -123,6 +124,14 @@ class ProductoTerminado(models.Model):
     )
     color = models.CharField(max_length=40, blank=True, verbose_name="Color Principal")
 
+    # --- Sección Doblado ---
+    dob_medida_cm = models.DecimalField(
+        max_digits=8, decimal_places=2, null=True, blank=True, 
+        validators=[MinValueValidator(0.0)],
+        verbose_name="Doblado: Medida (cm)",
+        help_text="Medida para el proceso de doblado en centímetros"
+    )
+
     # --- Sección Sellado ---
     sellado_peso_millar = models.DecimalField(
         max_digits=10, decimal_places=3, null=True, blank=True, validators=[MinValueValidator(0.0)],
@@ -228,7 +237,7 @@ class ProductoTerminado(models.Model):
 
         # Validar código no vacío
         if not self.codigo:
-             raise ValidationError({'codigo': 'El código no puede estar vacío.'})
+            raise ValidationError({'codigo': 'El código no puede estar vacío.'})
 
         # Validaciones condicionales para Sellado
         if self.sellado_ultrasonido and self.sellado_ultrasonido_pos is None:
@@ -244,16 +253,13 @@ class ProductoTerminado(models.Model):
             raise ValidationError({'sellado_precorte_medida': 'La medida no debe especificarse si no lleva precorte.'})
 
         # Validar pertenencia de subcategoría a categoría
-        if self.subcategoria_id and self.categoria_id: # Solo si ambos están seteados
-             # Necesitamos asegurar que self.subcategoria está cargado si usamos el objeto
-             # Es más seguro comparar IDs directamente si es posible
-             # O cargar la subcategoría si es necesario:
-             # subcat = SubcategoriaProducto.objects.get(pk=self.subcategoria_id)
-             # if subcat.categoria_id != self.categoria_id:
-             #      raise ValidationError...
-             # Por simplicidad, asumimos que el framework o el formulario validan esto
-             # o lo validamos en el save o en el serializador.
-             pass
+        if self.subcategoria_id and self.categoria_id:
+            # Cargar la subcategoría si es necesario
+            subcat = SubcategoriaProducto.objects.get(pk=self.subcategoria_id)
+            if subcat.categoria_id != self.categoria_id:
+                raise ValidationError({
+                    'subcategoria': 'La subcategoría debe pertenecer a la categoría seleccionada.'
+                })
 
     def save(self, *args, **kwargs):
         # Validar cambio de código si ya existe y tiene OPs

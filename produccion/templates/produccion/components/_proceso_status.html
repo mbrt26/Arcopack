@@ -1,0 +1,39 @@
+{% comment %}
+Componente para mostrar el estado de un proceso
+Uso: {% include "produccion/components/_proceso_status.html" with proceso=proceso %}
+{% endcomment %}
+{% load static %}
+
+<div class="card h-100">
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h6 class="mb-0">{{ proceso.nombre }}</h6>
+            <span class="badge bg-{{ proceso.estado|lower }} estado-badge">{{ proceso.get_estado_display }}</span>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="mb-2">
+            <small class="text-muted">Operario:</small>
+            <p class="mb-1">{{ proceso.operario_principal.nombre|default:"No asignado" }}</p>
+        </div>
+        <div class="mb-2">
+            <small class="text-muted">Máquina:</small>
+            <p class="mb-1">{{ proceso.maquina.codigo|default:"No asignada" }}</p>
+        </div>
+        <div class="mb-2">
+            <small class="text-muted">Inicio:</small>
+            <p class="mb-1">{{ proceso.hora_inicio|date:"d/m/Y H:i"|default:"--" }}</p>
+        </div>
+        {% if proceso.hora_final %}
+        <div>
+            <small class="text-muted">Fin:</small>
+            <p class="mb-0">{{ proceso.hora_final|date:"d/m/Y H:i" }}</p>
+        </div>
+        {% endif %}
+    </div>
+    {% if proceso.observaciones %}
+    <div class="card-footer">
+        <small class="text-muted">{{ proceso.observaciones|truncatechars:100 }}</small>
+    </div>
+    {% endif %}
+</div>

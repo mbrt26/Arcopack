@@ -111,7 +111,7 @@ class LoteProductoEnProcesoAdmin(admin.ModelAdmin):
     readonly_fields = ('creado_en', 'actualizado_en', 'creado_por', 'actualizado_por', 'proceso_origen_link', 'cantidad_producida_primaria', 'unidad_medida_primaria', 'cantidad_producida_secundaria', 'unidad_medida_secundaria', 'fecha_produccion')
     date_hierarchy = 'fecha_produccion'
     fieldsets = (
-        (None, {'fields': ('lote_id', 'producto_terminado_link', 'orden_produccion_link', 'proceso_origen_link')}),
+        (None, {'fields': ('lote_id', 'producto_terminado', 'orden_produccion', 'proceso_origen_link')}),
         ('Stock y Ubicación', {'fields': ('cantidad_actual', ('cantidad_producida_primaria', 'unidad_medida_primaria'), ('cantidad_producida_secundaria', 'unidad_medida_secundaria'), 'ubicacion', 'estado')}),
         ('Fechas y Obs.', {'fields': ('fecha_produccion', 'observaciones')}),
         ('Auditoría', {'fields': ('creado_en', 'actualizado_en', 'creado_por', 'actualizado_por'), 'classes': ('collapse',)}),
@@ -160,7 +160,7 @@ class LoteProductoTerminadoAdmin(admin.ModelAdmin):
     readonly_fields = ('creado_en', 'actualizado_en', 'creado_por', 'actualizado_por', 'proceso_final_link', 'cantidad_producida', 'fecha_produccion')
     date_hierarchy = 'fecha_produccion'
     fieldsets = (
-        (None, {'fields': ('lote_id', 'producto_terminado_link', 'orden_produccion_link', 'proceso_final_link')}),
+        (None, {'fields': ('lote_id', 'producto_terminado', 'orden_produccion', 'proceso_final_link')}),
         ('Stock y Ubicación', {'fields': ('cantidad_actual', 'cantidad_producida', 'ubicacion', 'estado')}),
         ('Fechas y Obs.', {'fields': ('fecha_produccion', 'fecha_vencimiento', 'observaciones')}),
         ('Auditoría', {'fields': ('creado_en', 'actualizado_en', 'creado_por', 'actualizado_por'), 'classes': ('collapse',)}),

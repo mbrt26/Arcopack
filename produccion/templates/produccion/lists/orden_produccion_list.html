@@ -1,0 +1,91 @@
+{% extends "produccion/layouts/produccion_base.html" %}
+
+{% block produccion_content %}
+<div class="row mb-4">
+    <div class="col">
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex gap-2">
+                <div class="btn-group">
+                    <button type="button" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
+                        <i class="fas fa-filter"></i> Filtrar
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="?etapa=PLAN">Planificación</a></li>
+                        <li><a class="dropdown-item" href="?etapa=PROC">En Proceso</a></li>
+                        <li><a class="dropdown-item" href="?etapa=TERM">Terminadas</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="?">Ver Todas</a></li>
+                    </ul>
+                </div>
+                <div class="btn-group">
+                    <button type="button" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
+                        <i class="fas fa-sort"></i> Ordenar
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="?order=fecha_compromiso">Fecha Entrega</a></li>
+                        <li><a class="dropdown-item" href="?order=cliente">Cliente</a></li>
+                        <li><a class="dropdown-item" href="?order=producto">Producto</a></li>
+                    </ul>
+                </div>
+            </div>
+            <a href="{% url 'produccion:orden-create' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Nueva Orden
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    {% for orden in ordenes %}
+        <div class="col-12 col-md-6 col-xl-4">
+            {% include "produccion/components/_orden_card.html" with orden=orden %}
+        </div>
+    {% empty %}
+        <div class="col">
+            <div class="alert alert-info">
+                No hay órdenes de producción que mostrar.
+            </div>
+        </div>
+    {% endfor %}
+</div>
+
+{% if ordenes.has_other_pages %}
+<div class="row mt-4">
+    <div class="col">
+        <nav>
+            <ul class="pagination justify-content-center">
+                {% if ordenes.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ ordenes.previous_page_number }}{% if request.GET.etapa %}&etapa={{ request.GET.etapa }}{% endif %}{% if request.GET.order %}&order={{ request.GET.order }}{% endif %}">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    </li>
+                {% endif %}
+                
+                {% for num in ordenes.paginator.page_range %}
+                    {% if ordenes.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                    {% else %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}{% if request.GET.etapa %}&etapa={{ request.GET.etapa }}{% endif %}{% if request.GET.order %}&order={{ request.GET.order }}{% endif %}">
+                                {{ num }}
+                            </a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if ordenes.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ ordenes.next_page_number }}{% if request.GET.etapa %}&etapa={{ request.GET.etapa }}{% endif %}{% if request.GET.order %}&order={{ request.GET.order }}{% endif %}">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

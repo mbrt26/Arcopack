@@ -1,0 +1,313 @@
+{% extends "base.html" %}
+
+{% block title %}Resultados de Producción - ARCOPACK{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h2><i class="fas fa-chart-line"></i> Resultados de Producción</h2>
+        </div>
+        <div class="col text-end">
+            <button class="btn btn-primary" onclick="window.print()">
+                <i class="fas fa-print"></i> Imprimir
+            </button>
+            <button class="btn btn-success" id="exportExcel">
+                <i class="fas fa-file-excel"></i> Exportar Excel
+            </button>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-filter"></i> Filtros
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Fecha Desde</label>
+                    <input type="date" name="fecha_desde" class="form-control" value="{{ fecha_desde|date:'Y-m-d' }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Fecha Hasta</label>
+                    <input type="date" name="fecha_hasta" class="form-control" value="{{ fecha_hasta|date:'Y-m-d' }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Proceso</label>
+                    <select name="proceso" class="form-select">
+                        <option value="">Todos</option>
+                        {% for p in procesos %}
+                            <option value="{{ p.codigo }}" {% if p.codigo == proceso_seleccionado %}selected{% endif %}>
+                                {{ p.nombre }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Estado</label>
+                    <select name="estado" class="form-select">
+                        <option value="">Todos</option>
+                        <option value="COMPLETADA" {% if estado == 'COMPLETADA' %}selected{% endif %}>Completadas</option>
+                        <option value="EN_PROCESO" {% if estado == 'EN_PROCESO' %}selected{% endif %}>En Proceso</option>
+                    </select>
+                </div>
+                <div class="col-md-12">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search"></i> Filtrar
+                    </button>
+                    <a href="{% url 'produccion:resultados' %}" class="btn btn-secondary">
+                        <i class="fas fa-undo"></i> Limpiar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- KPIs Generales -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h6 class="card-title">Total Producido</h6>
+                    <h3>{{ total_producido|floatformat:2 }} Kg</h3>
+                    <p class="mb-0">
+                        <span class="{% if tendencia_produccion > 0 %}text-success{% else %}text-danger{% endif %}">
+                            <i class="fas {% if tendencia_produccion > 0 %}fa-arrow-up{% else %}fa-arrow-down{% endif %}"></i>
+                            {{ tendencia_produccion|floatformat:1 }}%
+                        </span>
+                        vs. periodo anterior
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h6 class="card-title">Eficiencia General</h6>
+                    <h3>{{ eficiencia_general|floatformat:1 }}%</h3>
+                    <p class="mb-0">
+                        <span class="{% if tendencia_eficiencia > 0 %}text-light{% else %}text-danger{% endif %}">
+                            <i class="fas {% if tendencia_eficiencia > 0 %}fa-arrow-up{% else %}fa-arrow-down{% endif %}"></i>
+                            {{ tendencia_eficiencia|floatformat:1 }}%
+                        </span>
+                        vs. periodo anterior
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning">
+                <div class="card-body">
+                    <h6 class="card-title">% Desperdicio</h6>
+                    <h3>{{ porcentaje_desperdicio|floatformat:1 }}%</h3>
+                    <p class="mb-0">
+                        <span class="{% if tendencia_desperdicio < 0 %}text-success{% else %}text-danger{% endif %}">
+                            <i class="fas {% if tendencia_desperdicio < 0 %}fa-arrow-down{% else %}fa-arrow-up{% endif %}"></i>
+                            {{ tendencia_desperdicio|floatformat:1 }}%
+                        </span>
+                        vs. periodo anterior
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h6 class="card-title">Tiempo Total Paros</h6>
+                    <h3>{{ tiempo_total_paros }} hrs</h3>
+                    <p class="mb-0">
+                        <span class="{% if tendencia_paros < 0 %}text-success{% else %}text-danger{% endif %}">
+                            <i class="fas {% if tendencia_paros < 0 %}fa-arrow-down{% else %}fa-arrow-up{% endif %}"></i>
+                            {{ tendencia_paros|floatformat:1 }}%
+                        </span>
+                        vs. periodo anterior
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráficos -->
+    <div class="row mb-4">
+        <!-- Producción Diaria -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-chart-bar"></i> Producción Diaria
+                </div>
+                <div class="card-body">
+                    <canvas id="produccionDiariaChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Distribución de Paros -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-chart-pie"></i> Distribución de Paros
+                </div>
+                <div class="card-body">
+                    <canvas id="distribucionParosChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de Resultados -->
+    <div class="card">
+        <div class="card-header">
+            <i class="fas fa-table"></i> Detalle por Orden
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>Orden</th>
+                            <th>Producto</th>
+                            <th>Fecha</th>
+                            <th>Cant. Producida</th>
+                            <th>Eficiencia</th>
+                            <th>Desperdicio</th>
+                            <th>Tiempo Paros</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for orden in ordenes %}
+                        <tr>
+                            <td>{{ orden.numero }}</td>
+                            <td>{{ orden.producto.nombre }}</td>
+                            <td>{{ orden.fecha_inicio|date:"d/m/Y" }}</td>
+                            <td>{{ orden.cantidad_producida }} {{ orden.producto.unidad_medida.codigo }}</td>
+                            <td>
+                                <div class="progress">
+                                    <div class="progress-bar {% if orden.eficiencia >= 90 %}bg-success{% elif orden.eficiencia >= 75 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                         role="progressbar" 
+                                         style="width: {{ orden.eficiencia }}%">
+                                        {{ orden.eficiencia|floatformat:1 }}%
+                                    </div>
+                                </div>
+                            </td>
+                            <td>{{ orden.porcentaje_desperdicio|floatformat:1 }}%</td>
+                            <td>{{ orden.tiempo_total_paros }}</td>
+                            <td>
+                                <a href="{% url 'produccion:orden-produccion-detail' orden.id %}" 
+                                   class="btn btn-sm btn-info">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center">No hay resultados para mostrar</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Paginación -->
+    {% if is_paginated %}
+    <nav aria-label="Page navigation" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page=1">&laquo; Primera</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Anterior</a>
+            </li>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}">Siguiente</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Última &raquo;</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Gráfico de Producción Diaria
+const ctxProduccion = document.getElementById('produccionDiariaChart').getContext('2d');
+new Chart(ctxProduccion, {
+    type: 'bar',
+    data: {
+        labels: {{ fechas_produccion|safe }},
+        datasets: [{
+            label: 'Kg Producidos',
+            data: {{ produccion_diaria|safe }},
+            backgroundColor: 'rgba(54, 162, 235, 0.5)',
+            borderColor: 'rgba(54, 162, 235, 1)',
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+
+// Gráfico de Distribución de Paros
+const ctxParos = document.getElementById('distribucionParosChart').getContext('2d');
+new Chart(ctxParos, {
+    type: 'pie',
+    data: {
+        labels: {{ causas_paro|safe }},
+        datasets: [{
+            data: {{ tiempo_paro|safe }},
+            backgroundColor: [
+                'rgba(255, 99, 132, 0.8)',
+                'rgba(54, 162, 235, 0.8)',
+                'rgba(255, 206, 86, 0.8)',
+                'rgba(75, 192, 192, 0.8)',
+                'rgba(153, 102, 255, 0.8)'
+            ]
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+
+// Exportar a Excel
+document.getElementById('exportExcel').addEventListener('click', function() {
+    // Implementar exportación a Excel
+    alert('Función de exportación a Excel pendiente de implementar');
+});
+</script>
+{% endblock %}

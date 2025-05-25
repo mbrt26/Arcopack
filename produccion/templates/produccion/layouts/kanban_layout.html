@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ titulo }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'produccion/css/kanban.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1>{{ titulo }}</h1>
+                <a href="{% url 'produccion:proceso-list' %}" class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-left"></i> Volver a Procesos
+                </a>
+            </div>
+            <div class="kanban-container">
+                {% block kanban_columns %}{% endblock %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Actualizar automáticamente cada 5 minutos
+    setTimeout(function() {
+        window.location.reload();
+    }, 5 * 60 * 1000);
+</script>
+{% endblock %}

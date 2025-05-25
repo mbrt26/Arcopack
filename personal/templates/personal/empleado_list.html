@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Empleados{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">Empleados</h1>
+        <a href="{% url 'personal:empleado_create' %}" class="btn btn-primary">
+            <i class="bi bi-plus-lg"></i> Nuevo Empleado
+        </a>
+    </div>
+
+    {% include "components/_messages.html" %}
+    {% include "components/_search_filters.html" with filter=filter %}
+
+    <div class="card">
+        <div class="card-body">
+            {% with headers=empleado_headers items=empleados show_actions=True actions=empleado_actions %}
+            {% include "personal/components/_table.html" %}
+            {% endwith %}
+        </div>
+    </div>
+
+    {% include "components/_pagination.html" with page_obj=page_obj %}
+</div>
+{% endblock %}
