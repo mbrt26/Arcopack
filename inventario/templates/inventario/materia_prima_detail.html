@@ -13,14 +13,14 @@
         </div>
         <div class="col text-end">
             {% if materia_prima.estado == 'ACTIVO' %}
-            <a href="{% url 'inventario:materia-prima-update' materia_prima.id %}" class="btn btn-warning">
+            <a href="{% url 'inventario_web:materia-prima-update' materia_prima.id %}" class="btn btn-warning">
                 <i class="fas fa-edit"></i> Editar
             </a>
-            <a href="{% url 'inventario:lote-create' %}?materia_prima={{ materia_prima.id }}" class="btn btn-success">
+            <a href="{% url 'inventario_web:lote-create' %}?materia_prima={{ materia_prima.id }}" class="btn btn-success">
                 <i class="fas fa-plus"></i> Nuevo Lote
             </a>
             {% endif %}
-            <a href="{% url 'inventario:materia-prima-list' %}" class="btn btn-secondary">
+            <a href="{% url 'inventario_web:materia-prima-list' %}" class="btn btn-secondary">
                 <i class="fas fa-arrow-left"></i> Volver
             </a>
         </div>
@@ -147,7 +147,7 @@
                             </td>
                             <td>
                                 <div class="btn-group">
-                                    <a href="{% url 'inventario:lote-detail' lote.id %}" 
+                  <a href="{% url 'inventario_web:lote-detail' lote.id %}"
                                        class="btn btn-sm btn-info" 
                                        title="Ver Detalle">
                                         <i class="fas fa-eye"></i>
@@ -237,7 +237,7 @@
 <div class="modal fade" id="transferirModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form method="post" action="{% url 'inventario:lote-transferir' %}">
+            <form method="post" action="{% url 'inventario_web:lote-transferir' %}">
                 {% csrf_token %}
                 <input type="hidden" name="lote_id" id="transferirLoteId">
                 
@@ -273,7 +273,7 @@
 <div class="modal fade" id="consumirModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form method="post" action="{% url 'inventario:lote-consumir' %}">
+            <form method="post" action="{% url 'inventario_web:lote-consumir' %}">
                 {% csrf_token %}
                 <input type="hidden" name="lote_id" id="consumirLoteId">
                 

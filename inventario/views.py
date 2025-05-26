@@ -15,6 +15,7 @@ from django.urls import reverse_lazy
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q
+from django.contrib.contenttypes.models import ContentType
 from django.core.paginator import Paginator
 
 # Importar modelos y serializers necesarios
@@ -227,3 +228,39 @@ class MovimientoListView(LoginRequiredMixin, ListView):
             'tipos_salida': MovimientoInventario.TIPOS_SALIDA,
         })
         return context
+
+class MateriaPrimaDetailView(LoginRequiredMixin, DetailView):
+    model = MateriaPrima
+    template_name = 'inventario/materia_prima_detail.html'
+    context_object_name = 'materia_prima'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['lotes_disponibles'] = LoteMateriaPrima.objects.filter(
+            materia_prima=self.object, estado='DISPONIBLE'
+        ).order_by('-fecha_recepcion')
+        context['ultimos_movimientos'] = MovimientoInventario.objects.filter(
+            lote_content_type=ContentType.objects.get_for_model(LoteMateriaPrima),
+            lote_object_id__in=context['lotes_disponibles'].values_list('id', flat=True)
+        ).order_by('-timestamp')[:10]
+        context['ubicaciones'] = []
+        return context
+
+
+class LoteDetailView(LoginRequiredMixin, DetailView):
+    model = LoteMateriaPrima
+    template_name = 'inventario/lote_detail.html'
+    context_object_name = 'lote'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['movimientos'] = MovimientoInventario.objects.filter(
+            lote_content_type=ContentType.objects.get_for_model(LoteMateriaPrima),
+            lote_object_id=self.object.id
+        ).order_by('-timestamp')
+        context['ubicaciones'] = []
+        return context
+
+
+class StockListView(LoginRequiredMixin, TemplateView):
+    template_name = 'inventario/stock_list.html'
