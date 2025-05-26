@@ -89,4 +89,113 @@ class ProductoTerminadoViewSet(viewsets.ModelViewSet):
     #    instance.is_active = True
     #    instance.save(user=request.user)
     #    serializer = self.get_serializer(instance)
-    #    return Response(serializer.data)
+
+
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
+from django.urls import reverse_lazy
+from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.db.models import Q
+from django.shortcuts import get_object_or_404
+
+from .forms import ProductoTerminadoForm, ProductoSearchForm
+
+
+class ProductoListView(LoginRequiredMixin, ListView):
+    model = ProductoTerminado
+    template_name = 'productos/producto_list.html'
+    context_object_name = 'productos'
+    paginate_by = 20
+
+    def get_queryset(self):
+        qs = super().get_queryset().order_by('codigo')
+        self.search_form = ProductoSearchForm(self.request.GET)
+        if self.search_form.is_valid():
+            q = self.search_form.cleaned_data.get('q')
+            if q:
+                qs = qs.filter(Q(codigo__icontains=q) | Q(nombre__icontains=q))
+        return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        items = []
+        for obj in context['productos']:
+            items.append({
+                'id': obj.id,
+                'name': obj.nombre,
+                'is_active': obj.is_active,
+                'fields': [
+                    {'value': obj.codigo, 'type': 'code'},
+                    {'value': obj.nombre},
+                    {'value': obj.cliente.razon_social if obj.cliente else '-', 'type': 'text'},
+                    {'value': obj.get_estado_display(), 'type': 'badge', 'class': 'bg-success' if obj.is_active else 'bg-danger'},
+                ]
+            })
+        context.update({
+            'producto_headers': ['Código', 'Nombre', 'Cliente', 'Estado'],
+            'producto_actions': {
+                'view': 'productos_web:producto_detail',
+                'edit': 'productos_web:producto_update',
+                'duplicate': 'productos_web:producto_duplicate',
+                'delete': 'productos_web:producto_delete',
+            },
+            'productos': items,
+            'filter': self.search_form,
+        })
+        return context
+
+
+class ProductoDetailView(LoginRequiredMixin, DetailView):
+    model = ProductoTerminado
+    template_name = 'productos/producto_detail.html'
+    context_object_name = 'producto'
+
+
+class ProductoCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
+    model = ProductoTerminado
+    form_class = ProductoTerminadoForm
+    template_name = 'productos/producto_form.html'
+    permission_required = 'productos.add_productoterminado'
+
+    def form_valid(self, form):
+        messages.success(self.request, 'Producto creado correctamente.')
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy('productos_web:producto_detail', kwargs={'pk': self.object.pk})
+
+
+class ProductoUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+    model = ProductoTerminado
+    form_class = ProductoTerminadoForm
+    template_name = 'productos/producto_form.html'
+    permission_required = 'productos.change_productoterminado'
+
+    def form_valid(self, form):
+        messages.success(self.request, 'Producto actualizado correctamente.')
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy('productos_web:producto_detail', kwargs={'pk': self.object.pk})
+
+
+class ProductoDuplicateView(ProductoCreateView):
+    permission_required = 'productos.add_productoterminado'
+
+    def get_initial(self):
+        original = get_object_or_404(ProductoTerminado, pk=self.kwargs['pk'])
+        initial = {f.name: getattr(original, f.name) for f in ProductoTerminado._meta.fields
+                    if f.name not in ('id', 'creado_en', 'actualizado_en', 'creado_por', 'actualizado_por')}
+        initial['codigo'] = ''
+        return initial
+
+
+class ProductoDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
+    model = ProductoTerminado
+    permission_required = 'productos.delete_productoterminado'
+    success_url = reverse_lazy('productos_web:producto_list')
+    template_name = 'productos/confirm_delete.html'
+
+    def delete(self, request, *args, **kwargs):
+        messages.success(request, 'Producto eliminado correctamente.')
+        return super().delete(request, *args, **kwargs)

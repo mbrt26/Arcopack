@@ -11,7 +11,7 @@ class ColaboradorListView(LoginRequiredMixin, ListView):
     """Vista para listar todos los colaboradores."""
     model = Colaborador
     context_object_name = 'colaboradores'
-    template_name = 'personal/lists/colaborador_list.html'
+    template_name = 'personal/colaborador_list.html'
     paginate_by = 20
     
     def get_queryset(self):
@@ -32,7 +32,7 @@ class ColaboradorDetailView(LoginRequiredMixin, DetailView):
     """Vista para ver los detalles de un colaborador específico."""
     model = Colaborador
     context_object_name = 'colaborador'
-    template_name = 'personal/details/colaborador_detail.html'
+    template_name = 'personal/colaborador_detail.html'
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -48,7 +48,7 @@ class ColaboradorCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateV
         'cargo', 'area', 'fecha_ingreso', 'fecha_retiro',
         'usuario_sistema', 'is_active'
     ]
-    template_name = 'personal/forms/colaborador_form.html'
+    template_name = 'personal/colaborador_form.html'
     permission_required = 'personal.add_colaborador'
     
     def form_valid(self, form):
@@ -67,7 +67,7 @@ class ColaboradorUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateV
         'cargo', 'area', 'fecha_ingreso', 'fecha_retiro',
         'usuario_sistema', 'is_active'
     ]
-    template_name = 'personal/forms/colaborador_form.html'
+    template_name = 'personal/colaborador_form.html'
     permission_required = 'personal.change_colaborador'
     
     def form_valid(self, form):
