@@ -141,7 +141,7 @@
                 <h5 class="modal-title">Transferir Lote</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form method="post" action="{% url 'inventario:transferir-lote' lote.id %}">
+            <form method="post" action="{% url 'inventario_web:transferir-lote' lote.id %}">
                 {% csrf_token %}
                 <div class="modal-body">
                     <div class="mb-3">
@@ -177,7 +177,7 @@
                 <h5 class="modal-title">Consumir del Lote</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form method="post" action="{% url 'inventario:consumir-lote' lote.id %}">
+            <form method="post" action="{% url 'inventario_web:consumir-lote' lote.id %}">
                 {% csrf_token %}
                 <div class="modal-body">
                     <div class="mb-3">

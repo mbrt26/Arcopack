@@ -15,8 +15,8 @@
             <h6 class="m-0 font-weight-bold text-primary">Filtros</h6>
         </div>
         <div class="card-body">
-            <form method="get" class="form-inline">
-                <div class="form-group mr-2 mb-2">
+            <form method="get" class="row row-cols-lg-auto g-2 align-items-center">
+                <div class="form-group me-2 mb-2">
                     <select class="form-control" name="tipo_movimiento">
                         <option value="">Todos los tipos</option>
                         {% for tipo in tipos_movimiento %}
@@ -26,18 +26,18 @@
                         {% endfor %}
                     </select>
                 </div>
-                <div class="form-group mr-2 mb-2">
+                <div class="form-group me-2 mb-2">
                     <input type="date" class="form-control" name="fecha_desde" value="{{ fecha_desde|default:'' }}" 
                            placeholder="Desde">
                 </div>
-                <div class="form-group mr-2 mb-2">
+                <div class="form-group me-2 mb-2">
                     <input type="date" class="form-control" name="fecha_hasta" value="{{ fecha_hasta|default:'' }}" 
                            placeholder="Hasta">
                 </div>
                 <button type="submit" class="btn btn-primary mb-2">
                     <i class="fas fa-search"></i> Buscar
                 </button>
-                <a href="{% url 'inventario_web:movimiento-list' %}" class="btn btn-secondary mb-2 ml-2">
+                <a href="{% url 'inventario_web:movimiento-list' %}" class="btn btn-secondary mb-2 ms-2">
                     <i class="fas fa-sync-alt"></i> Limpiar
                 </a>
             </form>
@@ -139,7 +139,7 @@
 <script>
     $(document).ready(function() {
         // Inicializar tooltips
-        $('[data-toggle="tooltip"]').tooltip();
+        $('[data-bs-toggle="tooltip"]').tooltip();
         
         // Inicializar DataTables
         if ($.fn.DataTable.isDataTable('#dataTableMovimientos')) {

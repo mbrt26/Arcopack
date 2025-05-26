@@ -3,7 +3,13 @@
 import logging
 from rest_framework import viewsets, permissions, status # Importar componentes DRF
 from rest_framework.response import Response # Para respuestas API personalizadas
-from rest_framework.exceptions import ValidationError # Para errores de validación API
+from rest_framework.exceptions import ValidationError  # Para errores de validación API
+from django.urls import reverse_lazy
+from django.contrib import messages
+from django.views.generic import ListView, DetailView, CreateView, UpdateView
+from django.contrib.auth.mixins import LoginRequiredMixin
+
+from .forms import ProductoTerminadoForm
 
 from .models import ProductoTerminado # Importar el modelo de esta app
 from .serializers import ProductoTerminadoSerializer # Importar el serializer que creamos
@@ -90,3 +96,64 @@ class ProductoTerminadoViewSet(viewsets.ModelViewSet):
     #    instance.save(user=request.user)
     #    serializer = self.get_serializer(instance)
     #    return Response(serializer.data)
+
+# ----- Vistas HTML -----
+class ProductoListView(LoginRequiredMixin, ListView):
+    model = ProductoTerminado
+    template_name = 'productos/producto_list.html'
+    context_object_name = 'productos'
+    paginate_by = 20
+
+
+class ProductoDetailView(LoginRequiredMixin, DetailView):
+    model = ProductoTerminado
+    template_name = 'productos/producto_detail.html'
+    context_object_name = 'producto'
+
+
+class ProductoCreateView(LoginRequiredMixin, CreateView):
+    model = ProductoTerminado
+    form_class = ProductoTerminadoForm
+    template_name = 'productos/producto_form.html'
+
+    def form_valid(self, form):
+        messages.success(self.request, 'Producto creado correctamente.')
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy('productos_web:producto-detail', kwargs={'pk': self.object.pk})
+
+
+class ProductoUpdateView(LoginRequiredMixin, UpdateView):
+    model = ProductoTerminado
+    form_class = ProductoTerminadoForm
+    template_name = 'productos/producto_form.html'
+
+    def form_valid(self, form):
+        messages.success(self.request, 'Producto actualizado correctamente.')
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy('productos_web:producto-detail', kwargs={'pk': self.object.pk})
+
+
+class ProductoDuplicateView(LoginRequiredMixin, CreateView):
+    model = ProductoTerminado
+    form_class = ProductoTerminadoForm
+    template_name = 'productos/producto_form.html'
+
+    def get_initial(self):
+        original = ProductoTerminado.objects.get(pk=self.kwargs['pk'])
+        initial = original.__dict__.copy()
+        initial.pop('id', None)
+        initial.pop('_state', None)
+        initial['codigo'] = ''
+        return initial
+
+    def form_valid(self, form):
+        messages.success(self.request, 'Producto duplicado correctamente.')
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy('productos_web:producto-detail', kwargs={'pk': self.object.pk})
+
