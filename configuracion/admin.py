@@ -3,7 +3,7 @@
 from django.contrib import admin
 # Importar todos los modelos definidos en configuracion/models.py
 from .models import (
-    UnidadMedida, EstadoProducto, CategoriaProducto, SubcategoriaProducto,
+    UnidadMedida, EstadoProducto, CategoriaProducto, SubcategoriaProducto, SubLinea,
     TipoMateriaPrima, CategoriaMateriaPrima, TipoMaterial, Maquina, RodilloAnilox,
     CausaParo, TipoDesperdicio, Proveedor, Proceso, Ubicacion, Lamina,
     Tratamiento, TipoTinta, ProgramaLamina, TipoSellado, TipoTroquel,
@@ -150,5 +150,11 @@ class CuentaContableAdmin(admin.ModelAdmin):
 class ServicioAdmin(admin.ModelAdmin):
     list_display = ('nombre', 'descripcion')
     search_fields = ('nombre',)
+
+@admin.register(SubLinea)
+class SubLineaAdmin(admin.ModelAdmin):
+    list_display = ('nombre', 'descripcion')
+    search_fields = ('nombre',)
+    ordering = ('nombre',)
 
 # Nota: No se necesita admin.site.register() adicional si se usa el decorador @admin.register

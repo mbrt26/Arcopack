@@ -9,15 +9,17 @@ from django.conf import settings
 # --- Importar modelos de otras apps ---
 # Importamos todos los modelos necesarios de 'configuracion'
 from configuracion.models import (
-    EstadoProducto, UnidadMedida, CategoriaProducto, SubcategoriaProducto,
-    TipoMaterial, TipoMateriaPrima, Lamina, Tratamiento, TipoTinta, ProgramaLamina,
-    TipoSellado, TipoTroquel, TipoZipper, TipoValvula, TipoImpresion, RodilloAnilox, # Usamos RodilloAnilox
+    EstadoProducto, UnidadMedida, CategoriaProducto, SubLinea,
+    TipoMaterial, TipoMateriaPrima, Tratamiento, TipoTinta,
+    TipoSellado, TipoTroquel, TipoZipper, TipoValvula, TipoImpresion,
     CuentaContable, Servicio
 )
-# Importar OrdenProduccion para la validación de no cambiar código.
-# Usamos un string 'produccion.OrdenProduccion' para evitar importación circular si es necesario.
-# O importar directamente si la estructura lo permite y no hay círculos.
-# from produccion.models import OrdenProduccion # Descomentar si no causa problemas
+# Importar modelo Cliente
+from clientes.models import Cliente
+
+def upload_producto_path(instance, filename):
+    """Función para definir la ruta de carga de archivos de productos"""
+    return f'productos/{instance.codigo}/{filename}'
 
 class ProductoTerminado(models.Model):
     """Modelo maestro para Productos Terminados y sus especificaciones."""
@@ -29,6 +31,15 @@ class ProductoTerminado(models.Model):
         help_text="Código único del producto terminado."
     )
     nombre = models.CharField(max_length=150, verbose_name="Nombre Producto")
+    
+    # NUEVO: Campo Cliente
+    cliente = models.ForeignKey(
+        Cliente, on_delete=models.PROTECT,
+        null=True, blank=True,  # Permitir nulos temporalmente
+        verbose_name="Cliente",
+        help_text="Cliente para el cual se fabrica este producto terminado"
+    )
+    
     tipo_materia_prima = models.ForeignKey(
         TipoMateriaPrima, on_delete=models.PROTECT,
         verbose_name="Tipo Materia Prima Base"
@@ -45,18 +56,30 @@ class ProductoTerminado(models.Model):
         CuentaContable, on_delete=models.SET_NULL, null=True, blank=True,
         verbose_name="Cuenta Contable"
     )
-    comercializable = models.BooleanField(default=False, verbose_name="¿Es Comercializable?")
-    categoria = models.ForeignKey(
+    
+    # CAMBIO: categoria → linea, subcategoria → sublinea
+    linea = models.ForeignKey(
         CategoriaProducto, on_delete=models.PROTECT,
-        verbose_name="Categoría"
+        verbose_name="Línea",
+        default=1  # Valor temporal por defecto para migración
     )
-    subcategoria = models.ForeignKey(
-        SubcategoriaProducto, on_delete=models.SET_NULL, null=True, blank=True,
-        verbose_name="Subcategoría"
+    sublinea = models.ForeignKey(
+        SubLinea, on_delete=models.SET_NULL, null=True, blank=True,
+        verbose_name="SubLínea"
     )
+    
+    # ELIMINADO: comercializable
     servicio = models.ForeignKey(
         Servicio, on_delete=models.SET_NULL, null=True, blank=True,
         verbose_name="Servicio Asociado"
+    )
+
+    # NUEVO: Campo para archivos adjuntos
+    archivo_adjunto = models.FileField(
+        upload_to=upload_producto_path, 
+        null=True, blank=True,
+        verbose_name="Archivo Adjunto",
+        help_text="Archivo relacionado con el producto (especificaciones, planos, etc.)"
     )
 
     # --- Especificaciones Generales ---
@@ -93,11 +116,8 @@ class ProductoTerminado(models.Model):
         max_digits=12, decimal_places=2, null=True, blank=True, validators=[MinValueValidator(0.0)],
         verbose_name="Metros Lineales"
     )
-    lamina = models.ForeignKey(
-        Lamina, on_delete=models.SET_NULL, null=True, blank=True,
-        verbose_name="Lámina Asociada"
-    )
-    extrusion_doble = models.BooleanField(default=False, verbose_name="¿Extrusión Doble?")
+    
+    # ELIMINADOS: lamina, extrusion_doble, programa_lamina
     cantidad_xml = models.DecimalField(
         max_digits=12, decimal_places=2, null=True, blank=True, validators=[MinValueValidator(0.0)],
         verbose_name="Cantidad XML"
@@ -114,14 +134,8 @@ class ProductoTerminado(models.Model):
         TipoTinta, on_delete=models.SET_NULL, null=True, blank=True,
         verbose_name="Tipo de Tinta Estándar"
     )
-    pistas = models.PositiveIntegerField(
-        null=True, blank=True, validators=[MinValueValidator(1)],
-        verbose_name="Pistas Producción Estándar"
-    )
-    programa_lamina = models.ForeignKey(
-        ProgramaLamina, on_delete=models.SET_NULL, null=True, blank=True,
-        verbose_name="Programa Lámina"
-    )
+    
+    # MOVIDO A SECCION IMPRESION: pistas
     color = models.CharField(max_length=40, blank=True, verbose_name="Color Principal")
 
     # --- Sección Doblado ---
@@ -197,9 +211,11 @@ class ProductoTerminado(models.Model):
         TipoImpresion, on_delete=models.SET_NULL, null=True, blank=True,
         verbose_name="Impresión: Tipo Estándar"
     )
-    imp_rodillo = models.ForeignKey( # Referencia al modelo de anilox/rodillo
-        RodilloAnilox, on_delete=models.SET_NULL, null=True, blank=True,
-        verbose_name="Impresión: Rodillo/Anilox Estándar"
+    # ELIMINADO: imp_rodillo
+    # MOVIDO AQUI: pistas
+    pistas = models.PositiveIntegerField(
+        null=True, blank=True, validators=[MinValueValidator(1)],
+        verbose_name="Pistas Producción Estándar"
     )
     imp_repeticiones = models.PositiveIntegerField(
         null=True, blank=True, validators=[MinValueValidator(1)],
@@ -242,24 +258,13 @@ class ProductoTerminado(models.Model):
         # Validaciones condicionales para Sellado
         if self.sellado_ultrasonido and self.sellado_ultrasonido_pos is None:
             raise ValidationError({'sellado_ultrasonido_pos': 'La posición es requerida si se usa ultrasonido.'})
-        # Validar también que si no se usa ultrasonido, la posición esté vacía
         if not self.sellado_ultrasonido and self.sellado_ultrasonido_pos is not None:
             raise ValidationError({'sellado_ultrasonido_pos': 'La posición no debe especificarse si no se usa ultrasonido.'})
 
         if self.sellado_precorte and self.sellado_precorte_medida is None:
             raise ValidationError({'sellado_precorte_medida': 'La medida es requerida si lleva precorte.'})
-        # Validar también que si no lleva precorte, la medida esté vacía
         if not self.sellado_precorte and self.sellado_precorte_medida is not None:
             raise ValidationError({'sellado_precorte_medida': 'La medida no debe especificarse si no lleva precorte.'})
-
-        # Validar pertenencia de subcategoría a categoría
-        if self.subcategoria_id and self.categoria_id:
-            # Cargar la subcategoría si es necesario
-            subcat = SubcategoriaProducto.objects.get(pk=self.subcategoria_id)
-            if subcat.categoria_id != self.categoria_id:
-                raise ValidationError({
-                    'subcategoria': 'La subcategoría debe pertenecer a la categoría seleccionada.'
-                })
 
     def save(self, *args, **kwargs):
         # Validar cambio de código si ya existe y tiene OPs
@@ -280,7 +285,6 @@ class ProductoTerminado(models.Model):
                 pass # Es creación
             except ImportError:
                  print("WARN: No se pudo validar cambio de código por falta de OrdenProduccion.")
-
 
         # Asignar usuario de auditoría
         user = kwargs.pop('user', None)

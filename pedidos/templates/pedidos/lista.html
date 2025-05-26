@@ -1,0 +1,183 @@
+<!-- pedidos/templates/pedidos/lista.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Gestión de Pedidos - ARCOPACK{% endblock %}
+
+{% block extra_css %}
+<link href="{% static 'pedidos/css/pedidos.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title">
+                        <i class="fas fa-clipboard-list"></i>
+                        Pedidos
+                    </h3>
+                    <div class="card-tools">
+                        <a href="{% url 'pedidos:crear' %}" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Nuevo Pedido
+                        </a>
+                        <a href="{% url 'pedidos:dashboard' %}" class="btn btn-info">
+                            <i class="fas fa-chart-bar"></i> Dashboard
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <!-- Filtros -->
+                    <form method="get" class="row mb-3">
+                        <div class="col-md-3">
+                            <select name="estado" class="form-control">
+                                <option value="">Todos los estados</option>
+                                <option value="BORRADOR" {% if request.GET.estado == 'BORRADOR' %}selected{% endif %}>Borrador</option>
+                                <option value="CONFIRMADO" {% if request.GET.estado == 'CONFIRMADO' %}selected{% endif %}>Confirmado</option>
+                                <option value="EN_PRODUCCION" {% if request.GET.estado == 'EN_PRODUCCION' %}selected{% endif %}>En Producción</option>
+                                <option value="PRODUCIDO" {% if request.GET.estado == 'PRODUCIDO' %}selected{% endif %}>Producido</option>
+                                <option value="PENDIENTE_FACTURAR" {% if request.GET.estado == 'PENDIENTE_FACTURAR' %}selected{% endif %}>Pendiente Facturar</option>
+                                <option value="FACTURADO" {% if request.GET.estado == 'FACTURADO' %}selected{% endif %}>Facturado</option>
+                                <option value="ENTREGADO" {% if request.GET.estado == 'ENTREGADO' %}selected{% endif %}>Entregado</option>
+                                <option value="CANCELADO" {% if request.GET.estado == 'CANCELADO' %}selected{% endif %}>Cancelado</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select name="prioridad" class="form-control">
+                                <option value="">Todas las prioridades</option>
+                                <option value="BAJA" {% if request.GET.prioridad == 'BAJA' %}selected{% endif %}>Baja</option>
+                                <option value="MEDIA" {% if request.GET.prioridad == 'MEDIA' %}selected{% endif %}>Media</option>
+                                <option value="ALTA" {% if request.GET.prioridad == 'ALTA' %}selected{% endif %}>Alta</option>
+                                <option value="URGENTE" {% if request.GET.prioridad == 'URGENTE' %}selected{% endif %}>Urgente</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <input type="text" name="search" class="form-control" placeholder="Buscar pedido..." value="{{ request.GET.search }}">
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-secondary">
+                                <i class="fas fa-search"></i> Filtrar
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Tabla de pedidos -->
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Número</th>
+                                    <th>Cliente</th>
+                                    <th>Estado</th>
+                                    <th>Prioridad</th>
+                                    <th>Fecha Pedido</th>
+                                    <th>Fecha Compromiso</th>
+                                    <th>Valor Total</th>
+                                    <th>Progreso</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for pedido in pedidos %}
+                                <tr class="{% if pedido.es_vencido %}table-danger{% elif pedido.es_proximo_vencer %}table-warning{% endif %}">
+                                    <td>
+                                        <a href="{% url 'pedidos:detalle' pedido.pk %}">
+                                            {{ pedido.numero_pedido }}
+                                        </a>
+                                    </td>
+                                    <td>{{ pedido.cliente.razon_social }}</td>
+                                    <td>
+                                        <span class="badge badge-{{ pedido.estado|lower }}">
+                                            {{ pedido.get_estado_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-prioridad-{{ pedido.prioridad|lower }}">
+                                            {{ pedido.get_prioridad_display }}
+                                        </span>
+                                    </td>
+                                    <td>{{ pedido.fecha_pedido|date:"d/m/Y" }}</td>
+                                    <td>
+                                        {{ pedido.fecha_compromiso|date:"d/m/Y" }}
+                                        {% if pedido.es_vencido %}
+                                            <i class="fas fa-exclamation-triangle text-danger" title="Vencido"></i>
+                                        {% elif pedido.es_proximo_vencer %}
+                                            <i class="fas fa-clock text-warning" title="Próximo a vencer"></i>
+                                        {% endif %}
+                                    </td>
+                                    <td>${{ pedido.valor_total|floatformat:0 }}</td>
+                                    <td>
+                                        <div class="progress" style="height: 20px;">
+                                            <div class="progress-bar" role="progressbar" 
+                                                 style="width: {{ pedido.porcentaje_completado }}%"
+                                                 aria-valuenow="{{ pedido.porcentaje_completado }}" 
+                                                 aria-valuemin="0" aria-valuemax="100">
+                                                {{ pedido.porcentaje_completado|floatformat:0 }}%
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="{% url 'pedidos:detalle' pedido.pk %}" class="btn btn-sm btn-info" title="Ver detalle">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{% url 'pedidos:editar' pedido.pk %}" class="btn btn-sm btn-primary" title="Editar">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="{% url 'pedidos:imprimir' pedido.pk %}" class="btn btn-sm btn-secondary" title="Imprimir">
+                                                <i class="fas fa-print"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="9" class="text-center">No hay pedidos registrados</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Paginación -->
+                    {% if is_paginated %}
+                    <nav aria-label="Paginación">
+                        <ul class="pagination justify-content-center">
+                            {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}{% if request.GET.prioridad %}&prioridad={{ request.GET.prioridad }}{% endif %}">Primera</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}{% if request.GET.prioridad %}&prioridad={{ request.GET.prioridad }}{% endif %}">Anterior</a>
+                                </li>
+                            {% endif %}
+
+                            <li class="page-item active">
+                                <span class="page-link">
+                                    Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+                                </span>
+                            </li>
+
+                            {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}{% if request.GET.prioridad %}&prioridad={{ request.GET.prioridad }}{% endif %}">Siguiente</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}{% if request.GET.prioridad %}&prioridad={{ request.GET.prioridad }}{% endif %}">Última</a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'pedidos/js/pedidos.js' %}"></script>
+{% endblock %}

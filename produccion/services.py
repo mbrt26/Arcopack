@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__) # Configura logging en settings.py
 
 def _registrar_movimiento_produccion(
     *, lote, tipo_movimiento: str, cantidad: Decimal, 
-    proceso_ref, ubicacion_destino, usuario: User
+    proceso_ref, ubicacion_destino, usuario
 ) -> None:
     """Helper para registrar movimientos de producción (WIP/PT)."""
     proceso_tipo = proceso_ref.__class__.__name__
@@ -52,7 +52,22 @@ def es_ultimo_proceso_op(orden_produccion: OrdenProduccion, nombre_proceso_actua
         return False # No se puede determinar sin OP
 
     try:
-        proceso_actual_obj = Proceso.objects.get(nombre=nombre_proceso_actual) # Búsqueda exacta
+        # CORRECCIÓN: Usar búsqueda case-insensitive y con icontains para mayor flexibilidad
+        proceso_actual_obj = Proceso.objects.filter(
+            nombre__iexact=nombre_proceso_actual
+        ).first()
+        
+        if not proceso_actual_obj:
+            # Intento alternativo con icontains si no se encuentra exacto
+            proceso_actual_obj = Proceso.objects.filter(
+                nombre__icontains=nombre_proceso_actual
+            ).first()
+            
+        if not proceso_actual_obj:
+            logger.error("Error crítico: Proceso con nombre '%s' no encontrado en configuración.",
+                        nombre_proceso_actual)
+            return False
+            
         procesos_requeridos = orden_produccion.procesos.all()
 
         if procesos_requeridos.exists():
@@ -71,10 +86,6 @@ def es_ultimo_proceso_op(orden_produccion: OrdenProduccion, nombre_proceso_actua
             logger.warning("OP %s no tiene procesos definidos en el campo 'procesos'. Asumiendo que '%s' no es el último.",
                          orden_produccion.op_numero, nombre_proceso_actual)
             return False
-    except Proceso.DoesNotExist:
-         logger.error("Error crítico: Proceso con nombre '%s' no encontrado en configuración.",
-                     nombre_proceso_actual)
-         return False
     except Exception as e:
          logger.error("Error inesperado determinando último proceso ('%s') para OP %s: %s",
                      nombre_proceso_actual, orden_produccion.op_numero, e)
@@ -90,7 +101,7 @@ def consumir_sustrato_impresion(
     registro_impresion: RegistroImpresion,
     lote_sustrato_id: str,
     cantidad_kg: Decimal,
-    usuario: User
+    usuario
 ) -> LoteMateriaPrima:
     """Consume Lote MP (sustrato) para Impresión."""
     if cantidad_kg <= 0: raise ValueError("Cantidad a consumir debe ser positiva.")
@@ -106,7 +117,7 @@ def consumir_sustrato_impresion(
 @transaction.atomic
 def registrar_produccion_rollo_impreso(
     *, registro_impresion: RegistroImpresion, lote_salida_id: str, kg_producidos: Decimal,
-    metros_producidos: Decimal = None, ubicacion_destino_codigo: str, usuario: User,
+    metros_producidos: Decimal = None, ubicacion_destino_codigo: str, usuario,
     observaciones_lote: str = ""
 ) -> Union[LoteProductoEnProceso, LoteProductoTerminado]:
     """Crea Lote WIP o PT (rollo impreso) y registra movimiento."""
@@ -158,7 +169,7 @@ def registrar_produccion_rollo_impreso(
 # =============================================
 
 @transaction.atomic
-def consumir_rollo_entrada_refilado(*, refilado: Refilado, lote_entrada_id: str, cantidad_kg: Decimal, usuario: User) -> LoteProductoEnProceso:
+def consumir_rollo_entrada_refilado(*, refilado: Refilado, lote_entrada_id: str, cantidad_kg: Decimal, usuario) -> LoteProductoEnProceso:
     """Consume Lote WIP para Refilado."""
     if cantidad_kg <= 0: raise ValueError("Cantidad a consumir debe ser positiva.")
     if not usuario or not usuario.is_authenticated: raise ValueError("Usuario inválido.")
@@ -173,7 +184,7 @@ def consumir_rollo_entrada_refilado(*, refilado: Refilado, lote_entrada_id: str,
     return lote_a_consumir
 
 @transaction.atomic
-def consumir_mp_refilado(*, refilado: Refilado, lote_mp_id: str, cantidad_consumida: Decimal, usuario: User) -> LoteMateriaPrima:
+def consumir_mp_refilado(*, refilado: Refilado, lote_mp_id: str, cantidad_consumida: Decimal, usuario) -> LoteMateriaPrima:
     """Consume Lote MP (ej: core) para Refilado."""
     if cantidad_consumida <= 0: raise ValueError("Cantidad a consumir debe ser positiva.")
     if not usuario or not usuario.is_authenticated: raise ValueError("Usuario inválido.")
@@ -188,7 +199,7 @@ def consumir_mp_refilado(*, refilado: Refilado, lote_mp_id: str, cantidad_consum
 @transaction.atomic
 def registrar_produccion_rollo_refilado(
     *, refilado: Refilado, lote_salida_id: str, kg_producidos: Decimal,
-    metros_producidos: Decimal = None, ubicacion_destino_codigo: str, usuario: User,
+    metros_producidos: Decimal = None, ubicacion_destino_codigo: str, usuario,
     observaciones_lote: str = ""
 ) -> Union[LoteProductoEnProceso, LoteProductoTerminado]:
     """Crea Lote WIP o PT (rollo refilado) y registra movimiento."""
@@ -240,7 +251,7 @@ def registrar_produccion_rollo_refilado(
 # =============================================
 
 @transaction.atomic
-def consumir_rollo_entrada_sellado(*, sellado: Sellado, lote_entrada_id: str, cantidad_kg: Decimal, usuario: User) -> LoteProductoEnProceso:
+def consumir_rollo_entrada_sellado(*, sellado: Sellado, lote_entrada_id: str, cantidad_kg: Decimal, usuario) -> LoteProductoEnProceso:
     """Consume Lote WIP para Sellado."""
     if cantidad_kg <= 0: raise ValueError("Cantidad a consumir debe ser positiva.")
     if not usuario or not usuario.is_authenticated: raise ValueError("Usuario inválido.")
@@ -253,7 +264,7 @@ def consumir_rollo_entrada_sellado(*, sellado: Sellado, lote_entrada_id: str, ca
     return lote_a_consumir
 
 @transaction.atomic
-def consumir_mp_sellado(*, sellado: Sellado, lote_mp_id: str, cantidad_consumida: Decimal, usuario: User) -> LoteMateriaPrima:
+def consumir_mp_sellado(*, sellado: Sellado, lote_mp_id: str, cantidad_consumida: Decimal, usuario) -> LoteMateriaPrima:
     """Consume Lote MP (ej: zipper, válvula) para Sellado."""
     if cantidad_consumida <= 0: raise ValueError("Cantidad a consumir debe ser positiva.")
     if not usuario or not usuario.is_authenticated: raise ValueError("Usuario inválido.")
@@ -268,7 +279,7 @@ def consumir_mp_sellado(*, sellado: Sellado, lote_mp_id: str, cantidad_consumida
 @transaction.atomic
 def registrar_produccion_bolsas_sellado(
     *, sellado: Sellado, lote_salida_id: str, unidades_producidas: int,
-    ubicacion_destino_codigo: str, usuario: User, observaciones_lote: str = ""
+    ubicacion_destino_codigo: str, usuario, observaciones_lote: str = ""
 ) -> Union[LoteProductoEnProceso, LoteProductoTerminado]:
     """Crea Lote PT o WIP (bolsas selladas) y registra movimiento."""
     if unidades_producidas <= 0: raise ValueError("Unidades producidas deben ser positivas.")
@@ -291,7 +302,8 @@ def registrar_produccion_bolsas_sellado(
         if LoteProductoTerminado.objects.filter(lote_id=lote_salida_id).exists(): raise ValidationError(f"ID Lote PT '{lote_salida_id}' ya existe.")
         kg_calculados = None
         if producto_terminado.sellado_peso_millar and producto_terminado.sellado_peso_millar > 0:
-            kg_calculados = round(Decimal(unidades_producidas / 1000) * producto_terminado.sellado_peso_millar, 4)
+            # CORRECCIÓN: Usar Decimal para evitar pérdida de precisión
+            kg_calculados = round((Decimal(str(unidades_producidas)) / Decimal('1000')) * producto_terminado.sellado_peso_millar, 4)
         nuevo_lote_pt = LoteProductoTerminado.objects.create(
             lote_id=lote_salida_id, producto_terminado=producto_terminado, orden_produccion=orden_produccion,
             proceso_final_content_type=ct_registro, proceso_final_object_id=sellado.pk,
@@ -310,7 +322,8 @@ def registrar_produccion_bolsas_sellado(
         except UnidadMedida.DoesNotExist: raise RuntimeError("Unidad 'Unid' o 'Kg' no encontrada.")
         kg_calculados = None
         if producto_terminado.sellado_peso_millar and producto_terminado.sellado_peso_millar > 0:
-            kg_calculados = round(Decimal(unidades_producidas / 1000) * producto_terminado.sellado_peso_millar, 4)
+            # CORRECCIÓN: Usar Decimal para evitar pérdida de precisión
+            kg_calculados = round((Decimal(str(unidades_producidas)) / Decimal('1000')) * producto_terminado.sellado_peso_millar, 4)
 
         nuevo_lote_wip = LoteProductoEnProceso.objects.create(
             lote_id=lote_salida_id, producto_terminado=producto_terminado, orden_produccion=orden_produccion,
@@ -332,7 +345,7 @@ def registrar_produccion_bolsas_sellado(
 # =============================================
 
 @transaction.atomic
-def consumir_rollo_entrada_doblado(*, doblado: Doblado, lote_entrada_id: str, cantidad_kg: Decimal, usuario: User) -> LoteProductoEnProceso:
+def consumir_rollo_entrada_doblado(*, doblado: Doblado, lote_entrada_id: str, cantidad_kg: Decimal, usuario) -> LoteProductoEnProceso:
     """Consume Lote WIP para Doblado."""
     if cantidad_kg <= 0: raise ValueError("Cantidad a consumir debe ser positiva.")
     if not usuario or not usuario.is_authenticated: raise ValueError("Usuario inválido.")
@@ -345,7 +358,7 @@ def consumir_rollo_entrada_doblado(*, doblado: Doblado, lote_entrada_id: str, ca
     return lote_a_consumir
 
 @transaction.atomic
-def consumir_mp_doblado(*, doblado: Doblado, lote_mp_id: str, cantidad_consumida: Decimal, usuario: User) -> LoteMateriaPrima:
+def consumir_mp_doblado(*, doblado: Doblado, lote_mp_id: str, cantidad_consumida: Decimal, usuario) -> LoteMateriaPrima:
     """Consume Lote MP para Doblado."""
     if cantidad_consumida <= 0: raise ValueError("Cantidad a consumir debe ser positiva.")
     if not usuario or not usuario.is_authenticated: raise ValueError("Usuario inválido.")
@@ -360,7 +373,7 @@ def consumir_mp_doblado(*, doblado: Doblado, lote_mp_id: str, cantidad_consumida
 @transaction.atomic
 def registrar_produccion_rollo_doblado(
     *, doblado: Doblado, lote_salida_id: str, kg_producidos: Decimal,
-    metros_producidos: Decimal = None, ubicacion_destino_codigo: str, usuario: User,
+    metros_producidos: Decimal = None, ubicacion_destino_codigo: str, usuario,
     observaciones_lote: str = ""
 ) -> Union[LoteProductoEnProceso, LoteProductoTerminado]:
     """Crea Lote WIP o PT (rollo doblado) y registra movimiento."""

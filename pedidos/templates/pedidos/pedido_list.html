@@ -1,0 +1,308 @@
+<!-- pedidos/templates/pedidos/pedido_list.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Lista de Pedidos - ARCOPACK{% endblock %}
+
+{% block extra_css %}
+<style>
+    .estado-badge {
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: bold;
+        color: white;
+    }
+    .estado-BORRADOR { background-color: #6c757d; }
+    .estado-CONFIRMADO { background-color: #007bff; }
+    .estado-EN_PRODUCCION { background-color: #ffc107; color: #000; }
+    .estado-PRODUCIDO { background-color: #28a745; }
+    .estado-PENDIENTE_FACTURAR { background-color: #fd7e14; }
+    .estado-FACTURADO { background-color: #20c997; }
+    .estado-ENTREGADO { background-color: #198754; }
+    .estado-CANCELADO { background-color: #dc3545; }
+    .progress-bar-custom {
+        height: 20px;
+        border-radius: 10px;
+    }
+    .filters-card {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3">Lista de Pedidos</h1>
+                    <p class="text-muted">Gestión y seguimiento de pedidos de clientes</p>
+                </div>
+                <div>
+                    <a href="{% url 'admin:pedidos_pedido_add' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Nuevo Pedido
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="filters-card">
+        <form method="get" class="row g-3">
+            <div class="col-md-2">
+                <label class="form-label">Estado</label>
+                <select name="estado" class="form-select">
+                    <option value="">Todos los estados</option>
+                    {% for estado, nombre in estados %}
+                        <option value="{{ estado }}" {% if filtros.estado == estado %}selected{% endif %}>
+                            {{ nombre }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Prioridad</label>
+                <select name="prioridad" class="form-select">
+                    <option value="">Todas las prioridades</option>
+                    {% for prioridad, nombre in prioridades %}
+                        <option value="{{ prioridad }}" {% if filtros.prioridad == prioridad %}selected{% endif %}>
+                            {{ nombre }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Cliente</label>
+                <select name="cliente" class="form-select">
+                    <option value="">Todos los clientes</option>
+                    {% for cliente in clientes %}
+                        <option value="{{ cliente.id }}" {% if filtros.cliente == cliente.id|stringformat:"s" %}selected{% endif %}>
+                            {{ cliente.razon_social }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Con Orden</label>
+                <select name="con_orden" class="form-select">
+                    <option value="">Todos</option>
+                    <option value="si" {% if filtros.con_orden == 'si' %}selected{% endif %}>Con orden</option>
+                    <option value="no" {% if filtros.con_orden == 'no' %}selected{% endif %}>Sin orden</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Fecha Desde</label>
+                <input type="date" name="fecha_desde" class="form-control" value="{{ filtros.fecha_desde }}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Fecha Hasta</label>
+                <input type="date" name="fecha_hasta" class="form-control" value="{{ filtros.fecha_hasta }}">
+            </div>
+            <div class="col-md-8">
+                <label class="form-label">Búsqueda</label>
+                <input type="text" name="search" class="form-control" placeholder="Buscar por número de pedido, cliente..." value="{{ filtros.search }}">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">&nbsp;</label>
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">Filtrar</button>
+                    <a href="{% url 'pedidos:pedido-list' %}" class="btn btn-secondary">Limpiar</a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Estadísticas rápidas -->
+    <div class="row mb-3">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">{{ estadisticas.total_pedidos }}</h5>
+                    <p class="card-text text-muted">Total Pedidos</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title text-warning">{{ estadisticas.sin_orden_produccion }}</h5>
+                    <p class="card-text text-muted">Sin Orden de Producción</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title text-info">{{ estadisticas.pendientes_facturar }}</h5>
+                    <p class="card-text text-muted">Pendientes Facturar</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">{{ page_obj.paginator.count }}</h5>
+                    <p class="card-text text-muted">Resultados Filtrados</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de pedidos -->
+    <div class="card">
+        <div class="card-body">
+            {% if pedidos %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Número</th>
+                                <th>Cliente</th>
+                                <th>Estado</th>
+                                <th>Fecha Pedido</th>
+                                <th>Fecha Compromiso</th>
+                                <th>Valor Total</th>
+                                <th>Progreso</th>
+                                <th>Tiene OP</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for pedido in pedidos %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'pedidos:pedido-detail' pedido.pk %}" class="text-decoration-none">
+                                            <strong>{{ pedido.numero_pedido }}</strong>
+                                        </a>
+                                        {% if pedido.prioridad == 'URGENTE' %}
+                                            <span class="badge bg-danger ms-1">URGENTE</span>
+                                        {% elif pedido.prioridad == 'ALTA' %}
+                                            <span class="badge bg-warning ms-1">ALTA</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div>{{ pedido.cliente.razon_social }}</div>
+                                        {% if pedido.pedido_cliente_referencia %}
+                                            <small class="text-muted">Ref: {{ pedido.pedido_cliente_referencia }}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="estado-badge estado-{{ pedido.estado }}">
+                                            {{ pedido.get_estado_display }}
+                                        </span>
+                                    </td>
+                                    <td>{{ pedido.fecha_pedido|date:"d/m/Y" }}</td>
+                                    <td>
+                                        {{ pedido.fecha_compromiso|date:"d/m/Y" }}
+                                        {% if pedido.fecha_compromiso < today and pedido.estado not in 'FACTURADO,ENTREGADO,CANCELADO' %}
+                                            <br><small class="text-danger">Vencido</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>${{ pedido.valor_total|floatformat:0 }}</td>
+                                    <td>
+                                        <div class="progress progress-bar-custom">
+                                            {% with porcentaje=pedido.porcentaje_completado %}
+                                                <div class="progress-bar 
+                                                    {% if porcentaje >= 100 %}bg-success
+                                                    {% elif porcentaje >= 50 %}bg-warning
+                                                    {% else %}bg-danger{% endif %}" 
+                                                    style="width: {{ porcentaje }}%">
+                                                    {{ porcentaje|floatformat:0 }}%
+                                                </div>
+                                            {% endwith %}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if pedido.tiene_orden_produccion %}
+                                            <span class="badge bg-success">Sí</span>
+                                            <small class="d-block text-muted">
+                                                {{ pedido.ordenes_produccion_asociadas.count }} orden(es)
+                                            </small>
+                                        {% else %}
+                                            <span class="badge bg-warning">No</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="{% url 'pedidos:pedido-detail' pedido.pk %}" 
+                                               class="btn btn-sm btn-outline-primary" title="Ver detalle">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            {% if not pedido.tiene_orden_produccion and pedido.estado in 'CONFIRMADO,EN_PRODUCCION' %}
+                                                <a href="{% url 'pedidos:crear-orden-produccion' pedido.pk %}" 
+                                                   class="btn btn-sm btn-outline-success" title="Crear OP">
+                                                    <i class="fas fa-cogs"></i>
+                                                </a>
+                                            {% endif %}
+                                            <a href="{% url 'admin:pedidos_pedido_change' pedido.pk %}" 
+                                               class="btn btn-sm btn-outline-secondary" title="Editar">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Paginación -->
+                {% if is_paginated %}
+                    <nav aria-label="Paginación de pedidos">
+                        <ul class="pagination justify-content-center">
+                            {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page=1">Primera</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}">Anterior</a>
+                                </li>
+                            {% endif %}
+                            
+                            <li class="page-item active">
+                                <span class="page-link">
+                                    Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+                                </span>
+                            </li>
+                            
+                            {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}">Siguiente</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.paginator.num_pages }}">Última</a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                {% endif %}
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                    <h5>No se encontraron pedidos</h5>
+                    <p class="text-muted">No hay pedidos que coincidan con los filtros aplicados.</p>
+                    <a href="{% url 'admin:pedidos_pedido_add' %}" class="btn btn-primary">Crear Primer Pedido</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Auto-submit formulario cuando cambian los filtros select
+    document.querySelectorAll('select[name="estado"], select[name="prioridad"], select[name="cliente"], select[name="con_orden"]').forEach(function(select) {
+        select.addEventListener('change', function() {
+            this.form.submit();
+        });
+    });
+</script>
+{% endblock %}

@@ -6,7 +6,7 @@ from django.shortcuts import redirect
 from django.contrib.auth import views as auth_views
 
 def redirect_to_production(request):
-    return redirect('produccion:produccion_orden_list')
+    return redirect('produccion_web:produccion_orden_list')
 
 urlpatterns = [
     # Ruta raíz redirige a la lista de órdenes de producción
@@ -16,11 +16,14 @@ urlpatterns = [
     path('admin/', admin.site.urls),
 
     # Rutas principales de la aplicación
-    path('produccion/', include(('produccion.urls', 'produccion'))),
-    path('inventario/', include(('inventario.urls', 'inventario'))),
-    path('productos/', include(('productos.urls', 'productos'))),
-    path('configuracion/', include(('configuracion.urls', 'configuracion'))),
-    path('notificaciones/', include(('notificaciones.urls', 'notificaciones'))),
+    path('produccion/', include(('produccion.urls', 'produccion_web'), namespace='produccion_web')),
+    path('inventario/', include(('inventario.urls', 'inventario_web'), namespace='inventario_web')),
+    path('productos/', include(('productos.urls', 'productos_web'), namespace='productos_web')),
+    path('pedidos/', include(('pedidos.urls', 'pedidos_web'), namespace='pedidos_web')),
+    path('clientes/', include(('clientes.urls', 'clientes_web'), namespace='clientes_web')),
+    path('personal/', include(('personal.urls', 'personal_web'), namespace='personal_web')),
+    path('configuracion/', include(('configuracion.urls', 'configuracion_web'), namespace='configuracion_web')),
+    path('notificaciones/', include(('notificaciones.urls', 'notificaciones_web'), namespace='notificaciones_web')),
 
     # Autenticación y usuarios
     path('users/', include(([
@@ -44,4 +47,5 @@ urlpatterns = [
     path('api/v1/', include(('productos.urls', 'api_productos'))),
     path('api/v1/produccion/', include(('produccion.urls', 'api_produccion'))),
     path('api/v1/inventario/', include(('inventario.urls', 'api_inventario'))),
+    path('api/v1/pedidos/', include(('pedidos.urls', 'api_pedidos'))),
 ]

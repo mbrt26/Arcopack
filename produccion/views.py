@@ -100,7 +100,7 @@ class ProcesoListView(LoginRequiredMixin, ListView):
     context_object_name = 'procesos'
     
     def get_queryset(self):
-        procesos = Proceso.objects.order_by('orden_flujo', 'nombre').prefetch_related('maquinas')
+        procesos = Proceso.objects.order_by('orden_flujo', 'nombre')
         for proceso in procesos:
             proceso.kanban_url = f"{proceso.nombre.lower()}-kanban"
         return procesos

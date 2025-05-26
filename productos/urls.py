@@ -12,10 +12,10 @@ router = DefaultRouter()
 # 'productos' será el prefijo de la URL (ej: /api/v1/productos/)
 # 'ProductoTerminadoViewSet' es la clase que maneja las peticiones
 # 'basename' se usa para generar los nombres de las URLs internas de Django
-router.register(r'productos', ProductoTerminadoViewSet)
+router.register(r'productos', ProductoTerminadoViewSet, basename='producto')
 
-# Nombre de la aplicación para namespacing (buena práctica)
-app_name = 'productos'
+# Nombre de la aplicación para namespacing (debe coincidir con el namespace en erp_config/urls.py)
+app_name = 'productos_web'
 
 # Las urlpatterns de esta app incluyen todas las URLs generadas por el router
 urlpatterns = [

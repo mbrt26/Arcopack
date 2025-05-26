@@ -3,7 +3,7 @@
 from django.urls import path
 from . import views
 
-app_name = 'configuracion'
+app_name = 'configuracion_web'
 
 urlpatterns = [
     path('unidades-medida/', views.UnidadMedidaListView.as_view(), name='unidad-medida-list'),

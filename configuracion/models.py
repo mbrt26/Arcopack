@@ -359,3 +359,26 @@ class Servicio(models.Model):
         verbose_name="Servicio"
         verbose_name_plural="Servicios"
         ordering = ['nombre']
+
+class SubLinea(models.Model):
+    """SubLíneas específicas para productos terminados."""
+    OPCIONES_SUBLINEA = [
+        ('LAMINA', 'Lámina'),
+        ('BOLSA', 'Bolsa'),
+    ]
+    
+    nombre = models.CharField(
+        max_length=20, 
+        choices=OPCIONES_SUBLINEA, 
+        unique=True,
+        verbose_name="SubLínea"
+    )
+    descripcion = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return self.get_nombre_display()
+
+    class Meta:
+        verbose_name = "SubLínea"
+        verbose_name_plural = "SubLíneas"
+        ordering = ['nombre']

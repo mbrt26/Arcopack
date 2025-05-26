@@ -437,6 +437,7 @@ class OrdenProduccionAdmin(admin.ModelAdmin):
         ('Cantidades y Fechas', {'fields': ('cantidad_solicitada_kg', 'cantidad_producida_kg', 'fecha_compromiso_entrega')}),
         ('Especificaciones', {'fields': ('sustrato', 'ancho_sustrato_mm')}),
         ('Estado', {'fields': ('etapa_actual', 'is_active')}),
+        ('Observaciones', {'fields': ('observaciones',), 'classes': ('collapse',)}),
     )
 
     def save_model(self, request, obj, form, change):

@@ -1,0 +1,539 @@
+<!-- pedidos/templates/pedidos/pedido_form.html -->
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+    {% if es_nuevo %}Crear Pedido{% else %}Editar Pedido {{ object.numero_pedido }}{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<link href="{% static 'pedidos/css/pedido_form.css' %}" rel="stylesheet">
+<style>
+    .linea-pedido {
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+        background-color: #f8f9fa;
+    }
+    .linea-pedido:hover {
+        background-color: #f1f3f4;
+    }
+    .numero-linea {
+        color: #6c757d;
+        font-size: 14px;
+    }
+    .btn-remove-linea {
+        background: none;
+        border: none;
+        color: #dc3545;
+        cursor: pointer;
+        padding: 5px;
+    }
+    .btn-remove-linea:hover {
+        color: #c82333;
+    }
+    .producto-info {
+        background-color: #e9ecef;
+        padding: 8px;
+        border-radius: 4px;
+        margin-top: 10px;
+    }
+    .totales-card {
+        position: sticky;
+        top: 20px;
+        background: #fff;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">
+                        {% if es_nuevo %}
+                            <i class="fas fa-plus-circle text-primary"></i> Crear Nuevo Pedido
+                        {% else %}
+                            <i class="fas fa-edit text-warning"></i> Editar Pedido {{ object.numero_pedido }}
+                        {% endif %}
+                    </h2>
+                    <p class="text-muted mb-0">
+                        {% if es_nuevo %}
+                            Complete la información del nuevo pedido y sus líneas de detalle
+                        {% else %}
+                            Modifique la información del pedido (solo permitido en estado BORRADOR)
+                        {% endif %}
+                    </p>
+                </div>
+                <div>
+                    <a href="{% url 'pedidos:lista' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Volver a Lista
+                    </a>
+                    {% if not es_nuevo %}
+                        <a href="{% url 'pedidos:detalle' object.pk %}" class="btn btn-outline-info">
+                            <i class="fas fa-eye"></i> Ver Detalle
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <form method="post" id="pedido-form" novalidate>
+        {% csrf_token %}
+        
+        <div class="row">
+            <!-- Formulario Principal -->
+            <div class="col-lg-8">
+                <!-- Información del Pedido -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-info-circle"></i> Información del Pedido
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.cliente.id_for_label }}" class="form-label">
+                                        {{ form.cliente.label }} <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.cliente }}
+                                    {% if form.cliente.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.cliente.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.pedido_cliente_referencia.id_for_label }}" class="form-label">
+                                        {{ form.pedido_cliente_referencia.label }}
+                                    </label>
+                                    {{ form.pedido_cliente_referencia }}
+                                    {% if form.pedido_cliente_referencia.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.pedido_cliente_referencia.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="{{ form.fecha_pedido.id_for_label }}" class="form-label">
+                                        {{ form.fecha_pedido.label }} <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.fecha_pedido }}
+                                    {% if form.fecha_pedido.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.fecha_pedido.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="{{ form.fecha_compromiso.id_for_label }}" class="form-label">
+                                        {{ form.fecha_compromiso.label }} <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.fecha_compromiso }}
+                                    {% if form.fecha_compromiso.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.fecha_compromiso.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="{{ form.prioridad.id_for_label }}" class="form-label">
+                                        {{ form.prioridad.label }}
+                                    </label>
+                                    {{ form.prioridad }}
+                                    {% if form.prioridad.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.prioridad.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.condiciones_pago.id_for_label }}" class="form-label">
+                                        {{ form.condiciones_pago.label }}
+                                    </label>
+                                    {{ form.condiciones_pago }}
+                                    {% if form.condiciones_pago.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.condiciones_pago.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.observaciones.id_for_label }}" class="form-label">
+                                        {{ form.observaciones.label }}
+                                    </label>
+                                    {{ form.observaciones }}
+                                    {% if form.observaciones.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.observaciones.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Líneas del Pedido -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-list"></i> Líneas del Pedido
+                                <span class="badge bg-primary" id="contador-lineas">0</span>
+                            </h5>
+                            <button type="button" class="btn btn-success btn-sm" id="agregar-linea">
+                                <i class="fas fa-plus"></i> Agregar Línea
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <!-- Formset Management -->
+                        {{ lineas_formset.management_form }}
+                        
+                        <!-- Líneas Container -->
+                        <div id="lineas-container">
+                            {% for form in lineas_formset %}
+                                <div class="linea-pedido" data-form-index="{{ forloop.counter0 }}">
+                                    {% for hidden in form.hidden_fields %}
+                                        {{ hidden }}
+                                    {% endfor %}
+                                    
+                                    <div class="row align-items-center">
+                                        <div class="col-md-1">
+                                            <strong class="numero-linea">#{{ forloop.counter }}</strong>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Producto *</label>
+                                            {{ form.producto }}
+                                            {% if form.producto.errors %}
+                                                <div class="invalid-feedback d-block">
+                                                    {{ form.producto.errors.0 }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label">Cantidad *</label>
+                                            {{ form.cantidad }}
+                                            {% if form.cantidad.errors %}
+                                                <div class="invalid-feedback d-block">
+                                                    {{ form.cantidad.errors.0 }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label">Precio Unit.</label>
+                                            {{ form.precio_unitario }}
+                                            {% if form.precio_unitario.errors %}
+                                                <div class="invalid-feedback d-block">
+                                                    {{ form.precio_unitario.errors.0 }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label">Subtotal</label>
+                                            <input type="text" class="form-control subtotal-display" readonly value="$0.00">
+                                        </div>
+                                        <div class="col-md-1">
+                                            {% if lineas_formset.can_delete %}
+                                                <button type="button" class="btn-remove-linea" title="Eliminar línea">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                                {{ form.DELETE }}
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row mt-2">
+                                        <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> {% if object %}Actualizar{% else %}Crear{% endif %} Pedido
+                            </button>
+                            
+                            {% if object and object.estado == 'CONFIRMADO' %}
+                                <a href="{% url 'pedidos:crear-orden-produccion' object.pk %}" class="btn btn-success">
+                                    <i class="fas fa-cogs"></i> Crear Orden de Producción
+                                </a>
+                            {% endif %}
+                            
+                            <a href="{% url 'pedidos:pedido-list' %}" class="btn btn-secondary">
+                                Cancelar
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                {% if object %}
+                    <!-- Información adicional -->
+                    <div class="card mt-3">
+                        <div class="card-header">
+                            <h6>Información de Seguimiento</h6>
+                        </div>
+                        <div class="card-body">
+                            <p><strong>Creado:</strong> {{ object.creado_en|date:"d/m/Y H:i" }}</p>
+                            <p><strong>Modificado:</strong> {{ object.actualizado_en|date:"d/m/Y H:i" }}</p>
+                            {% if object.creado_por %}
+                                <p><strong>Creado por:</strong> {{ object.creado_por.get_full_name|default:object.creado_por.username }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Template para nueva línea -->
+<div id="linea-template" style="display: none;">
+    <div class="linea-pedido" data-form-index="__prefix__">
+        <div class="row align-items-center">
+            <div class="col-md-1">
+                <strong class="numero-linea">#</strong>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Producto *</label>
+                <!-- El contenido se completará via JavaScript -->
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Cantidad *</label>
+                <!-- El contenido se completará via JavaScript -->
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Precio Unit.</label>
+                <!-- El contenido se completará via JavaScript -->
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Subtotal</label>
+                <input type="text" class="form-control subtotal-display" readonly value="0.00">
+            </div>
+            <div class="col-md-1">
+                <button type="button" class="btn-remove-linea" title="Eliminar línea">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="row mt-2">
+            <div class="col-12">
+                <label class="form-label">Especificaciones Técnicas</label>
+                <!-- El contenido se completará via JavaScript -->
+            </div>
+        </div>
+
+        <div class="producto-info" style="display: none;">
+            <div class="row">
+                <div class="col-md-6">
+                    <small><strong>Unidad:</strong> <span class="unidad-medida">-</span></small>
+                </div>
+                <div class="col-md-6">
+                    <small><strong>Precio Base:</strong> $<span class="precio-base">-</span></small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let formIndex = {{ formset.total_form_count|default:0 }};
+    
+    // Función para actualizar numeración de líneas
+    function actualizarNumeracion() {
+        document.querySelectorAll('.linea-pedido:not([style*="display: none"])').forEach((linea, index) => {
+            const numeroLinea = linea.querySelector('.numero-linea');
+            if (numeroLinea) {
+                numeroLinea.textContent = '#' + (index + 1);
+            }
+        });
+    }
+
+    // Función para calcular subtotales y total
+    function calcularTotales() {
+        let totalGeneral = 0;
+        let totalLineas = 0;
+        let totalItems = 0;
+
+        document.querySelectorAll('.linea-pedido:not([style*="display: none"])').forEach(linea => {
+            const cantidadInput = linea.querySelector('input[name$="-cantidad"]');
+            const precioInput = linea.querySelector('input[name$="-precio_unitario"]');
+            const subtotalDisplay = linea.querySelector('.subtotal-display');
+
+            if (cantidadInput && precioInput && subtotalDisplay) {
+                const cantidad = parseFloat(cantidadInput.value) || 0;
+                const precio = parseFloat(precioInput.value) || 0;
+                const subtotal = cantidad * precio;
+
+                subtotalDisplay.value = subtotal.toFixed(2);
+                totalGeneral += subtotal;
+                totalItems += cantidad;
+                totalLineas++;
+            }
+        });
+
+        document.getElementById('total-pedido').textContent = '$' + totalGeneral.toFixed(2);
+        document.getElementById('contador-lineas').textContent = totalLineas;
+        document.getElementById('total-items').textContent = totalItems.toFixed(2);
+    }
+
+    // Función para agregar nueva línea
+    function agregarLinea() {
+        const container = document.getElementById('lineas-container');
+        const template = document.getElementById('linea-template');
+        const newLinea = template.firstElementChild.cloneNode(true);
+        
+        // Actualizar índices del formulario
+        newLinea.dataset.formIndex = formIndex;
+        newLinea.innerHTML = newLinea.innerHTML.replace(/__prefix__/g, formIndex);
+        
+        // Agregar los campos del formset (esto requiere datos del backend)
+        // Por simplicidad, mostraremos un mensaje
+        const productSelect = document.createElement('select');
+        productSelect.className = 'form-select';
+        productSelect.name = `form-${formIndex}-producto`;
+        productSelect.innerHTML = '<option value="">Seleccione un producto...</option>';
+        
+        const cantidadInput = document.createElement('input');
+        cantidadInput.type = 'number';
+        cantidadInput.className = 'form-control';
+        cantidadInput.name = `form-${formIndex}-cantidad`;
+        cantidadInput.step = '0.01';
+        cantidadInput.min = '0';
+        
+        const precioInput = document.createElement('input');
+        precioInput.type = 'number';
+        precioInput.className = 'form-control';
+        precioInput.name = `form-${formIndex}-precio_unitario`;
+        precioInput.step = '0.01';
+        precioInput.min = '0';
+        
+        const especTextarea = document.createElement('textarea');
+        especTextarea.className = 'form-control';
+        especTextarea.name = `form-${formIndex}-especificaciones_tecnicas`;
+        especTextarea.rows = 2;
+        
+        // Insertar campos en el template
+        newLinea.querySelector('.col-md-4').appendChild(productSelect);
+        newLinea.querySelector('.col-md-2:nth-child(3)').appendChild(cantidadInput);
+        newLinea.querySelector('.col-md-2:nth-child(4)').appendChild(precioInput);
+        newLinea.querySelector('.col-12').appendChild(especTextarea);
+        
+        container.appendChild(newLinea);
+        
+        // Actualizar contador de formularios
+        formIndex++;
+        document.getElementById('id_form-TOTAL_FORMS').value = formIndex;
+        
+        actualizarNumeracion();
+        agregarEventListeners(newLinea);
+    }
+
+    // Función para eliminar línea
+    function eliminarLinea(button) {
+        const linea = button.closest('.linea-pedido');
+        const deleteInput = linea.querySelector('input[name$="-DELETE"]');
+        
+        if (deleteInput) {
+            deleteInput.checked = true;
+            linea.style.display = 'none';
+        } else {
+            linea.remove();
+        }
+        
+        actualizarNumeracion();
+        calcularTotales();
+    }
+
+    // Función para agregar event listeners a una línea
+    function agregarEventListeners(linea) {
+        // Botón eliminar
+        const btnEliminar = linea.querySelector('.btn-remove-linea');
+        if (btnEliminar) {
+            btnEliminar.addEventListener('click', function() {
+                eliminarLinea(this);
+            });
+        }
+
+        // Inputs de cálculo
+        const cantidadInput = linea.querySelector('input[name$="-cantidad"]');
+        const precioInput = linea.querySelector('input[name$="-precio_unitario"]');
+        
+        if (cantidadInput) {
+            cantidadInput.addEventListener('input', calcularTotales);
+        }
+        if (precioInput) {
+            precioInput.addEventListener('input', calcularTotales);
+        }
+    }
+
+    // Event listener para agregar línea
+    document.getElementById('agregar-linea').addEventListener('click', agregarLinea);
+
+    // Agregar event listeners a líneas existentes
+    document.querySelectorAll('.linea-pedido').forEach(agregarEventListeners);
+
+    // Calcular totales iniciales
+    calcularTotales();
+    actualizarNumeracion();
+
+    // Validación del formulario
+    document.getElementById('pedido-form').addEventListener('submit', function(e) {
+        const lineasVisibles = document.querySelectorAll('.linea-pedido:not([style*="display: none"])');
+        
+        if (lineasVisibles.length === 0) {
+            e.preventDefault();
+            alert('Debe agregar al menos una línea al pedido.');
+            return;
+        }
+
+        // Validar que todas las líneas tengan producto y cantidad
+        let valido = true;
+        lineasVisibles.forEach(linea => {
+            const producto = linea.querySelector('select[name$="-producto"]');
+            const cantidad = linea.querySelector('input[name$="-cantidad"]');
+            
+            if (!producto || !producto.value || !cantidad || parseFloat(cantidad.value) <= 0) {
+                valido = false;
+            }
+        });
+
+        if (!valido) {
+            e.preventDefault();
+            alert('Todas las líneas deben tener producto y cantidad válida.');
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,543 @@
+<!-- pedidos/templates/pedidos/dashboard.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard Pedidos - ARCOPACK{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'pedidos/css/pedidos.css' %}">
+<style>
+    .dashboard-card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+    }
+    .dashboard-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+    }
+    .metric-card {
+        background: linear-gradient(135deg, #f8f9fa, #ffffff);
+        border-left: 5px solid;
+    }
+    .chart-container {
+        height: 300px;
+        position: relative;
+    }
+</style>
+<!-- Incluir Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid pedidos-container">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 text-primary">Dashboard de Pedidos</h1>
+                    <p class="text-muted">Resumen ejecutivo y métricas clave</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{% url 'pedidos:pedido_list' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-list"></i> Ver Todos
+                    </a>
+                    <a href="{% url 'pedidos:pedido_create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Nuevo Pedido
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card dashboard-card">
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Fecha desde</label>
+                            <input type="date" name="fecha_desde" class="form-control" value="{{ filtros.fecha_desde }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Fecha hasta</label>
+                            <input type="date" name="fecha_hasta" class="form-control" value="{{ filtros.fecha_hasta }}">
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary me-2">Filtrar</button>
+                            <a href="{% url 'pedidos:dashboard_pedidos' %}" class="btn btn-outline-secondary">Limpiar</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Métricas principales -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="card dashboard-card metric-card border-left-primary">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total Pedidos
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ estadisticas.total_pedidos }}
+                            </div>
+                            <div class="small text-muted mt-1">
+                                Valor: {{ estadisticas.valor_total|floatformat:2 }} €
+                            </div>
+                        </div>
+                        <div class="text-primary">
+                            <i class="fas fa-clipboard-list fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="card dashboard-card metric-card border-left-warning">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Mes Actual
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ estadisticas.pedidos_mes_actual }}
+                            </div>
+                            <div class="small text-muted mt-1">
+                                Valor: {{ estadisticas.valor_total_mes|floatformat:2 }} €
+                            </div>
+                        </div>
+                        <div class="text-warning">
+                            <i class="fas fa-calendar-day fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="card dashboard-card metric-card border-left-success">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Mes Anterior
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ estadisticas.pedidos_mes_anterior }}
+                            </div>
+                            <div class="small text-muted mt-1">
+                                Comparación: {% if estadisticas.pedidos_mes_actual > estadisticas.pedidos_mes_anterior %}+{% endif %}{{ estadisticas.pedidos_mes_actual|add:'-'|add:estadisticas.pedidos_mes_anterior }}
+                            </div>
+                        </div>
+                        <div class="text-success">
+                            <i class="fas fa-calendar-week fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="card dashboard-card metric-card border-left-info">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Valor Promedio
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ estadisticas.promedio_valor|floatformat:2 }} €
+                            </div>
+                            <div class="small text-muted mt-1">
+                                Por pedido
+                            </div>
+                        </div>
+                        <div class="text-info">
+                            <i class="fas fa-chart-line fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Gráfico de estados -->
+        <div class="col-xl-6 col-lg-6 mb-4">
+            <div class="card dashboard-card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">Estado de Pedidos</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="estadosChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Gráfico de prioridades -->
+        <div class="col-xl-6 col-lg-6 mb-4">
+            <div class="card dashboard-card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">Prioridad de Pedidos</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="prioridadesChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Gráfico de tendencia -->
+        <div class="col-xl-8 col-lg-8 mb-4">
+            <div class="card dashboard-card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">Tendencia Mensual</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="tendenciaChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pedidos próximos a vencer -->
+        <div class="col-xl-4 col-lg-5 mb-4">
+            <div class="card dashboard-card">
+                <div class="card-header">
+                    <h6 class="m-0 font-weight-bold text-primary">Próximos a Vencer</h6>
+                </div>
+                <div class="card-body">
+                    {% if pedidos_proximos %}
+                        <div class="list-group list-group-flush">
+                            {% for pedido in pedidos_proximos %}
+                                <div class="list-group-item d-flex justify-content-between align-items-center p-2">
+                                    <div>
+                                        <a href="{% url 'pedidos:pedido_detail' pedido.pk %}" class="text-decoration-none">
+                                            <strong>{{ pedido.numero_pedido }}</strong>
+                                        </a>
+                                        <br>
+                                        <small class="text-muted">{{ pedido.cliente.razon_social }}</small>
+                                        <br>
+                                        <small class="{% if pedido.fecha_compromiso < today %}text-danger{% else %}text-warning{% endif %}">
+                                            <i class="fas fa-calendar"></i> {{ pedido.fecha_compromiso|date:"d/m/Y" }}
+                                        </small>
+                                    </div>
+                                    <div>
+                                        <span class="estado-badge estado-{{ pedido.estado }}">
+                                            {{ pedido.get_estado_display }}
+                                        </span>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center text-muted py-3">
+                            <i class="fas fa-check-circle fa-2x mb-2"></i>
+                            <p>No hay pedidos próximos a vencer</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Últimos pedidos y estadísticas adicionales -->
+    <div class="row">
+        <div class="col-lg-8 mb-4">
+            <div class="card dashboard-card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">Últimos Pedidos</h6>
+                    <a href="{% url 'pedidos:pedido_list' %}" class="btn btn-sm btn-outline-primary">Ver Todos</a>
+                </div>
+                <div class="card-body">
+                    {% if ultimos_pedidos %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Número</th>
+                                        <th>Cliente</th>
+                                        <th>Estado</th>
+                                        <th>Fecha</th>
+                                        <th>Valor</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for pedido in ultimos_pedidos %}
+                                        <tr>
+                                            <td>
+                                                <a href="{% url 'pedidos:pedido_detail' pedido.pk %}" class="pedido-numero">
+                                                    {{ pedido.numero_pedido }}
+                                                </a>
+                                            </td>
+                                            <td>{{ pedido.cliente.razon_social|truncatechars:30 }}</td>
+                                            <td>
+                                                <span class="estado-badge estado-{{ pedido.estado }}">
+                                                    {{ pedido.get_estado_display }}
+                                                </span>
+                                            </td>
+                                            <td>{{ pedido.fecha_pedido|date:"d/m/Y" }}</td>
+                                            <td>${{ pedido.valor_total|floatformat:0 }}</td>
+                                            <td>
+                                                <a href="{% url 'pedidos:pedido_detail' pedido.pk %}" 
+                                                   class="btn btn-sm btn-outline-primary" title="Ver detalle">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center text-muted py-3">
+                            <i class="fas fa-inbox fa-2x mb-2"></i>
+                            <p>No hay pedidos recientes</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 mb-4">
+            <!-- Estadísticas por prioridad -->
+            <div class="card dashboard-card mb-3">
+                <div class="card-header">
+                    <h6 class="m-0 font-weight-bold text-primary">Por Prioridad</h6>
+                </div>
+                <div class="card-body">
+                    {% for prioridad, count in pedidos_por_prioridad.items %}
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="prioridad-badge prioridad-{{ prioridad }}">{{ prioridad }}</span>
+                            <strong>{{ count }}</strong>
+                        </div>
+                    {% empty %}
+                        <p class="text-muted text-center">Sin datos</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Acciones rápidas -->
+            <div class="card dashboard-card">
+                <div class="card-header">
+                    <h6 class="m-0 font-weight-bold text-primary">Acciones Rápidas</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'pedidos:pedido_create' %}" class="btn btn-primary btn-accion">
+                            <i class="fas fa-plus"></i> Nuevo Pedido
+                        </a>
+                        <a href="{% url 'pedidos:reporte_pedidos' %}" class="btn btn-outline-secondary btn-accion">
+                            <i class="fas fa-chart-bar"></i> Generar Reporte
+                        </a>
+                        <a href="{% url 'pedidos:pedido_list' %}?estado=CONFIRMADO" class="btn btn-outline-warning btn-accion">
+                            <i class="fas fa-clock"></i> Pendientes Producción
+                        </a>
+                        <a href="{% url 'pedidos:pedido_list' %}?estado=PENDIENTE_FACTURAR" class="btn btn-outline-info btn-accion">
+                            <i class="fas fa-file-invoice"></i> Pendientes Facturar
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Definir los datos desde Django como objetos JSON para evitar problemas de interpolación
+var dashboardData = {
+    estados: {
+        labels: [
+            {% for estado_key, estado_data in estados.items %}
+                "{{ estado_data.nombre|escapejs }}",
+            {% endfor %}
+        ],
+        values: [
+            {% for estado_key, estado_data in estados.items %}
+                {{ estado_data.count|default:0 }},
+            {% endfor %}
+        ],
+        colors: [
+            '#6c757d', // Borrador
+            '#007bff', // Confirmado
+            '#ffc107', // En Producción
+            '#28a745', // Producido
+            '#20c997', // Pendiente Facturar
+            '#17a2b8', // Facturado
+            '#198754', // Entregado
+            '#dc3545'  // Cancelado
+        ]
+    },
+    prioridades: {
+        labels: [
+            {% for prioridad_key, prioridad_data in prioridades.items %}
+                "{{ prioridad_data.nombre|escapejs }}",
+            {% endfor %}
+        ],
+        values: [
+            {% for prioridad_key, prioridad_data in prioridades.items %}
+                {{ prioridad_data.count|default:0 }},
+            {% endfor %}
+        ],
+        colors: ['#28a745', '#17a2b8', '#ffc107', '#dc3545']
+    },
+    meses: {
+        labels: [
+            {% for mes in pedidos_por_mes %}
+                "{{ mes.mes|escapejs }}",
+            {% endfor %}
+        ],
+        counts: [
+            {% for mes in pedidos_por_mes %}
+                {{ mes.count|default:0 }},
+            {% endfor %}
+        ],
+        valores: [
+            {% for mes in pedidos_por_mes %}
+                {{ mes.valor|default:0 }},
+            {% endfor %}
+        ]
+    }
+};
+
+// Esperar a que el DOM esté completamente cargado
+document.addEventListener('DOMContentLoaded', function() {
+    // Inicializar gráfico de estados
+    var ctxEstados = document.getElementById('estadosChart');
+    if (ctxEstados) {
+        new Chart(ctxEstados.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: dashboardData.estados.labels,
+                datasets: [{
+                    data: dashboardData.estados.values,
+                    backgroundColor: dashboardData.estados.colors,
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right'
+                    }
+                }
+            }
+        });
+    }
+    
+    // Inicializar gráfico de prioridades
+    var ctxPrioridades = document.getElementById('prioridadesChart');
+    if (ctxPrioridades) {
+        new Chart(ctxPrioridades.getContext('2d'), {
+            type: 'pie',
+            data: {
+                labels: dashboardData.prioridades.labels,
+                datasets: [{
+                    data: dashboardData.prioridades.values,
+                    backgroundColor: dashboardData.prioridades.colors,
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right'
+                    }
+                }
+            }
+        });
+    }
+    
+    // Inicializar gráfico de tendencia mensual
+    var ctxTendencia = document.getElementById('tendenciaChart');
+    if (ctxTendencia) {
+        new Chart(ctxTendencia.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: dashboardData.meses.labels,
+                datasets: [
+                    {
+                        label: 'Cantidad de Pedidos',
+                        data: dashboardData.meses.counts,
+                        borderColor: '#007bff',
+                        backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: 'Valor Total (€)',
+                        data: dashboardData.meses.valores,
+                        borderColor: '#28a745',
+                        backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        yAxisID: 'y1'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: 'Cantidad de Pedidos'
+                        }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        title: {
+                            display: true,
+                            text: 'Valor Total (€)'
+                        },
+                        grid: {
+                            drawOnChartArea: false
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    }
+    
+    // Auto-refresh cada 5 minutos
+    setInterval(function() {
+        window.location.reload();
+    }, 300000);
+});
+</script>
+{% endblock %}

@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'inventario.apps.InventarioConfig',
     'personal.apps.PersonalConfig',
     'clientes.apps.ClientesConfig',
+    'pedidos.apps.PedidosConfig',  # Agregado el módulo de pedidos
     'notificaciones.apps.NotificacionesConfig',
 
     # Apps de Terceros
@@ -209,3 +210,9 @@ REST_FRAMEWORK = {
         'user': '1000/day'
     }
 }
+
+# Authentication settings
+LOGIN_URL = '/users/login/'
+LOGOUT_URL = '/users/logout/'
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/users/login/'

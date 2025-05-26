@@ -222,8 +222,28 @@ class LoteMateriaPrima(LoteBase):
     def consumir(self, cantidad_consumir, proceso_ref, usuario, **kwargs):
         if not usuario or not usuario.is_authenticated: raise ValueError("Usuario requerido.")
         if cantidad_consumir <= 0: raise ValueError("Cantidad a consumir debe ser positiva.")
-        if self.cantidad_actual < cantidad_consumir: raise ValidationError(f"Stock insuficiente en lote MP {self.lote_id}. Disp: {self.cantidad_actual}, Req: {cantidad_consumir}")
+        
+        # CORRECCIÓN: Validación de stock con tolerancia decimal
+        TOLERANCE = Decimal('0.0001')
+        diferencia = cantidad_consumir - self.cantidad_actual
+        
+        if diferencia > TOLERANCE:
+            raise ValidationError(
+                f"Stock insuficiente en lote MP {self.lote_id}. "
+                f"Disponible: {self.cantidad_actual}, Requerido: {cantidad_consumir}, "
+                f"Faltante: {diferencia}"
+            )
+        
         if self.estado != 'DISPONIBLE': raise ValidationError(f"Lote MP {self.lote_id} no disponible (Estado: {self.estado})")
+        
+        # Si la diferencia está dentro de la tolerancia, ajustar automáticamente
+        if diferencia > 0 and diferencia <= TOLERANCE:
+            logger.warning(
+                f"Ajustando automáticamente consumo de {cantidad_consumir} a {self.cantidad_actual} "
+                f"para Lote MP {self.lote_id} (diferencia: {diferencia} dentro de tolerancia)"
+            )
+            cantidad_consumir = self.cantidad_actual
+        
         self.cantidad_actual -= cantidad_consumir
         nuevo_estado = self.estado
         umbral_cero = Decimal('0.0001') # Umbral para considerar cero por decimales
@@ -266,19 +286,53 @@ class LoteProductoEnProceso(LoteBase):
 
     def consumir(self, cantidad_consumir, proceso_ref, usuario, **kwargs):
         # Lógica similar a LoteMateriaPrima.consumir, registra CONSUMO_WIP
-        if not usuario or not usuario.is_authenticated: raise ValueError("Usuario requerido.")
-        if cantidad_consumir <= 0: raise ValueError("Cantidad a consumir debe ser positiva.")
-        if self.cantidad_actual < cantidad_consumir: raise ValidationError(f"Stock insuficiente en lote WIP {self.lote_id}. Disp: {self.cantidad_actual}, Req: {cantidad_consumir}")
-        if self.estado != 'DISPONIBLE': raise ValidationError(f"Lote WIP {self.lote_id} no disponible (Estado: {self.estado})")
+        if not usuario or not usuario.is_authenticated: 
+            raise ValueError("Usuario requerido.")
+        if cantidad_consumir <= 0: 
+            raise ValueError("Cantidad a consumir debe ser positiva.")
+        
+        # CORRECCIÓN: Validación de stock con tolerancia decimal
+        TOLERANCE = Decimal('0.0001')
+        diferencia = cantidad_consumir - self.cantidad_actual
+        
+        if diferencia > TOLERANCE:
+            raise ValidationError(
+                f"Stock insuficiente en lote WIP {self.lote_id}. "
+                f"Disponible: {self.cantidad_actual}, Requerido: {cantidad_consumir}, "
+                f"Faltante: {diferencia}"
+            )
+        
+        if self.estado != 'DISPONIBLE': 
+            raise ValidationError(f"Lote WIP {self.lote_id} no disponible (Estado: {self.estado})")
+        
+        # Si la diferencia está dentro de la tolerancia, ajustar automáticamente
+        if diferencia > 0 and diferencia <= TOLERANCE:
+            logger.warning(
+                f"Ajustando automáticamente consumo de {cantidad_consumir} a {self.cantidad_actual} "
+                f"para Lote WIP {self.lote_id} (diferencia: {diferencia} dentro de tolerancia)"
+            )
+            cantidad_consumir = self.cantidad_actual
+        
         self.cantidad_actual -= cantidad_consumir
         nuevo_estado = self.estado
         umbral_cero = Decimal('0.0001')
-        if self.cantidad_actual <= umbral_cero: nuevo_estado = 'CONSUMIDO'; self.cantidad_actual = Decimal('0.0')
-        self.estado = nuevo_estado; self.actualizado_por = usuario
+        if self.cantidad_actual <= umbral_cero: 
+            nuevo_estado = 'CONSUMIDO'
+            self.cantidad_actual = Decimal('0.0')
+        
+        self.estado = nuevo_estado
+        self.actualizado_por = usuario
+        
         obs = kwargs.pop('observaciones', f"Consumo para Proceso Ref {getattr(proceso_ref, 'id', 'N/A')}")
         self.save(update_fields=['cantidad_actual', 'estado', 'actualizado_en', 'actualizado_por'])
-        self.registrar_movimiento('CONSUMO_WIP', cantidad_consumir, usuario=usuario, proceso_referencia=proceso_ref, observaciones=obs, **kwargs)
-        logger.info(f"Consumidos {cantidad_consumir} {self.unidad_medida_lote.codigo} de Lote WIP {self.lote_id}. Restante: {self.cantidad_actual}.")
+        self.registrar_movimiento(
+            'CONSUMO_WIP', cantidad_consumir, usuario=usuario, 
+            proceso_referencia=proceso_ref, observaciones=obs, **kwargs
+        )
+        logger.info(
+            f"Consumidos {cantidad_consumir} {self.unidad_medida_lote.codigo} de Lote WIP {self.lote_id}. "
+            f"Restante: {self.cantidad_actual}."
+        )
         return True
     
     

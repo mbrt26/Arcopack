@@ -196,17 +196,17 @@
                          id="submenuProduccion">
                         <ul class="nav flex-column ms-3">
                             <li class="nav-item">
-                                <a class="nav-link" href="{% url 'produccion:produccion_orden_list' %}">
+                                <a class="nav-link" href="{% url 'produccion_web:produccion_orden_list' %}">
                                     Órdenes de Producción
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" href="{% url 'produccion:proceso-list' %}">
+                                <a class="nav-link" href="{% url 'produccion_web:proceso-list' %}">
                                     Procesos
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" href="{% url 'produccion:resultados' %}">
+                                <a class="nav-link" href="{% url 'produccion_web:resultados' %}">
                                     Resultados
                                 </a>
                             </li>
@@ -216,25 +216,48 @@
 
                 <!-- Inventario -->
                 <li class="nav-item">
-                    <a class="nav-link {% if request.resolver_match.app_name == 'inventario' %}active{% endif %}"
+                    <a class="nav-link {% if request.resolver_match.app_name == 'inventario_web' %}active{% endif %}"
                        href="#submenuInventario" data-bs-toggle="collapse">
                         <i class="fas fa-boxes"></i> Inventario
                     </a>
-                    <div class="collapse {% if request.resolver_match.app_name == 'inventario' %}show{% endif %}" 
+                    <div class="collapse {% if request.resolver_match.app_name == 'inventario_web' %}show{% endif %}" 
                          id="submenuInventario">
                         <ul class="nav flex-column ms-3">
                             <li class="nav-item">
-                                <a class="nav-link" href="{% url 'inventario:materia-prima-list' %}">
+                                <a class="nav-link" href="{% url 'inventario_web:materia-prima-list' %}">
                                     Materias Primas
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" href="{% url 'inventario:lote-list' %}">
+                                <a class="nav-link" href="{% url 'inventario_web:lote-list' %}">
                                     Lotes
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" href="{% url 'inventario:movimiento-list' %}">
+                                <a class="nav-link" href="{% url 'inventario_web:movimiento-list' %}">
+                                    Movimientos
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+
+                <!-- Inventario -->
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.app_name == 'inventario_web' %}active{% endif %}"
+                       href="#submenuInventario" data-bs-toggle="collapse">
+                        <i class="fas fa-warehouse"></i> Inventario
+                    </a>
+                    <div class="collapse {% if request.resolver_match.app_name == 'inventario_web' %}show{% endif %}" 
+                         id="submenuInventario">
+                        <ul class="nav flex-column ms-3">
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'inventario_web:lote-list' %}">
+                                    Lotes
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'inventario_web:movimiento-list' %}">
                                     Movimientos
                                 </a>
                             </li>
@@ -244,39 +267,41 @@
 
                 <!-- Productos -->
                 <li class="nav-item">
-                    <a class="nav-link {% if request.resolver_match.app_name == 'productos' %}active{% endif %}"
+                    <a class="nav-link {% if request.resolver_match.app_name == 'productos_web' %}active{% endif %}"
                        href="#submenuProductos" data-bs-toggle="collapse">
                         <i class="fas fa-box-open"></i> Productos
                     </a>
-                    <div class="collapse {% if request.resolver_match.app_name == 'productos' %}show{% endif %}" 
+                    <div class="collapse {% if request.resolver_match.app_name == 'productos_web' %}show{% endif %}" 
                          id="submenuProductos">
                         <ul class="nav flex-column ms-3">
                             <li class="nav-item">
-                                <a class="nav-link" href="{% url 'productos:producto-list' %}">
+                                <a class="nav-link" href="{% url 'productos_web:producto-list' %}">
                                     Productos
                                 </a>
                             </li>
+                            <!-- Temporarily commenting out Categorías until the view is implemented
                             <li class="nav-item">
-                                <a class="nav-link" href="{% url 'productos:categoria-list' %}">
+                                <a class="nav-link" href="#">
                                     Categorías
                                 </a>
                             </li>
+                            -->
                         </ul>
                     </div>
                 </li>
 
                 <!-- Clientes -->
                 <li class="nav-item">
-                    <a class="nav-link {% if request.resolver_match.app_name == 'clientes' %}active{% endif %}"
-                       href="{% url 'clientes:cliente-list' %}">
+                    <a class="nav-link {% if request.resolver_match.app_name == 'clientes_web' %}active{% endif %}"
+                       href="{% url 'clientes_web:cliente_list' %}">
                         <i class="fas fa-users"></i> Clientes
                     </a>
                 </li>
 
                 <!-- Personal -->
                 <li class="nav-item">
-                    <a class="nav-link {% if request.resolver_match.app_name == 'personal' %}active{% endif %}"
-                       href="{% url 'personal:empleado-list' %}">
+                    <a class="nav-link {% if request.resolver_match.app_name == 'personal_web' %}active{% endif %}"
+                       href="{% url 'personal_web:colaborador_list' %}">
                         <i class="fas fa-user-tie"></i> Personal
                     </a>
                 </li>
@@ -284,35 +309,35 @@
                 <!-- Configuración -->
                 {% if user.is_staff %}
                 <li class="nav-item">
-                    <a class="nav-link {% if request.resolver_match.app_name == 'configuracion' %}active{% endif %}"
-                       href="#submenuConfig" data-bs-toggle="collapse">
+                    <a class="nav-link {% if request.resolver_match.app_name == 'configuracion_web' %}active{% endif %}"
+                       href="#submenuConfiguracion" data-bs-toggle="collapse">
                         <i class="fas fa-cog"></i> Configuración
                     </a>
-                    <div class="collapse {% if request.resolver_match.app_name == 'configuracion' %}show{% endif %}" 
-                         id="submenuConfig">
+                    <div class="collapse {% if request.resolver_match.app_name == 'configuracion_web' %}show{% endif %}" 
+                         id="submenuConfiguracion">
                         <ul class="nav flex-column ms-3">
                             <li class="nav-item">
-                                <a class="nav-link" href="{% url 'configuracion:unidad-medida-list' %}">
+                                <a class="nav-link" href="{% url 'configuracion_web:unidad-medida-list' %}">
                                     Unidades de Medida
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" href="{% url 'configuracion:categoria-mp-list' %}">
+                                <a class="nav-link" href="{% url 'configuracion_web:categoria-mp-list' %}">
                                     Categorías MP
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" href="{% url 'configuracion:ubicacion-list' %}">
+                                <a class="nav-link" href="{% url 'configuracion_web:ubicacion-list' %}">
                                     Ubicaciones
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" href="{% url 'configuracion:proceso-list' %}">
+                                <a class="nav-link" href="{% url 'configuracion_web:proceso-list' %}">
                                     Procesos
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" href="{% url 'configuracion:maquina-list' %}">
+                                <a class="nav-link" href="{% url 'configuracion_web:maquina-list' %}">
                                     Máquinas
                                 </a>
                             </li>

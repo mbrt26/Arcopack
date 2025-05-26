@@ -1,0 +1,385 @@
+<!-- pedidos/templates/pedidos/pedido_detail.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Pedido {{ pedido.numero_pedido }} - ARCOPACK{% endblock %}
+
+{% block extra_css %}
+<style>
+    .estado-badge {
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: bold;
+        color: white;
+    }
+    .estado-BORRADOR { background-color: #6c757d; }
+    .estado-CONFIRMADO { background-color: #007bff; }
+    .estado-EN_PRODUCCION { background-color: #ffc107; color: #000; }
+    .estado-PRODUCIDO { background-color: #28a745; }
+    .estado-PENDIENTE_FACTURAR { background-color: #fd7e14; }
+    .estado-FACTURADO { background-color: #20c997; }
+    .estado-ENTREGADO { background-color: #198754; }
+    .estado-CANCELADO { background-color: #dc3545; }
+    .info-card {
+        background: #f8f9fa;
+        border-left: 4px solid #007bff;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+    .timeline-item {
+        border-left: 2px solid #dee2e6;
+        padding-left: 15px;
+        margin-bottom: 15px;
+        position: relative;
+    }
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: -6px;
+        top: 5px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #007bff;
+    }
+    .progress-custom {
+        height: 25px;
+        border-radius: 12px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Encabezado -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3">Pedido {{ pedido.numero_pedido }}</h1>
+                    <p class="text-muted">Cliente: {{ pedido.cliente.razon_social }}</p>
+                </div>
+                <div>
+                    <span class="estado-badge estado-{{ pedido.estado }}">{{ pedido.get_estado_display }}</span>
+                    {% if pedido.prioridad == 'URGENTE' %}
+                        <span class="badge bg-danger ms-2">URGENTE</span>
+                    {% elif pedido.prioridad == 'ALTA' %}
+                        <span class="badge bg-warning ms-2">ALTA PRIORIDAD</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Información general del pedido -->
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5>Información General</h5>
+                    <a href="{% url 'admin:pedidos_pedido_change' pedido.pk %}" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-edit"></i> Editar
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Número de Pedido:</strong> {{ pedido.numero_pedido }}</p>
+                            <p><strong>Cliente:</strong> {{ pedido.cliente.razon_social }}</p>
+                            <p><strong>NIT Cliente:</strong> {{ pedido.cliente.nit }}</p>
+                            {% if pedido.pedido_cliente_referencia %}
+                                <p><strong>Ref. Cliente:</strong> {{ pedido.pedido_cliente_referencia }}</p>
+                            {% endif %}
+                            <p><strong>Estado:</strong> 
+                                <span class="estado-badge estado-{{ pedido.estado }}">{{ pedido.get_estado_display }}</span>
+                            </p>
+                            <p><strong>Prioridad:</strong> {{ pedido.get_prioridad_display }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Fecha Pedido:</strong> {{ pedido.fecha_pedido|date:"d/m/Y" }}</p>
+                            <p><strong>Fecha Compromiso:</strong> {{ pedido.fecha_compromiso|date:"d/m/Y" }}</p>
+                            {% if pedido.fecha_entrega_estimada %}
+                                <p><strong>Entrega Estimada:</strong> {{ pedido.fecha_entrega_estimada|date:"d/m/Y" }}</p>
+                            {% endif %}
+                            {% if pedido.fecha_entrega_real %}
+                                <p><strong>Entrega Real:</strong> {{ pedido.fecha_entrega_real|date:"d/m/Y" }}</p>
+                            {% endif %}
+                            <p><strong>Valor Total:</strong> <span class="h5 text-success">${{ pedido.valor_total|floatformat:2 }}</span></p>
+                            {% if pedido.condiciones_pago %}
+                                <p><strong>Condiciones Pago:</strong> {{ pedido.condiciones_pago }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    {% if pedido.observaciones %}
+                        <div class="mt-3">
+                            <strong>Observaciones:</strong>
+                            <p class="text-muted">{{ pedido.observaciones }}</p>
+                        </div>
+                    {% endif %}
+
+                    <!-- Información de facturación -->
+                    {% if pedido.numero_factura or pedido.fecha_facturacion %}
+                        <div class="info-card">
+                            <h6>Información de Facturación</h6>
+                            {% if pedido.numero_factura %}
+                                <p><strong>Número Factura:</strong> {{ pedido.numero_factura }}</p>
+                            {% endif %}
+                            {% if pedido.fecha_facturacion %}
+                                <p><strong>Fecha Facturación:</strong> {{ pedido.fecha_facturacion|date:"d/m/Y" }}</p>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Líneas del pedido -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5>Líneas del Pedido</h5>
+                </div>
+                <div class="card-body">
+                    {% if pedido.lineas.all %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Orden</th>
+                                        <th>Producto</th>
+                                        <th>Cantidad</th>
+                                        <th>Precio Unit.</th>
+                                        <th>Descuento</th>
+                                        <th>Subtotal</th>
+                                        <th>Producido</th>
+                                        <th>% Completado</th>
+                                        <th>Tiene OP</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for resumen in resumen_lineas %}
+                                        {% with linea=resumen.linea %}
+                                            <tr>
+                                                <td>{{ linea.orden_linea }}</td>
+                                                <td>
+                                                    <strong>{{ linea.producto.codigo }}</strong><br>
+                                                    <small class="text-muted">{{ linea.producto.nombre }}</small>
+                                                </td>
+                                                <td>{{ linea.cantidad }} {{ linea.producto.unidad_medida.codigo }}</td>
+                                                <td>${{ linea.precio_unitario|floatformat:2 }}</td>
+                                                <td>{{ linea.descuento_porcentaje }}%</td>
+                                                <td><strong>${{ linea.subtotal|floatformat:2 }}</strong></td>
+                                                <td>{{ linea.cantidad_producida|default:0 }} {{ linea.producto.unidad_medida.codigo }}</td>
+                                                <td>
+                                                    <div class="progress progress-custom">
+                                                        {% with porcentaje=linea.porcentaje_completado %}
+                                                            <div class="progress-bar 
+                                                                {% if porcentaje >= 100 %}bg-success
+                                                                {% elif porcentaje >= 50 %}bg-warning
+                                                                {% else %}bg-danger{% endif %}" 
+                                                                style="width: {{ porcentaje }}%">
+                                                                {{ porcentaje|floatformat:0 }}%
+                                                            </div>
+                                                        {% endwith %}
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    {% if resumen.tiene_orden %}
+                                                        <span class="badge bg-success">Sí</span>
+                                                        <small class="d-block text-muted">
+                                                            {{ resumen.ordenes.count }} orden(es)
+                                                        </small>
+                                                    {% else %}
+                                                        <span class="badge bg-warning">No</span>
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                            {% if linea.especificaciones_tecnicas %}
+                                                <tr>
+                                                    <td colspan="9">
+                                                        <small class="text-muted">
+                                                            <strong>Especificaciones:</strong> {{ linea.especificaciones_tecnicas }}
+                                                        </small>
+                                                    </td>
+                                                </tr>
+                                            {% endif %}
+                                        {% endwith %}
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No hay líneas definidas para este pedido.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Órdenes de producción asociadas -->
+            {% if ordenes_produccion %}
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5>Órdenes de Producción Asociadas</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Número OP</th>
+                                        <th>Producto</th>
+                                        <th>Cantidad</th>
+                                        <th>Estado</th>
+                                        <th>Fecha Compromiso</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for orden in ordenes_produccion %}
+                                        <tr>
+                                            <td>
+                                                <a href="{% url 'admin:produccion_ordenproduccion_change' orden.pk %}" class="text-decoration-none">
+                                                    {{ orden.op_numero }}
+                                                </a>
+                                            </td>
+                                            <td>{{ orden.producto.codigo }}</td>
+                                            <td>{{ orden.cantidad_solicitada_kg }} Kg</td>
+                                            <td>
+                                                <span class="badge bg-info">{{ orden.get_estado_display }}</span>
+                                            </td>
+                                            <td>{{ orden.fecha_compromiso_entrega|date:"d/m/Y" }}</td>
+                                            <td>
+                                                <a href="{% url 'admin:produccion_ordenproduccion_change' orden.pk %}" 
+                                                   class="btn btn-sm btn-outline-primary">Ver OP</a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Panel lateral -->
+        <div class="col-md-4">
+            <!-- Progreso general -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5>Progreso General</h5>
+                </div>
+                <div class="card-body text-center">
+                    <div class="progress progress-custom mb-3">
+                        {% with porcentaje=pedido.porcentaje_completado %}
+                            <div class="progress-bar 
+                                {% if porcentaje >= 100 %}bg-success
+                                {% elif porcentaje >= 50 %}bg-warning
+                                {% else %}bg-danger{% endif %}" 
+                                style="width: {{ porcentaje }}%">
+                                {{ porcentaje|floatformat:1 }}%
+                            </div>
+                        {% endwith %}
+                    </div>
+                    <p class="text-muted">Progreso de producción</p>
+                </div>
+            </div>
+
+            <!-- Acciones rápidas -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5>Acciones</h5>
+                </div>
+                <div class="card-body">
+                    {% if not pedido.tiene_orden_produccion and pedido.estado in 'CONFIRMADO,EN_PRODUCCION' %}
+                        <a href="{% url 'pedidos:crear-orden-produccion' pedido.pk %}" class="btn btn-success btn-sm w-100 mb-2">
+                            <i class="fas fa-cogs"></i> Crear Orden de Producción
+                        </a>
+                    {% endif %}
+                    
+                    <!-- Formulario para cambiar estado -->
+                    <form method="post" action="{% url 'pedidos:cambiar-estado' pedido.pk %}">
+                        {% csrf_token %}
+                        <div class="mb-2">
+                            <label class="form-label">Cambiar Estado:</label>
+                            <select name="nuevo_estado" class="form-select form-select-sm">
+                                {% for estado, nombre in pedido.ESTADO_CHOICES %}
+                                    <option value="{{ estado }}" {% if estado == pedido.estado %}selected{% endif %}>
+                                        {{ nombre }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        {% if pedido.estado == 'PRODUCIDO' %}
+                            <div class="mb-2">
+                                <label class="form-label">Número Factura:</label>
+                                <input type="text" name="numero_factura" class="form-control form-control-sm" 
+                                       value="{{ pedido.numero_factura }}">
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label">Fecha Facturación:</label>
+                                <input type="date" name="fecha_facturacion" class="form-control form-control-sm" 
+                                       value="{{ pedido.fecha_facturacion|date:'Y-m-d' }}">
+                            </div>
+                        {% endif %}
+                        
+                        <div class="mb-2">
+                            <label class="form-label">Observaciones:</label>
+                            <textarea name="observaciones" class="form-control form-control-sm" rows="2" 
+                                      placeholder="Comentarios sobre el cambio de estado..."></textarea>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary btn-sm w-100">
+                            <i class="fas fa-save"></i> Actualizar Estado
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Seguimiento de cambios -->
+            <div class="card">
+                <div class="card-header">
+                    <h5>Historial de Cambios</h5>
+                </div>
+                <div class="card-body">
+                    {% if seguimientos %}
+                        {% for seguimiento in seguimientos %}
+                            <div class="timeline-item">
+                                <div class="d-flex justify-content-between">
+                                    <small class="text-muted">{{ seguimiento.fecha_cambio|date:"d/m/Y H:i" }}</small>
+                                </div>
+                                <p class="mb-1">
+                                    <strong>{{ seguimiento.estado_anterior }}</strong> → 
+                                    <strong>{{ seguimiento.estado_nuevo }}</strong>
+                                </p>
+                                {% if seguimiento.observaciones %}
+                                    <small class="text-muted">{{ seguimiento.observaciones }}</small>
+                                {% endif %}
+                                <div class="mt-1">
+                                    <small class="text-muted">Por: {{ seguimiento.usuario.username }}</small>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted">No hay cambios registrados.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Mostrar/ocultar campos según el estado seleccionado
+    document.querySelector('select[name="nuevo_estado"]').addEventListener('change', function() {
+        const facturaFields = document.querySelectorAll('input[name="numero_factura"], input[name="fecha_facturacion"]');
+        if (this.value === 'FACTURADO') {
+            facturaFields.forEach(field => field.closest('.mb-2').style.display = 'block');
+        } else {
+            facturaFields.forEach(field => field.closest('.mb-2').style.display = 'none');
+        }
+    });
+</script>
+{% endblock %}

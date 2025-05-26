@@ -1,0 +1,1 @@
+# pedidos/__init__.py

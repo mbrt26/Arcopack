@@ -7,7 +7,7 @@ Uso: {% include "produccion/components/_orden_card.html" with orden=orden %}
 <div class="card orden-card mb-3">
     <div class="card-header d-flex justify-content-between align-items-center">
         <h5 class="card-title mb-0">
-            <a href="{% url 'produccion:produccion_orden_detail' orden.pk %}" class="text-decoration-none">
+            <a href="{% url 'produccion_web:produccion_orden_detail' orden.pk %}" class="text-decoration-none">
                 {{ orden.op_numero }}
             </a>
         </h5>

@@ -1,0 +1,343 @@
+<!-- pedidos/templates/pedidos/detalle.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Pedido {{ pedido.numero_pedido }} - ARCOPACK{% endblock %}
+
+{% block extra_css %}
+<link href="{% static 'pedidos/css/pedidos.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title">
+                        <i class="fas fa-file-alt"></i>
+                        Pedido {{ pedido.numero_pedido }}
+                    </h3>
+                    <div class="card-tools">
+                        <a href="{% url 'pedidos:lista' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Volver
+                        </a>
+                        <a href="{% url 'pedidos:editar' pedido.pk %}" class="btn btn-primary">
+                            <i class="fas fa-edit"></i> Editar
+                        </a>
+                        <a href="{% url 'pedidos:imprimir' pedido.pk %}" class="btn btn-info">
+                            <i class="fas fa-print"></i> Imprimir
+                        </a>
+                        <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#cambiarEstadoModal">
+                            <i class="fas fa-exchange-alt"></i> Cambiar Estado
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Información del pedido -->
+                        <div class="col-md-6">
+                            <div class="card card-outline card-primary">
+                                <div class="card-header">
+                                    <h5 class="card-title">Información del Pedido</h5>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table table-borderless">
+                                        <tr>
+                                            <td><strong>Número:</strong></td>
+                                            <td>{{ pedido.numero_pedido }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Estado:</strong></td>
+                                            <td>
+                                                <span class="badge badge-{{ pedido.estado|lower }} badge-lg">
+                                                    {{ pedido.get_estado_display }}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Prioridad:</strong></td>
+                                            <td>
+                                                <span class="badge badge-prioridad-{{ pedido.prioridad|lower }}">
+                                                    {{ pedido.get_prioridad_display }}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Fecha Pedido:</strong></td>
+                                            <td>{{ pedido.fecha_pedido|date:"d/m/Y" }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Fecha Compromiso:</strong></td>
+                                            <td>
+                                                {{ pedido.fecha_compromiso|date:"d/m/Y" }}
+                                                {% if pedido.es_vencido %}
+                                                    <span class="badge badge-danger ml-2">Vencido</span>
+                                                {% elif pedido.es_proximo_vencer %}
+                                                    <span class="badge badge-warning ml-2">Próximo a vencer</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% if pedido.fecha_entrega_real %}
+                                        <tr>
+                                            <td><strong>Fecha Entrega:</strong></td>
+                                            <td>{{ pedido.fecha_entrega_real|date:"d/m/Y" }}</td>
+                                        </tr>
+                                        {% endif %}
+                                        <tr>
+                                            <td><strong>Ref. Cliente:</strong></td>
+                                            <td>{{ pedido.pedido_cliente_referencia|default:"-" }}</td>
+                                        </tr>
+                                        {% if pedido.numero_factura %}
+                                        <tr>
+                                            <td><strong>Número Factura:</strong></td>
+                                            <td>{{ pedido.numero_factura }}</td>
+                                        </tr>
+                                        {% endif %}
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Información del cliente -->
+                        <div class="col-md-6">
+                            <div class="card card-outline card-info">
+                                <div class="card-header">
+                                    <h5 class="card-title">Información del Cliente</h5>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table table-borderless">
+                                        <tr>
+                                            <td><strong>Razón Social:</strong></td>
+                                            <td>{{ pedido.cliente.razon_social }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>RUT:</strong></td>
+                                            <td>{{ pedido.cliente.rut }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Dirección:</strong></td>
+                                            <td>{{ pedido.cliente.direccion|default:"-" }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Teléfono:</strong></td>
+                                            <td>{{ pedido.cliente.telefono|default:"-" }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Email:</strong></td>
+                                            <td>{{ pedido.cliente.email|default:"-" }}</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Progreso del pedido -->
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <div class="card card-outline card-success">
+                                <div class="card-header">
+                                    <h5 class="card-title">Progreso del Pedido</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="progress progress-lg mb-2">
+                                        <div class="progress-bar bg-success" role="progressbar" 
+                                             style="width: {{ pedido.porcentaje_completado }}%"
+                                             aria-valuenow="{{ pedido.porcentaje_completado }}" 
+                                             aria-valuemin="0" aria-valuemax="100">
+                                            {{ pedido.porcentaje_completado|floatformat:1 }}%
+                                        </div>
+                                    </div>
+                                    <small class="text-muted">
+                                        Progreso calculado basado en el estado del pedido y sus líneas
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Líneas del pedido -->
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <div class="card card-outline card-warning">
+                                <div class="card-header">
+                                    <h5 class="card-title">Productos del Pedido</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered">
+                                            <thead>
+                                                <tr>
+                                                    <th>Producto</th>
+                                                    <th>Cantidad</th>
+                                                    <th>Precio Unitario</th>
+                                                    <th>Subtotal</th>
+                                                    <th>Estado</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for linea in pedido.lineas.all %}
+                                                <tr>
+                                                    <td>
+                                                        <strong>{{ linea.producto.nombre }}</strong><br>
+                                                        <small class="text-muted">{{ linea.producto.codigo }}</small>
+                                                    </td>
+                                                    <td>{{ linea.cantidad }} {{ linea.producto.unidad_medida }}</td>
+                                                    <td>${{ linea.precio_unitario|floatformat:2 }}</td>
+                                                    <td>${{ linea.subtotal|floatformat:2 }}</td>
+                                                    <td>
+                                                        <span class="badge badge-{{ linea.estado|lower }}">
+                                                            {{ linea.get_estado_display }}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                                {% empty %}
+                                                <tr>
+                                                    <td colspan="5" class="text-center">No hay productos en este pedido</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                            <tfoot>
+                                                <tr class="font-weight-bold">
+                                                    <td colspan="3" class="text-right">Total:</td>
+                                                    <td>${{ pedido.valor_total|floatformat:2 }}</td>
+                                                    <td></td>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Seguimiento del pedido -->
+                    {% if pedido.seguimientos.exists %}
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <div class="card card-outline card-secondary">
+                                <div class="card-header">
+                                    <h5 class="card-title">Historial de Seguimiento</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="timeline">
+                                        {% for seguimiento in pedido.seguimientos.all %}
+                                        <div class="time-label">
+                                            <span class="bg-info">{{ seguimiento.fecha_cambio|date:"d/m/Y H:i" }}</span>
+                                        </div>
+                                        <div>
+                                            <i class="fas fa-exchange-alt bg-blue"></i>
+                                            <div class="timeline-item">
+                                                <span class="time">
+                                                    <i class="fas fa-clock"></i> {{ seguimiento.fecha_cambio|timesince }} ago
+                                                </span>
+                                                <h3 class="timeline-header">
+                                                    <strong>{{ seguimiento.usuario.get_full_name|default:seguimiento.usuario.username }}</strong>
+                                                    cambió el estado de 
+                                                    <span class="badge badge-secondary">{{ seguimiento.get_estado_anterior_display }}</span>
+                                                    a 
+                                                    <span class="badge badge-primary">{{ seguimiento.get_estado_nuevo_display }}</span>
+                                                </h3>
+                                                {% if seguimiento.observaciones %}
+                                                <div class="timeline-body">
+                                                    {{ seguimiento.observaciones }}
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Observaciones -->
+                    {% if pedido.observaciones %}
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <div class="card card-outline card-dark">
+                                <div class="card-header">
+                                    <h5 class="card-title">Observaciones</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p>{{ pedido.observaciones|linebreaks }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para cambiar estado -->
+<div class="modal fade" id="cambiarEstadoModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Cambiar Estado del Pedido</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <form method="post" action="{% url 'pedidos:cambiar_estado' pedido.pk %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="nuevo_estado">Nuevo Estado:</label>
+                        <select name="nuevo_estado" id="nuevo_estado" class="form-control" required>
+                            <option value="">Seleccione un estado</option>
+                            {% for codigo, nombre in estados_disponibles %}
+                            <option value="{{ codigo }}">{{ nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="form-group" id="numero_factura_group" style="display: none;">
+                        <label for="numero_factura">Número de Factura:</label>
+                        <input type="text" name="numero_factura" id="numero_factura" class="form-control">
+                    </div>
+                    
+                    <div class="form-group" id="fecha_facturacion_group" style="display: none;">
+                        <label for="fecha_facturacion">Fecha de Facturación:</label>
+                        <input type="date" name="fecha_facturacion" id="fecha_facturacion" class="form-control">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="observaciones">Observaciones:</label>
+                        <textarea name="observaciones" id="observaciones" class="form-control" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Cambiar Estado</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'pedidos/js/pedidos.js' %}"></script>
+<script>
+$(document).ready(function() {
+    $('#nuevo_estado').change(function() {
+        var estado = $(this).val();
+        if (estado === 'FACTURADO') {
+            $('#numero_factura_group, #fecha_facturacion_group').show();
+            $('#numero_factura, #fecha_facturacion').attr('required', true);
+        } else {
+            $('#numero_factura_group, #fecha_facturacion_group').hide();
+            $('#numero_factura, #fecha_facturacion').attr('required', false);
+        }
+    });
+});
+</script>
+{% endblock %}

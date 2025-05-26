@@ -47,6 +47,7 @@ class OrdenProduccion(models.Model):
     fecha_real_inicio = models.DateField(null=True, blank=True, editable=False, verbose_name="Fecha Real Inicio Prod.")
     fecha_real_terminacion = models.DateField(null=True, blank=True, editable=False, verbose_name="Fecha Real Terminación Prod.")
     fecha_real_entrega = models.DateField(null=True, blank=True, editable=False, verbose_name="Fecha Real Entrega")
+    observaciones = models.TextField(blank=True, verbose_name="Observaciones", help_text="Información adicional relevante sobre la orden de producción")
     sustrato = models.ForeignKey('inventario.MateriaPrima', on_delete=models.PROTECT, verbose_name="Sustrato Principal")
     ancho_sustrato_mm = models.DecimalField(max_digits=8, decimal_places=2, validators=[MinValueValidator(Decimal('0.01'))], verbose_name="Ancho Sustrato (mm)")
     calibre_sustrato_um = models.DecimalField(max_digits=8, decimal_places=2, validators=[MinValueValidator(Decimal('0.0'))], verbose_name="Calibre Sustrato (µm)")
@@ -199,37 +200,78 @@ class ConsumoSustratoImpresion(models.Model):
                 raise ValidationError({
                     'lote_consumido': f'El lote debe ser del sustrato especificado en la OP ({op.sustrato})'
                 })
-        # Validar stock disponible
+        
+        # CORRECCIÓN: Validar stock disponible con tolerancia decimal
         if (
             self.lote_consumido_id and
             self.cantidad_kg_consumida is not None and
             hasattr(self.lote_consumido, 'cantidad_actual') and
-            self.lote_consumido.cantidad_actual is not None and
-            self.cantidad_kg_consumida > self.lote_consumido.cantidad_actual
-        ):  
-            raise ValidationError({
-                'cantidad_kg_consumida': f'Cantidad excede el stock disponible ({self.lote_consumido.cantidad_actual} Kg)'
-            })
+            self.lote_consumido.cantidad_actual is not None
+        ):
+            TOLERANCE = Decimal('0.0001')
+            diferencia = self.cantidad_kg_consumida - self.lote_consumido.cantidad_actual
+            
+            if diferencia > TOLERANCE:
+                raise ValidationError({
+                    'cantidad_kg_consumida': (
+                        f'Cantidad excede el stock disponible. '
+                        f'Disponible: {self.lote_consumido.cantidad_actual} Kg, '
+                        f'Solicitado: {self.cantidad_kg_consumida} Kg, '
+                        f'Exceso: {diferencia} Kg'
+                    )
+                })
+            elif diferencia > 0 and diferencia <= TOLERANCE:
+                # Ajustar automáticamente dentro de tolerancia
+                logger.warning(
+                    f"Ajustando automáticamente cantidad de {self.cantidad_kg_consumida} "
+                    f"a {self.lote_consumido.cantidad_actual} Kg para lote {self.lote_consumido.lote_id} "
+                    f"(diferencia: {diferencia} dentro de tolerancia)"
+                )
+                self.cantidad_kg_consumida = self.lote_consumido.cantidad_actual
 
     def save(self, *args, **kwargs): 
-        user = kwargs.pop('user', None); is_new = self.pk is None
-        if is_new and user: self.registrado_por = user
-        # No llamar a full_clean() aquí directamente si se llama desde save_formset
-        # self.full_clean()
-        consumo_realizado = False
-        if self.lote_consumido and self.cantidad_kg_consumida > 0:
-             # Solo consumir si es nuevo o si la cantidad/lote cambia? Necesita lógica más compleja o manejar en Vista.
-             # Por ahora, consumirá cada vez que se guarde con cantidad > 0 si no se controla externamente.
-             usuario_accion = user or self.registrado_por or User.objects.filter(is_superuser=True).first() # Fallback a superuser? Mejorar esto.
-             if not usuario_accion: raise ValueError("Usuario requerido para consumo.")
-             try:
-                 self.lote_consumido.consumir(cantidad_consumir=self.cantidad_kg_consumida, proceso_ref=self.registro_impresion, usuario=usuario_accion, observaciones=f"Consumo auto Reg.Consumo ID {self.id or 'nuevo'}")
-                 consumo_realizado = True
-             except (ValidationError, ValueError) as e: logger.error(f"ERROR (ConsumoSustratoImpresion.save): {e}"); raise e
+        user = kwargs.pop('user', None)
+        is_new = self.pk is None
+        
+        # CORRECCIÓN: Solo consumir automáticamente si es explícitamente solicitado
+        # y si no se ha consumido previamente
+        auto_consumir = kwargs.pop('auto_consumir', False)
+        
+        if is_new and user: 
+            self.registrado_por = user
+        
+        # Guardar el registro primero
         super().save(*args, **kwargs)
-        # ¿Qué pasa si el super().save() falla después de consumir? Transaction a nivel de vista es mejor.
-        logger.info(f"ConsumoSustratoImpresion guardado ID:{self.id}. Consumo realizado: {consumo_realizado}")
+        
+        # Solo consumir si se solicita explícitamente y es un registro nuevo
+        if auto_consumir and is_new and self.lote_consumido and self.cantidad_kg_consumida > 0:
+            usuario_accion = user or self.registrado_por or User.objects.filter(is_superuser=True).first()
+            if not usuario_accion: 
+                raise ValueError("Usuario requerido para consumo automático.")
+            try:
+                self.lote_consumido.consumir(
+                    cantidad_consumir=self.cantidad_kg_consumida, 
+                    proceso_ref=self.registro_impresion, 
+                    usuario=usuario_accion, 
+                    observaciones=f"Consumo auto Reg.Consumo ID {self.id}"
+                )
+            except (ValidationError, ValueError) as e: 
+                logger.error(f"ERROR (ConsumoSustratoImpresion.save): {e}")
+                raise e
+        
+        logger.info(f"ConsumoSustratoImpresion guardado ID:{self.id}. Auto-consumo: {auto_consumir and is_new}")
 
+    def consumir_lote_manual(self, usuario):
+        """Método explícito para consumir el lote asociado."""
+        if not self.lote_consumido or self.cantidad_kg_consumida <= 0:
+            raise ValueError("No hay lote o cantidad válida para consumir.")
+        
+        return self.lote_consumido.consumir(
+            cantidad_consumir=self.cantidad_kg_consumida,
+            proceso_ref=self.registro_impresion,
+            usuario=usuario,
+            observaciones=f"Consumo manual Reg.Consumo ID {self.id}"
+        )
 
     def __str__(self): return f"Consumo {self.cantidad_kg_consumida} Kg Lote {self.lote_consumido_id} en Impresión {self.registro_impresion_id}"
     class Meta: verbose_name = "Consumo Sustrato (Impresión)"; verbose_name_plural = "Consumos Sustrato (Impresión)"; unique_together = ('registro_impresion', 'lote_consumido')
@@ -358,7 +400,7 @@ class ConsumoMpRefilado(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self): return f"Consumo MP {self.cantidad_consumida} Lote {self.lote_consumido_id} en Refilado {self.registro_refilado_id}"
-    class Meta: verbose_name = "Consumo MP (Refilado)"; verbose_name_plural = "Consumos MP (Refilado)"; unique_together = ('registro_refilado', 'lote_consumido')
+    class Meta: verbose_name = "Consumo MP (Refilado)"; verbose_name_plural = "Consumos MP (Refilado)"
 
 
 # =============================================
@@ -467,7 +509,7 @@ class ConsumoMpSellado(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self): return f"Consumo MP {self.cantidad_consumida} Lote {self.lote_consumido_id} en Sellado {self.registro_sellado_id}"
-    class Meta: verbose_name = "Consumo MP (Sellado)"; verbose_name_plural = "Consumos MP (Sellado)"; unique_together = ('registro_sellado', 'lote_consumido')
+    class Meta: verbose_name = "Consumo MP (Sellado)"; verbose_name_plural = "Consumos MP (Sellado)"
 
 
 # =============================================
@@ -575,7 +617,7 @@ class ConsumoMpDoblado(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self): return f"Consumo MP {self.cantidad_consumida} Lote {self.lote_consumido_id} en Doblado {self.registro_doblado_id}"
-    class Meta: verbose_name = "Consumo MP (Doblado)"; verbose_name_plural = "Consumos MP (Doblado)"; unique_together = ('registro_doblado', 'lote_consumido')
+    class Meta: verbose_name = "Consumo MP (Doblado)"; verbose_name_plural = "Consumos MP (Doblado)"
 
 
 # --- SEÑALES (Opcional, si almacenas indicadores OEE en los modelos principales) ---

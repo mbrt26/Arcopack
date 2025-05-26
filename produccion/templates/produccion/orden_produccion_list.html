@@ -9,7 +9,7 @@
             <h2><i class="fas fa-industry"></i> Órdenes de Producción</h2>
         </div>
         <div class="col text-end">
-            <a href="{% url 'produccion:orden-produccion-create' %}" class="btn btn-primary">
+            <a href="{% url 'produccion_web:ordenproduccion-list' %}" class="btn btn-primary">
                 <i class="fas fa-plus"></i> Nueva Orden
             </a>
         </div>
@@ -53,7 +53,7 @@
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-search"></i> Filtrar
                     </button>
-                    <a href="{% url 'produccion:orden-produccion-list' %}" class="btn btn-secondary">
+                    <a href="{% url 'produccion_web:produccion_orden_list' %}" class="btn btn-secondary">
                         <i class="fas fa-undo"></i> Limpiar
                     </a>
                 </div>
@@ -114,12 +114,12 @@
                             </td>
                             <td>
                                 <div class="btn-group">
-                                    <a href="{% url 'produccion:orden-produccion-detail' orden.id %}" 
+                                    <a href="{% url 'produccion_web:produccion_orden_detail' orden.id %}" 
                                        class="btn btn-sm btn-info" title="Ver Detalle">
                                         <i class="fas fa-eye"></i>
                                     </a>
                                     {% if orden.estado == 'PENDIENTE' %}
-                                    <a href="{% url 'produccion:orden-produccion-update' orden.id %}" 
+                                    <a href="{% url 'produccion_web:produccion_orden_update' orden.id %}" 
                                        class="btn btn-sm btn-warning" title="Editar">
                                         <i class="fas fa-edit"></i>
                                     </a>
@@ -138,7 +138,7 @@
                                                 <h5 class="modal-title">Cancelar Orden #{{ orden.numero }}</h5>
                                                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                             </div>
-                                            <form method="post" action="{% url 'produccion:orden-produccion-cancel' orden.id %}">
+                                            <form method="post" action="{% url 'produccion_web:anular_orden' orden.id %}">
                                                 {% csrf_token %}
                                                 <div class="modal-body">
                                                     <p>¿Está seguro que desea cancelar esta orden de producción?</p>

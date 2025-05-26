@@ -229,7 +229,7 @@
                 <h5 class="modal-title">Cancelar Orden #{{ orden.numero }}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form method="post" action="{% url 'produccion:orden-produccion-cancel' orden.id %}">
+            <form method="post" action="{% url 'produccion_web:anular_orden' orden.id %}">
                 {% csrf_token %}
                 <div class="modal-body">
                     <p>¿Está seguro que desea cancelar esta orden de producción?</p>

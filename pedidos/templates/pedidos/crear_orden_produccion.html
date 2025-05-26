@@ -1,0 +1,321 @@
+<!-- pedidos/templates/pedidos/crear_orden_produccion.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Crear Orden de Producción - Pedido {{ pedido.numero_pedido }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .linea-card {
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        transition: all 0.3s ease;
+    }
+    .linea-card:hover {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .linea-card.selected {
+        border-color: #007bff;
+        background-color: #f8f9fa;
+    }
+    .cantidad-input {
+        width: 120px;
+    }
+    .alert-info {
+        background-color: #e7f3ff;
+        border-color: #b8daff;
+        color: #004085;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3">Crear Orden de Producción</h1>
+                    <p class="text-muted">Pedido: {{ pedido.numero_pedido }} - {{ pedido.cliente.razon_social }}</p>
+                </div>
+                <div>
+                    <a href="{% url 'pedidos:pedido_detail' pedido.pk %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Volver al Pedido
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <form method="post" id="crear-op-form">
+        {% csrf_token %}
+        
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Seleccionar Líneas del Pedido</h5>
+                        <p class="text-muted mb-0">Seleccione las líneas para las cuales desea crear órdenes de producción</p>
+                    </div>
+                    <div class="card-body">
+                        {% if lineas_disponibles %}
+                            {% for linea in lineas_disponibles %}
+                                <div class="linea-card p-3" data-linea-id="{{ linea.id }}">
+                                    <div class="row align-items-center">
+                                        <div class="col-md-1">
+                                            <div class="form-check">
+                                                <input class="form-check-input linea-checkbox" type="checkbox" 
+                                                       name="lineas_seleccionadas" value="{{ linea.id }}" 
+                                                       id="linea_{{ linea.id }}">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <h6 class="mb-1">{{ linea.producto.codigo }}</h6>
+                                            <small class="text-muted">{{ linea.producto.nombre }}</small>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <strong>Cantidad Pedida:</strong><br>
+                                            {{ linea.cantidad }} {{ linea.producto.unidad_medida.codigo }}
+                                        </div>
+                                        <div class="col-md-2">
+                                            <strong>Pendiente:</strong><br>
+                                            {{ linea.cantidad_pendiente }} {{ linea.producto.unidad_medida.codigo }}
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label">Cantidad a Producir:</label>
+                                            <div class="input-group input-group-sm">
+                                                <input type="number" class="form-control cantidad-input" 
+                                                       name="cantidad_{{ linea.id }}" 
+                                                       value="{{ linea.cantidad_pendiente }}" 
+                                                       max="{{ linea.cantidad_pendiente }}" 
+                                                       min="1" step="0.01" disabled>
+                                                <span class="input-group-text">{{ linea.producto.unidad_medida.codigo }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    {% if linea.especificaciones_tecnicas %}
+                                        <div class="row mt-2">
+                                            <div class="col-12">
+                                                <small class="text-muted">
+                                                    <strong>Especificaciones:</strong> {{ linea.especificaciones_tecnicas }}
+                                                </small>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="alert alert-info">
+                                <h5>No hay líneas disponibles</h5>
+                                <p class="mb-0">Todas las líneas de este pedido ya tienen órdenes de producción asociadas o están completamente producidas.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Configuración de la Orden</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">Fecha Compromiso de Entrega</label>
+                            <input type="date" name="fecha_compromiso" class="form-control" 
+                                   value="{{ pedido.fecha_compromiso|date:'Y-m-d' }}" required>
+                            <small class="text-muted">Fecha original del pedido: {{ pedido.fecha_compromiso|date:"d/m/Y" }}</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Prioridad</label>
+                            <select name="prioridad" class="form-select" required>
+                                <option value="NORMAL" {% if pedido.prioridad == 'NORMAL' %}selected{% endif %}>Normal</option>
+                                <option value="ALTA" {% if pedido.prioridad == 'ALTA' %}selected{% endif %}>Alta</option>
+                                <option value="URGENTE" {% if pedido.prioridad == 'URGENTE' %}selected{% endif %}>Urgente</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Observaciones</label>
+                            <textarea name="observaciones" class="form-control" rows="3" 
+                                      placeholder="Instrucciones especiales para producción...">Orden generada desde pedido {{ pedido.numero_pedido }}</textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Tipo de Orden</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="tipo_orden" value="individual" 
+                                       id="tipo_individual" checked>
+                                <label class="form-check-label" for="tipo_individual">
+                                    <strong>Órdenes Individuales</strong><br>
+                                    <small class="text-muted">Una orden por cada línea seleccionada</small>
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="tipo_orden" value="consolidada" 
+                                       id="tipo_consolidada">
+                                <label class="form-check-label" for="tipo_consolidada">
+                                    <strong>Orden Consolidada</strong><br>
+                                    <small class="text-muted">Una sola orden con múltiples productos (si es posible)</small>
+                                </label>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <div class="mb-3">
+                            <h6>Resumen</h6>
+                            <div id="resumen-seleccion">
+                                <p class="text-muted">Seleccione líneas para ver el resumen</p>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary" id="btn-crear-op" disabled>
+                                <i class="fas fa-cogs"></i> Crear Orden(es) de Producción
+                            </button>
+                            <a href="{% url 'pedidos:pedido-detail' pedido.pk %}" class="btn btn-secondary">
+                                Cancelar
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Información del pedido -->
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h6>Información del Pedido</h6>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Cliente:</strong> {{ pedido.cliente.razon_social }}</p>
+                        <p><strong>Fecha Pedido:</strong> {{ pedido.fecha_pedido|date:"d/m/Y" }}</p>
+                        <p><strong>Estado:</strong> {{ pedido.get_estado_display }}</p>
+                        <p><strong>Valor Total:</strong> ${{ pedido.valor_total|floatformat:2 }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const checkboxes = document.querySelectorAll('.linea-checkbox');
+    const btnCrearOP = document.getElementById('btn-crear-op');
+    const resumenDiv = document.getElementById('resumen-seleccion');
+
+    function actualizarEstado() {
+        const seleccionadas = document.querySelectorAll('.linea-checkbox:checked');
+        
+        // Habilitar/deshabilitar botón
+        btnCrearOP.disabled = seleccionadas.length === 0;
+        
+        // Actualizar cards visuales
+        document.querySelectorAll('.linea-card').forEach(card => {
+            const checkbox = card.querySelector('.linea-checkbox');
+            const cantidadInput = card.querySelector('.cantidad-input');
+            
+            if (checkbox.checked) {
+                card.classList.add('selected');
+                cantidadInput.disabled = false;
+            } else {
+                card.classList.remove('selected');
+                cantidadInput.disabled = true;
+            }
+        });
+        
+        // Actualizar resumen
+        if (seleccionadas.length > 0) {
+            let resumenHTML = `<strong>${seleccionadas.length} línea(s) seleccionada(s):</strong><ul class="list-unstyled mt-2">`;
+            
+            seleccionadas.forEach(checkbox => {
+                const card = checkbox.closest('.linea-card');
+                const producto = card.querySelector('h6').textContent;
+                const cantidadInput = card.querySelector('.cantidad-input');
+                const unidad = cantidadInput.nextElementSibling.textContent;
+                
+                resumenHTML += `<li><small>${producto}: ${cantidadInput.value} ${unidad}</small></li>`;
+            });
+            
+            resumenHTML += '</ul>';
+            resumenDiv.innerHTML = resumenHTML;
+        } else {
+            resumenDiv.innerHTML = '<p class="text-muted">Seleccione líneas para ver el resumen</p>';
+        }
+    }
+
+    // Event listeners
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', actualizarEstado);
+    });
+
+    // Event listeners para inputs de cantidad
+    document.querySelectorAll('.cantidad-input').forEach(input => {
+        input.addEventListener('input', actualizarEstado);
+    });
+
+    // Click en card para seleccionar
+    document.querySelectorAll('.linea-card').forEach(card => {
+        card.addEventListener('click', function(e) {
+            if (e.target.type !== 'checkbox' && e.target.type !== 'number') {
+                const checkbox = this.querySelector('.linea-checkbox');
+                checkbox.checked = !checkbox.checked;
+                actualizarEstado();
+            }
+        });
+    });
+
+    // Validación del formulario
+    document.getElementById('crear-op-form').addEventListener('submit', function(e) {
+        const seleccionadas = document.querySelectorAll('.linea-checkbox:checked');
+        
+        if (seleccionadas.length === 0) {
+            e.preventDefault();
+            alert('Debe seleccionar al menos una línea del pedido.');
+            return;
+        }
+
+        // Validar cantidades
+        let cantidadesValidas = true;
+        seleccionadas.forEach(checkbox => {
+            const card = checkbox.closest('.linea-card');
+            const cantidadInput = card.querySelector('.cantidad-input');
+            const cantidad = parseFloat(cantidadInput.value);
+            const max = parseFloat(cantidadInput.max);
+            
+            if (cantidad <= 0 || cantidad > max) {
+                cantidadesValidas = false;
+            }
+        });
+
+        if (!cantidadesValidas) {
+            e.preventDefault();
+            alert('Las cantidades deben ser mayores a 0 y no exceder la cantidad pendiente.');
+            return;
+        }
+
+        // Confirmación
+        if (!confirm(`¿Está seguro de crear ${seleccionadas.length} orden(es) de producción?`)) {
+            e.preventDefault();
+        }
+    });
+
+    // Inicializar estado
+    actualizarEstado();
+});
+</script>
+{% endblock %}

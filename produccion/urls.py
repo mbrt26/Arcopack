@@ -41,7 +41,8 @@ router.register(r'lotes-mp-disponibles', LoteMPDisponibleViewSet, basename='lote
 router.register(r'lotes-wip-disponibles', LoteWIPDisponibleViewSet, basename='lotes-wip-disponibles')
 
 # Nombre de la aplicación para namespacing (útil para reverse URL lookups)
-app_name = 'produccion'
+# Debe coincidir con el namespace usado en erp_config/urls.py
+app_name = 'produccion_web'
 
 # Las urlpatterns de esta app incluyen todas las URLs generadas por el router
 urlpatterns = [
