@@ -90,3 +90,43 @@ class ProductoTerminadoViewSet(viewsets.ModelViewSet):
     #    instance.save(user=request.user)
     #    serializer = self.get_serializer(instance)
     #    return Response(serializer.data)
+
+
+from django.views.generic import ListView, DetailView, CreateView, UpdateView
+from django.urls import reverse_lazy
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from .forms import ProductoTerminadoForm
+
+
+class ProductoListView(LoginRequiredMixin, ListView):
+    model = ProductoTerminado
+    template_name = 'productos/producto_list.html'
+    context_object_name = 'productos'
+    paginate_by = 20
+
+
+class ProductoDetailView(LoginRequiredMixin, DetailView):
+    model = ProductoTerminado
+    template_name = 'productos/producto_detail.html'
+    context_object_name = 'producto'
+
+
+class ProductoCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
+    model = ProductoTerminado
+    form_class = ProductoTerminadoForm
+    template_name = 'productos/producto_form.html'
+    permission_required = 'productos.add_productoterminado'
+
+    def get_success_url(self):
+        return reverse_lazy('productos_web:producto-detail', kwargs={'pk': self.object.pk})
+
+
+class ProductoUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+    model = ProductoTerminado
+    form_class = ProductoTerminadoForm
+    template_name = 'productos/producto_form.html'
+    permission_required = 'productos.change_productoterminado'
+
+    def get_success_url(self):
+        return reverse_lazy('productos_web:producto-detail', kwargs={'pk': self.object.pk})
+

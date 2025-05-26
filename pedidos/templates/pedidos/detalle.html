@@ -28,7 +28,7 @@
                         <a href="{% url 'pedidos:imprimir' pedido.pk %}" class="btn btn-info">
                             <i class="fas fa-print"></i> Imprimir
                         </a>
-                        <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#cambiarEstadoModal">
+                        <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#cambiarEstadoModal">
                             <i class="fas fa-exchange-alt"></i> Cambiar Estado
                         </button>
                     </div>
@@ -51,7 +51,7 @@
                                         <tr>
                                             <td><strong>Estado:</strong></td>
                                             <td>
-                                                <span class="badge badge-{{ pedido.estado|lower }} badge-lg">
+                                                <span class="badge bg-{{ pedido.estado|lower }} badge-lg">
                                                     {{ pedido.get_estado_display }}
                                                 </span>
                                             </td>
@@ -59,7 +59,7 @@
                                         <tr>
                                             <td><strong>Prioridad:</strong></td>
                                             <td>
-                                                <span class="badge badge-prioridad-{{ pedido.prioridad|lower }}">
+                                                <span class="badge bg-prioridad-{{ pedido.prioridad|lower }}">
                                                     {{ pedido.get_prioridad_display }}
                                                 </span>
                                             </td>
@@ -73,9 +73,9 @@
                                             <td>
                                                 {{ pedido.fecha_compromiso|date:"d/m/Y" }}
                                                 {% if pedido.es_vencido %}
-                                                    <span class="badge badge-danger ml-2">Vencido</span>
+                                                    <span class="badge bg-danger ms-2">Vencido</span>
                                                 {% elif pedido.es_proximo_vencer %}
-                                                    <span class="badge badge-warning ml-2">Próximo a vencer</span>
+                                                    <span class="badge bg-warning ms-2">Próximo a vencer</span>
                                                 {% endif %}
                                             </td>
                                         </tr>
@@ -188,7 +188,7 @@
                                                     <td>${{ linea.precio_unitario|floatformat:2 }}</td>
                                                     <td>${{ linea.subtotal|floatformat:2 }}</td>
                                                     <td>
-                                                        <span class="badge badge-{{ linea.estado|lower }}">
+                                                        <span class="badge bg-{{ linea.estado|lower }}">
                                                             {{ linea.get_estado_display }}
                                                         </span>
                                                     </td>
@@ -236,9 +236,9 @@
                                                 <h3 class="timeline-header">
                                                     <strong>{{ seguimiento.usuario.get_full_name|default:seguimiento.usuario.username }}</strong>
                                                     cambió el estado de 
-                                                    <span class="badge badge-secondary">{{ seguimiento.get_estado_anterior_display }}</span>
+                                                    <span class="badge bg-secondary">{{ seguimiento.get_estado_anterior_display }}</span>
                                                     a 
-                                                    <span class="badge badge-primary">{{ seguimiento.get_estado_nuevo_display }}</span>
+                                                    <span class="badge bg-primary">{{ seguimiento.get_estado_nuevo_display }}</span>
                                                 </h3>
                                                 {% if seguimiento.observaciones %}
                                                 <div class="timeline-body">

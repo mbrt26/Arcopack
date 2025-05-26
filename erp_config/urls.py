@@ -2,6 +2,7 @@
 
 from django.contrib import admin
 from django.urls import path, include
+from productos.urls import api_urlpatterns as productos_api_urls
 from django.shortcuts import redirect
 from django.contrib.auth import views as auth_views
 
@@ -44,8 +45,9 @@ urlpatterns = [
     ], 'users'))),
 
     # --- Rutas para la API v1 ---
-    path('api/v1/', include(('productos.urls', 'api_productos'))),
+    path('api/v1/', include((productos_api_urls, 'api_productos'))),
     path('api/v1/produccion/', include(('produccion.urls', 'api_produccion'))),
     path('api/v1/inventario/', include(('inventario.urls', 'api_inventario'))),
     path('api/v1/pedidos/', include(('pedidos.urls', 'api_pedidos'))),
 ]
+
