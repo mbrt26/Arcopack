@@ -15,12 +15,12 @@
             <h6 class="m-0 font-weight-bold text-primary">Filtros</h6>
         </div>
         <div class="card-body">
-            <form method="get" class="form-inline">
-                <div class="form-group mr-2 mb-2">
+            <form method="get" class="row row-cols-lg-auto g-2 align-items-center">
+                <div class="form-group me-2 mb-2">
                     <input type="text" class="form-control" name="q" value="{{ search_query|default:'' }}" 
                            placeholder="Buscar por ID, código o nombre...">
                 </div>
-                <div class="form-group mr-2 mb-2">
+                <div class="form-group me-2 mb-2">
                     <select class="form-control" name="estado">
                         <option value="">Todos los estados</option>
                         {% for estado in estados_lote %}
@@ -33,7 +33,7 @@
                 <button type="submit" class="btn btn-primary mb-2">
                     <i class="fas fa-search"></i> Buscar
                 </button>
-                <a href="{% url 'inventario_web:lote-list' %}" class="btn btn-secondary mb-2 ml-2">
+                <a href="{% url 'inventario_web:lote-list' %}" class="btn btn-secondary mb-2 ms-2">
                     <i class="fas fa-sync-alt"></i> Limpiar
                 </a>
             </form>
@@ -43,7 +43,7 @@
     <!-- Pestañas -->
     <ul class="nav nav-tabs mb-4" id="loteTabs" role="tablist">
         <li class="nav-item">
-            <a class="nav-link active" id="mp-tab" data-toggle="tab" href="#mp" role="tab" aria-controls="mp" aria-selected="true">
+            <a class="nav-link active" id="mp-tab" data-bs-toggle="tab" href="#mp" role="tab" aria-controls="mp" aria-selected="true">
                 Materia Prima
             </a>
         </li>
@@ -143,7 +143,7 @@
 <script>
     $(document).ready(function() {
         // Inicializar tooltips
-        $('[data-toggle="tooltip"]').tooltip();
+        $('[data-bs-toggle="tooltip"]').tooltip();
         
         // Inicializar DataTables
         if ($.fn.DataTable.isDataTable('#dataTableMp')) {
