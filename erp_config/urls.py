@@ -4,6 +4,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.shortcuts import redirect
 from django.contrib.auth import views as auth_views
+from productos.urls import api_urlpatterns as productos_api_urls
 
 def redirect_to_production(request):
     return redirect('produccion_web:produccion_orden_list')
@@ -44,7 +45,7 @@ urlpatterns = [
     ], 'users'))),
 
     # --- Rutas para la API v1 ---
-    path('api/v1/', include(('productos.urls', 'api_productos'))),
+    path('api/v1/', include((productos_api_urls, 'api_productos'))),
     path('api/v1/produccion/', include(('produccion.urls', 'api_produccion'))),
     path('api/v1/inventario/', include(('inventario.urls', 'api_inventario'))),
     path('api/v1/pedidos/', include(('pedidos.urls', 'api_pedidos'))),
