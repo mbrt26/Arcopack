@@ -113,7 +113,7 @@
                 <label class="form-label">&nbsp;</label>
                 <div class="d-flex gap-2">
                     <button type="submit" class="btn btn-primary">Filtrar</button>
-                    <a href="{% url 'pedidos:pedido-list' %}" class="btn btn-secondary">Limpiar</a>
+                    <a href="{% url 'pedidos_web:pedido-list' %}" class="btn btn-secondary">Limpiar</a>
                 </div>
             </div>
         </form>
@@ -178,7 +178,7 @@
                             {% for pedido in pedidos %}
                                 <tr>
                                     <td>
-                                        <a href="{% url 'pedidos:pedido-detail' pedido.pk %}" class="text-decoration-none">
+                                        <a href="{% url 'pedidos_web:pedido-detail' pedido.pk %}" class="text-decoration-none">
                                             <strong>{{ pedido.numero_pedido }}</strong>
                                         </a>
                                         {% if pedido.prioridad == 'URGENTE' %}
@@ -231,12 +231,12 @@
                                     </td>
                                     <td>
                                         <div class="btn-group" role="group">
-                                            <a href="{% url 'pedidos:pedido-detail' pedido.pk %}" 
+                                            <a href="{% url 'pedidos_web:pedido-detail' pedido.pk %}" 
                                                class="btn btn-sm btn-outline-primary" title="Ver detalle">
                                                 <i class="fas fa-eye"></i>
                                             </a>
                                             {% if not pedido.tiene_orden_produccion and pedido.estado in 'CONFIRMADO,EN_PRODUCCION' %}
-                                                <a href="{% url 'pedidos:crear-orden-produccion' pedido.pk %}" 
+                                                <a href="{% url 'pedidos_web:crear-orden-produccion' pedido.pk %}" 
                                                    class="btn btn-sm btn-outline-success" title="Crear OP">
                                                     <i class="fas fa-cogs"></i>
                                                 </a>

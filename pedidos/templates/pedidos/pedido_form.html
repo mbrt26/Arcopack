@@ -73,11 +73,11 @@
                     </p>
                 </div>
                 <div>
-                    <a href="{% url 'pedidos:lista' %}" class="btn btn-outline-secondary">
+                    <a href="{% url 'pedidos_web:lista' %}" class="btn btn-outline-secondary">
                         <i class="fas fa-arrow-left"></i> Volver a Lista
                     </a>
                     {% if not es_nuevo %}
-                        <a href="{% url 'pedidos:detalle' object.pk %}" class="btn btn-outline-info">
+                        <a href="{% url 'pedidos_web:detalle' object.pk %}" class="btn btn-outline-info">
                             <i class="fas fa-eye"></i> Ver Detalle
                         </a>
                     {% endif %}
@@ -282,12 +282,12 @@
                             </button>
                             
                             {% if object and object.estado == 'CONFIRMADO' %}
-                                <a href="{% url 'pedidos:crear-orden-produccion' object.pk %}" class="btn btn-success">
+                                <a href="{% url 'pedidos_web:crear-orden-produccion' object.pk %}" class="btn btn-success">
                                     <i class="fas fa-cogs"></i> Crear Orden de Producción
                                 </a>
                             {% endif %}
                             
-                            <a href="{% url 'pedidos:pedido-list' %}" class="btn btn-secondary">
+                            <a href="{% url 'pedidos_web:pedido-list' %}" class="btn btn-secondary">
                                 Cancelar
                             </a>
                         </div>

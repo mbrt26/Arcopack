@@ -291,13 +291,13 @@
                 </div>
                 <div class="card-body">
                     {% if not pedido.tiene_orden_produccion and pedido.estado in 'CONFIRMADO,EN_PRODUCCION' %}
-                        <a href="{% url 'pedidos:crear-orden-produccion' pedido.pk %}" class="btn btn-success btn-sm w-100 mb-2">
+                        <a href="{% url 'pedidos_web:crear-orden-produccion' pedido.pk %}" class="btn btn-success btn-sm w-100 mb-2">
                             <i class="fas fa-cogs"></i> Crear Orden de Producción
                         </a>
                     {% endif %}
                     
                     <!-- Formulario para cambiar estado -->
-                    <form method="post" action="{% url 'pedidos:cambiar-estado' pedido.pk %}">
+                    <form method="post" action="{% url 'pedidos_web:cambiar-estado' pedido.pk %}">
                         {% csrf_token %}
                         <div class="mb-2">
                             <label class="form-label">Cambiar Estado:</label>
