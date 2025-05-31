@@ -9,7 +9,7 @@
             <h2><i class="fas fa-ruler"></i> Unidades de Medida</h2>
         </div>
         <div class="col text-end">
-            <a href="{% url 'configuracion:unidad-medida-create' %}" class="btn btn-primary">
+            <a href="{% url 'configuracion_web:unidad-medida-create' %}" class="btn btn-primary">
                 <i class="fas fa-plus"></i> Nueva Unidad
             </a>
         </div>
@@ -34,7 +34,7 @@
                             <td>{{ unidad.nombre }}</td>
                             <td>
                                 <div class="btn-group">
-                                    <a href="{% url 'configuracion:unidad-medida-update' unidad.pk %}" 
+                                    <a href="{% url 'configuracion_web:unidad-medida-update' unidad.pk %}" 
                                        class="btn btn-sm btn-warning" title="Editar">
                                         <i class="fas fa-edit"></i>
                                     </a>

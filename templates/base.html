@@ -46,7 +46,7 @@
         /* Main content */
         .main-content {
             margin-left: 240px;
-            padding: 2rem;
+            padding: 4rem 2rem 2rem 2rem;  /* Aumentado el padding-top a 4rem */
         }
 
         /* Cards */
@@ -201,7 +201,7 @@
                          id="submenuProduccion">
                         <ul class="nav flex-column ms-3">
                             <li class="nav-item">
-                                <a class="nav-link" href="{% url 'produccion_web:produccion_orden_list' %}">
+                                <a class="nav-link" href="{% url 'produccion_web:orden-produccion-list' %}">
                                     Órdenes de Producción
                                 </a>
                             </li>
@@ -257,7 +257,7 @@
                          id="submenuProductos">
                         <ul class="nav flex-column ms-3">
                             <li class="nav-item">
-                                <a class="nav-link" href="{% url 'productos_web:producto-list' %}">
+                                <a class="nav-link" href="{% url 'productos_web:producto_list' %}">
                                     Productos
                                 </a>
                             </li>

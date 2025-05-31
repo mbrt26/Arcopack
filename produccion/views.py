@@ -7,19 +7,31 @@ from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError as DRFValidationError
 from django.shortcuts import render, get_object_or_404
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, CreateView, UpdateView, ListView
 from django.db import models, transaction
 from django.db.models import Q, F, Case, When, Value, BooleanField
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.shortcuts import redirect
-from django.views.generic import ListView
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.urls import reverse_lazy, reverse
+from django.http import HttpResponseRedirect
 from configuracion.models import Proceso
 
 # Importar modelos de esta app
 from .models import OrdenProduccion, RegistroImpresion, Refilado, Sellado, Doblado
+
+# Importar formularios
+from .forms import (
+    OrdenProduccionForm, RegistroImpresionForm, ParoImpresionFormset,
+    DesperdicioImpresionFormset, ConsumoTintaImpresionFormset,
+    ConsumoSustratoImpresionFormset, RegistroRefiladoForm,
+    ParoRefiladoFormset, ConsumoWipRefiladoFormset, ProduccionImpresionFormset,
+    ProduccionRefiladoFormSet, RegistroSelladoForm, ParoSelladoFormset,
+    ConsumoWipSelladoFormset, ProduccionSelladoFormSet, RegistroDobladoForm,
+    ParoDobladoFormset, ConsumoWipDobladoFormset, ProduccionDobladoFormSet
+)
 
 # Importar Serializers de esta app
 from .serializers import (
@@ -341,7 +353,7 @@ class DobladoViewSet(viewsets.ModelViewSet):
             consumir_rollo_entrada_doblado(doblado=doblado, usuario=request.user, **serializer.validated_data)
             return Response({'status': 'consumo WIP registrado'}, status=status.HTTP_200_OK)
         except (ValidationError, ValueError) as e: raise DRFValidationError(str(e))
-        except Exception as e: logger.exception(...); return Response({'error': 'Error interno'}, status=500)
+        except Exception as e: logger.exception(...); return Response({'error': '...'}, status=500)
 
     @action(detail=True, methods=['post'], url_path='consumir-mp', serializer_class=ConsumoMpDobladoSerializer)
     def consumir_mp(self, request, pk=None):
@@ -473,7 +485,19 @@ class KanbanBaseView(TemplateView):
 
     def get_orden_estado(self, orden):
         """Determina el estado actual de la orden para este proceso."""
-        registros = getattr(orden, f'registros_{self.proceso_nombre.lower()}').all()
+        proceso_nombre_lower = self.proceso_nombre.lower()
+        
+        # Obtener registros según el tipo de proceso
+        if proceso_nombre_lower == 'impresion':
+            registros = orden.registros_impresion.all()
+        elif proceso_nombre_lower == 'refilado':
+            registros = orden.registros_refilado.all()
+        elif proceso_nombre_lower == 'sellado':
+            registros = orden.registros_sellado.all()
+        elif proceso_nombre_lower == 'doblado':
+            registros = orden.registros_doblado.all()
+        else:
+            return 'pendiente'
         
         if not registros.exists():
             return 'pendiente'
@@ -482,23 +506,85 @@ class KanbanBaseView(TemplateView):
         if not ultimo_registro:
             return 'pendiente'
             
+        # Verificar si el proceso está en curso (sin hora final)
         if not ultimo_registro.hora_final:
-            # Si tiene paro sin finalizar, está pausado
-            paro_activo = ultimo_registro.paros.filter(
-                hora_inicio_paro__isnull=False,
-                hora_final_paro__isnull=True
-            ).exists()
+            # Verificar si hay paros activos
+            if hasattr(ultimo_registro, 'paros_impresion'):
+                paro_activo = ultimo_registro.paros_impresion.filter(
+                    hora_inicio_paro__isnull=False,
+                    hora_final_paro__isnull=True
+                ).exists()
+            elif hasattr(ultimo_registro, 'paros_refilado'):
+                paro_activo = ultimo_registro.paros_refilado.filter(
+                    hora_inicio_paro__isnull=False,
+                    hora_final_paro__isnull=True
+                ).exists()
+            elif hasattr(ultimo_registro, 'paros_sellado'):
+                paro_activo = ultimo_registro.paros_sellado.filter(
+                    hora_inicio_paro__isnull=False,
+                    hora_final_paro__isnull=True
+                ).exists()
+            elif hasattr(ultimo_registro, 'paros_doblado'):
+                paro_activo = ultimo_registro.paros_doblado.filter(
+                    hora_inicio_paro__isnull=False,
+                    hora_final_paro__isnull=True
+                ).exists()
+            else:
+                paro_activo = False
+                
             return 'pausado' if paro_activo else 'proceso'
             
-        # Si el último registro tiene hora final, revisar si hay más por hacer
-        if self.proceso_nombre.lower() == 'sellado':
-            produccion_total = ultimo_registro.bolsas_producidas or 0
-            meta = orden.cantidad or 0
-        else:
-            produccion_total = sum(r.kg_producidos or 0 for r in registros)
-            meta = orden.kg_total or 0
+        # Si el último registro tiene hora final, verificar la producción
+        try:
+            # Para impresión, calcular producción basada en lotes WIP/PT generados
+            if proceso_nombre_lower == 'impresion':
+                # Buscar lotes WIP/PT generados por registros de impresión de esta orden
+                from inventario.models import LoteProductoEnProceso, LoteProductoTerminado
+                lotes_wip = LoteProductoEnProceso.objects.filter(
+                    orden_produccion=orden,
+                    proceso_origen_content_type__model='registroimpresion'
+                ).aggregate(total=models.Sum('cantidad_actual'))['total'] or 0
+                
+                lotes_pt = LoteProductoTerminado.objects.filter(
+                    orden_produccion=orden,
+                    proceso_origen_content_type__model='registroimpresion'
+                ).aggregate(total=models.Sum('cantidad_actual'))['total'] or 0
+                
+                produccion_total = lotes_wip + lotes_pt
+                
+            elif proceso_nombre_lower == 'sellado':
+                # Para sellado, usar lotes PT generados (bolsas)
+                from inventario.models import LoteProductoTerminado
+                produccion_total = LoteProductoTerminado.objects.filter(
+                    orden_produccion=orden,
+                    proceso_origen_content_type__model='sellado'
+                ).aggregate(total=models.Sum('cantidad_actual'))['total'] or 0
+                
+            else:
+                # Para refilado y doblado, usar lotes WIP/PT generados
+                from inventario.models import LoteProductoEnProceso, LoteProductoTerminado
+                model_name = f'{proceso_nombre_lower}'
+                
+                lotes_wip = LoteProductoEnProceso.objects.filter(
+                    orden_produccion=orden,
+                    proceso_origen_content_type__model=model_name
+                ).aggregate(total=models.Sum('cantidad_actual'))['total'] or 0
+                
+                lotes_pt = LoteProductoTerminado.objects.filter(
+                    orden_produccion=orden,
+                    proceso_origen_content_type__model=model_name
+                ).aggregate(total=models.Sum('cantidad_actual'))['total'] or 0
+                
+                produccion_total = lotes_wip + lotes_pt
+                
+            # Comparar con la meta de la orden
+            meta = orden.cantidad_solicitada_kg or 0
+            return 'terminado' if produccion_total >= meta else 'pendiente'
             
-        return 'terminado' if produccion_total >= meta else 'pendiente'
+        except Exception as e:
+            # En caso de error, asumir que está pendiente
+            logger.warning(f"Error calculando estado de orden {orden.pk}: {e}")
+            return 'pendiente'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -545,11 +631,23 @@ class ImpresionKanbanView(KanbanBaseView):
     """Vista Kanban para proceso de Impresión."""
     template_name = 'produccion/kanban/impresion_kanban.html'
     proceso_nombre = 'Impresion'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['create_url'] = reverse('produccion_web:registro-impresion-create')
+        context['create_button_text'] = 'Nuevo Registro de Impresión'
+        return context
 
 class RefiladoKanbanView(KanbanBaseView):
     """Vista Kanban para proceso de Refilado."""
     template_name = 'produccion/kanban/refilado_kanban.html'
     proceso_nombre = 'Refilado'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['create_url'] = reverse('produccion_web:registro-refilado-create')
+        context['create_button_text'] = 'Nuevo Registro de Refilado'
+        return context
 
 class SelladoKanbanView(KanbanBaseView):
     """Vista Kanban para proceso de Sellado."""
@@ -565,9 +663,265 @@ class SelladoKanbanView(KanbanBaseView):
                     total=models.Sum('cantidad_producida')
                 )['total'] or 0
                 orden.porcentaje_avance = min(100, (produccion_actual / orden.cantidad) * 100)
+        
+        context['create_url'] = reverse('produccion_web:registro-sellado-create')
+        context['create_button_text'] = 'Nuevo Registro de Sellado'
         return context
 
 class DobladoKanbanView(KanbanBaseView):
     """Vista Kanban para proceso de Doblado."""
     template_name = 'produccion/kanban/doblado_kanban.html'
     proceso_nombre = 'Doblado'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['create_url'] = reverse('produccion_web:registro-doblado-create')
+        context['create_button_text'] = 'Nuevo Registro de Doblado'
+        return context
+
+# =============================================
+# === VISTAS WEB PARA FORMULARIOS ===
+# =============================================
+
+class RegistroImpresionCreateView(LoginRequiredMixin, CreateView):
+    """Vista para crear un nuevo registro de impresión."""
+    model = RegistroImpresion
+    form_class = RegistroImpresionForm
+    template_name = 'produccion/registro_impresion_form.html'
+    
+    def get_success_url(self):
+        return reverse('produccion_web:impresion-kanban')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if self.request.POST:
+            context['paro_formset'] = ParoImpresionFormset(self.request.POST)
+            context['desperdicio_formset'] = DesperdicioImpresionFormset(self.request.POST)
+            context['consumo_tinta_formset'] = ConsumoTintaImpresionFormset(self.request.POST)
+            context['consumo_sustrato_formset'] = ConsumoSustratoImpresionFormset(self.request.POST)
+            context['produccion_formset'] = ProduccionImpresionFormset(self.request.POST)
+        else:
+            context['paro_formset'] = ParoImpresionFormset()
+            context['desperdicio_formset'] = DesperdicioImpresionFormset()
+            context['consumo_tinta_formset'] = ConsumoTintaImpresionFormset()
+            context['consumo_sustrato_formset'] = ConsumoSustratoImpresionFormset()
+            context['produccion_formset'] = ProduccionImpresionFormset()
+        context['page_title'] = 'Nuevo Registro de Impresión'
+        context['cancel_url'] = reverse('produccion_web:impresion-kanban')
+        return context
+    
+    def form_valid(self, form):
+        context = self.get_context_data()
+        paro_formset = context['paro_formset']
+        desperdicio_formset = context['desperdicio_formset']
+        consumo_tinta_formset = context['consumo_tinta_formset']
+        consumo_sustrato_formset = context['consumo_sustrato_formset']
+        produccion_formset = context['produccion_formset']
+        
+        if (paro_formset.is_valid() and desperdicio_formset.is_valid() and
+            consumo_tinta_formset.is_valid() and consumo_sustrato_formset.is_valid() and
+            produccion_formset.is_valid()):
+            
+            with transaction.atomic():
+                self.object = form.save()
+                
+                # Save related formsets
+                paro_formset.instance = self.object
+                paro_formset.save()
+                
+                desperdicio_formset.instance = self.object
+                desperdicio_formset.save()
+                
+                consumo_tinta_formset.instance = self.object
+                consumo_tinta_formset.save()
+                
+                consumo_sustrato_formset.instance = self.object
+                consumo_sustrato_formset.save()
+                
+                # Save production formset with custom logic
+                produccion_formset.registro_impresion = self.object
+                produccion_formset.save()
+            
+            messages.success(self.request, 'Registro de impresión creado exitosamente.')
+            return HttpResponseRedirect(self.get_success_url())
+        else:
+            return self.form_invalid(form)
+
+
+class RegistroRefiladoCreateView(LoginRequiredMixin, CreateView):
+    """Vista para crear un nuevo registro de refilado."""
+    model = Refilado
+    form_class = RegistroRefiladoForm
+    template_name = 'produccion/registro_refilado_form.html'
+    success_url = reverse_lazy('produccion_web:refilado-kanban')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if self.request.POST:
+            context['paro_formset'] = ParoRefiladoFormset(self.request.POST)
+            context['consumo_wip_formset'] = ConsumoWipRefiladoFormset(self.request.POST)
+            context['produccion_formset'] = ProduccionRefiladoFormSet(self.request.POST)
+        else:
+            context['paro_formset'] = ParoRefiladoFormset()
+            context['consumo_wip_formset'] = ConsumoWipRefiladoFormset()
+            context['produccion_formset'] = ProduccionRefiladoFormSet()
+        context['page_title'] = 'Nuevo Registro de Refilado'
+        context['cancel_url'] = reverse('produccion_web:refilado-kanban')
+        return context
+
+    def form_valid(self, form):
+        context = self.get_context_data()
+        paro_formset = context['paro_formset']
+        consumo_wip_formset = context['consumo_wip_formset']
+        produccion_formset = context['produccion_formset']
+
+        if (paro_formset.is_valid() and consumo_wip_formset.is_valid() and 
+            produccion_formset.is_valid()):
+            
+            with transaction.atomic():
+                self.object = form.save()
+                
+                # Save related formsets
+                paro_formset.instance = self.object
+                paro_formset.save()
+                
+                consumo_wip_formset.instance = self.object
+                consumo_wip_formset.save()
+                
+                # Save production formset with custom logic
+                produccion_formset.registro_refilado = self.object
+                produccion_formset.save()
+            
+            messages.success(self.request, 'Registro de refilado creado exitosamente.')
+            return super().form_valid(form)
+        else:
+            return self.form_invalid(form)
+
+class RegistroSelladoCreateView(LoginRequiredMixin, CreateView):
+    """Vista para crear un nuevo registro de sellado."""
+    model = Sellado
+    form_class = RegistroSelladoForm
+    template_name = 'produccion/registro_sellado_form.html'
+    success_url = reverse_lazy('produccion_web:sellado-kanban')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if self.request.POST:
+            context['paro_formset'] = ParoSelladoFormset(self.request.POST)
+            context['consumo_wip_formset'] = ConsumoWipSelladoFormset(self.request.POST)
+            context['produccion_formset'] = ProduccionSelladoFormSet(self.request.POST)
+        else:
+            context['paro_formset'] = ParoSelladoFormset()
+            context['consumo_wip_formset'] = ConsumoWipSelladoFormset()
+            context['produccion_formset'] = ProduccionSelladoFormSet()
+        context['page_title'] = 'Nuevo Registro de Sellado'
+        context['cancel_url'] = reverse('produccion_web:sellado-kanban')
+        return context
+
+    def form_valid(self, form):
+        context = self.get_context_data()
+        paro_formset = context['paro_formset']
+        consumo_wip_formset = context['consumo_wip_formset']
+        produccion_formset = context['produccion_formset']
+
+        if (paro_formset.is_valid() and consumo_wip_formset.is_valid() and 
+            produccion_formset.is_valid()):
+            
+            with transaction.atomic():
+                self.object = form.save()
+                
+                # Save related formsets
+                paro_formset.instance = self.object
+                paro_formset.save()
+                
+                consumo_wip_formset.instance = self.object
+                consumo_wip_formset.save()
+                
+                # Save production formset with custom logic
+                produccion_formset.registro_sellado = self.object
+                produccion_formset.save()
+            
+            messages.success(self.request, 'Registro de sellado creado exitosamente.')
+            return super().form_valid(form)
+        else:
+            return self.form_invalid(form)
+
+class RegistroDobladoCreateView(LoginRequiredMixin, CreateView):
+    """Vista para crear un nuevo registro de doblado."""
+    model = Doblado
+    form_class = RegistroDobladoForm
+    template_name = 'produccion/registro_doblado_form.html'
+    success_url = reverse_lazy('produccion_web:doblado-kanban')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if self.request.POST:
+            context['paro_formset'] = ParoDobladoFormset(self.request.POST)
+            context['consumo_wip_formset'] = ConsumoWipDobladoFormset(self.request.POST)
+            context['produccion_formset'] = ProduccionDobladoFormSet(self.request.POST)
+        else:
+            context['paro_formset'] = ParoDobladoFormset()
+            context['consumo_wip_formset'] = ConsumoWipDobladoFormset()
+            context['produccion_formset'] = ProduccionDobladoFormSet()
+        context['page_title'] = 'Nuevo Registro de Doblado'
+        context['cancel_url'] = reverse('produccion_web:doblado-kanban')
+        return context
+
+    def form_valid(self, form):
+        context = self.get_context_data()
+        paro_formset = context['paro_formset']
+        consumo_wip_formset = context['consumo_wip_formset']
+        produccion_formset = context['produccion_formset']
+
+        if (paro_formset.is_valid() and consumo_wip_formset.is_valid() and 
+            produccion_formset.is_valid()):
+            
+            with transaction.atomic():
+                self.object = form.save()
+                
+                # Save related formsets
+                paro_formset.instance = self.object
+                paro_formset.save()
+                
+                consumo_wip_formset.instance = self.object
+                consumo_wip_formset.save()
+                
+                # Save production formset with custom logic
+                produccion_formset.registro_doblado = self.object
+                produccion_formset.save()
+            
+            messages.success(self.request, 'Registro de doblado creado exitosamente.')
+            return super().form_valid(form)
+        else:
+            return self.form_invalid(form)
+
+class OrdenProduccionCreateView(LoginRequiredMixin, CreateView):
+    """Vista para crear una nueva orden de producción."""
+    model = OrdenProduccion
+    form_class = OrdenProduccionForm
+    template_name = 'produccion/orden_produccion_form.html'
+    success_url = reverse_lazy('produccion_web:orden-produccion-list')
+    
+    def form_valid(self, form):
+        form.instance.creado_por = self.request.user
+        form.instance.actualizado_por = self.request.user
+        messages.success(self.request, 'Orden de producción creada exitosamente.')
+        return super().form_valid(form)
+
+
+class OrdenProduccionUpdateView(LoginRequiredMixin, UpdateView):
+    """Vista para actualizar una orden de producción."""
+    model = OrdenProduccion
+    form_class = OrdenProduccionForm
+    template_name = 'produccion/orden_produccion_form.html'
+    
+    def get_queryset(self):
+        return OrdenProduccion.objects.filter(is_active=True)
+    
+    def get_success_url(self):
+        return reverse('produccion_web:orden-produccion-detail', kwargs={'pk': self.object.pk})
+    
+    def form_valid(self, form):
+        form.instance.actualizado_por = self.request.user
+        messages.success(self.request, 'Orden de producción actualizada exitosamente.')
+        return super().form_valid(form)

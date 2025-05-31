@@ -9,7 +9,7 @@ from rest_framework import permissions, status
 from django.db.models import Sum, Count, F, Value, CharField, DecimalField # <<< AÑADIDO DecimalField
 from django.db.models.functions import Coalesce
 from django.core.exceptions import ObjectDoesNotExist # Para manejo de errores
-from django.views.generic import ListView, TemplateView
+from django.views.generic import ListView, TemplateView, DetailView
 from django.views.generic.edit import CreateView, UpdateView
 from django.urls import reverse_lazy
 from django.contrib import messages
@@ -122,7 +122,7 @@ class MateriaPrimaCreateView(CreateView):
     template_name = 'inventario/materia_prima_form.html'
     fields = ['codigo', 'nombre', 'descripcion', 'categoria', 'unidad_medida', 
               'stock_minimo', 'stock_maximo', 'proveedor_preferido', 'requiere_lote']
-    success_url = reverse_lazy('inventario:materia-prima-list')
+    success_url = reverse_lazy('inventario_web:materia-prima-list')
 
     def form_valid(self, form):
         messages.success(self.request, 'Materia prima creada exitosamente.')
@@ -133,7 +133,7 @@ class MateriaPrimaUpdateView(UpdateView):
     template_name = 'inventario/materia_prima_form.html'
     fields = ['codigo', 'nombre', 'descripcion', 'categoria', 'unidad_medida', 
               'stock_minimo', 'stock_maximo', 'proveedor_preferido', 'requiere_lote']
-    success_url = reverse_lazy('inventario:materia-prima-list')
+    success_url = reverse_lazy('inventario_web:materia-prima-list')
     
     def form_valid(self, form):
         messages.success(self.request, 'Materia prima actualizada correctamente.')
@@ -197,7 +197,7 @@ class MovimientoListView(LoginRequiredMixin, ListView):
     
     def get_queryset(self):
         queryset = MovimientoInventario.objects.select_related(
-            'lote_content_object', 'ubicacion_origen', 'ubicacion_destino', 'usuario'
+            'lote_content_type', 'ubicacion_origen', 'ubicacion_destino', 'usuario', 'unidad_medida'
         ).order_by('-timestamp')
         
         # Filtros
@@ -227,3 +227,43 @@ class MovimientoListView(LoginRequiredMixin, ListView):
             'tipos_salida': MovimientoInventario.TIPOS_SALIDA,
         })
         return context
+
+
+class MateriaPrimaDetailView(LoginRequiredMixin, DetailView):
+    """Vista para ver el detalle de una materia prima."""
+    model = MateriaPrima
+    template_name = 'inventario/materia_prima_detail.html'
+    context_object_name = 'materia_prima'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Obtener los lotes de la materia prima
+        context['lotes'] = LoteMateriaPrima.objects.filter(
+            materia_prima=self.object
+        ).order_by('-fecha_recepcion')
+        return context
+
+
+class LoteCreateView(LoginRequiredMixin, CreateView):
+    """Vista para crear un nuevo lote de materia prima."""
+    model = LoteMateriaPrima
+    template_name = 'inventario/lote_form.html'
+    fields = ['materia_prima', 'lote_id', 'cantidad_recibida', 'ubicacion', 
+              'proveedor', 'fecha_recepcion', 'fecha_vencimiento', 'observaciones']
+    success_url = reverse_lazy('inventario_web:lote-list')
+
+    def get_initial(self):
+        initial = super().get_initial()
+        # Si se proporciona una materia prima en la URL, pre-seleccionarla
+        materia_prima_id = self.request.GET.get('materia_prima')
+        if materia_prima_id:
+            initial['materia_prima'] = materia_prima_id
+        return initial
+
+    def form_valid(self, form):
+        # Establecer los valores iniciales del lote
+        form.instance.estado = 'DISPONIBLE'
+        form.instance.cantidad_actual = form.instance.cantidad_recibida
+        form.instance.creado_por = self.request.user
+        messages.success(self.request, 'Lote creado exitosamente.')
+        return super().form_valid(form)

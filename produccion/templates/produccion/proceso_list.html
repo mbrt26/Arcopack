@@ -3,44 +3,148 @@
 
 {% block title %}{{ page_title }}{% endblock %}
 
+{% block extra_css %}
+<style>
+    .proceso-card {
+        transition: all 0.3s ease;
+        border: none;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .proceso-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    .proceso-header {
+        background: linear-gradient(45deg, #2193b0, #6dd5ed);
+        color: white;
+        border-radius: 8px 8px 0 0;
+        padding: 1.2rem;
+    }
+
+    .orden-badge {
+        position: absolute;
+        top: -10px;
+        right: -10px;
+        background: #ff6b6b;
+        color: white;
+        border-radius: 50%;
+        width: 35px;
+        height: 35px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .maquina-item {
+        background: #f8f9fa;
+        padding: 0.5rem;
+        border-radius: 6px;
+        margin-bottom: 0.5rem;
+        transition: background-color 0.2s;
+    }
+
+    .maquina-item:hover {
+        background: #e9ecef;
+    }
+
+    .maquina-status {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 8px;
+    }
+
+    .status-active {
+        background-color: #40c057;
+    }
+
+    .status-inactive {
+        background-color: #ff6b6b;
+    }
+
+    .ver-tablero-btn {
+        background: #2193b0;
+        border: none;
+        border-radius: 6px;
+        padding: 0.8rem 1.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .ver-tablero-btn:hover {
+        background: #1a7a94;
+        transform: scale(1.05);
+    }
+
+    .proceso-description {
+        color: #6c757d;
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container-fluid">
+<div class="container-fluid py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>{{ page_title }}</h1>
+        <div>
+            <h1 class="display-5 mb-0">{{ page_title }}</h1>
+            <p class="text-muted mt-2">Gestión y seguimiento de procesos de producción</p>
+        </div>
     </div>
 
     {% if procesos %}
     <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
         {% for proceso in procesos %}
         <div class="col">
-            <div class="card h-100">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">
+            <div class="card h-100 proceso-card">
+                <div class="card-header proceso-header position-relative">
+                    <div class="orden-badge">{{ proceso.orden_flujo }}</div>
+                    <h5 class="card-title mb-0 d-flex align-items-center">
+                        <i class="fas fa-cogs me-2"></i>
                         {{ proceso.nombre }}
-                        <span class="badge bg-secondary">Orden: {{ proceso.orden_flujo }}</span>
                     </h5>
                 </div>
                 <div class="card-body">
-                    <p class="card-text">{{ proceso.descripcion|default:"Sin descripción" }}</p>
+                    <p class="card-text proceso-description">{{ proceso.descripcion|default:"Sin descripción" }}</p>
                     
-                    <div class="mt-3">
-                        <h6>Máquinas Asignadas:</h6>
+                    <div class="mt-4">
+                        <h6 class="mb-3">
+                            <i class="fas fa-tools me-2"></i>
+                            Máquinas Asignadas
+                        </h6>
                         {% if proceso.maquinas.exists %}
-                        <ul class="list-unstyled">
+                        <div class="maquinas-list">
                             {% for maquina in proceso.maquinas.all %}
-                            <li>
-                                <i class="fas fa-cog"></i> {{ maquina.codigo }} - {{ maquina.nombre }}
-                            </li>
+                            <div class="maquina-item d-flex align-items-center justify-content-between">
+                                <div>
+                                    <span class="maquina-status {% if maquina.activa %}status-active{% else %}status-inactive{% endif %}"
+                                          data-bs-toggle="tooltip" 
+                                          title="{% if maquina.activa %}Activa{% else %}Inactiva{% endif %}"></span>
+                                    <strong>{{ maquina.codigo }}</strong> - {{ maquina.nombre }}
+                                </div>
+                                <span class="badge {% if maquina.activa %}bg-success{% else %}bg-danger{% endif %} rounded-pill">
+                                    {% if maquina.activa %}Operativa{% else %}No Operativa{% endif %}
+                                </span>
+                            </div>
                             {% endfor %}
-                        </ul>
+                        </div>
                         {% else %}
-                        <p class="text-muted">No hay máquinas asignadas</p>
+                        <div class="alert alert-light text-center">
+                            <i class="fas fa-info-circle me-2"></i>
+                            No hay máquinas asignadas
+                        </div>
                         {% endif %}
                     </div>
                 </div>
-                <div class="card-footer">
-                    <a href="{% url 'produccion_web:'|add:proceso.nombre|lower|add:'-kanban' %}" class="btn btn-primary">
-                        <i class="fas fa-columns"></i> Ver Tablero
+                <div class="card-footer bg-transparent border-0 text-center py-3">
+                    <a href="{% url 'produccion_web:'|add:proceso.nombre|lower|add:'-kanban' %}" 
+                       class="btn btn-primary ver-tablero-btn w-100">
+                        <i class="fas fa-columns me-2"></i> Ver Tablero
                     </a>
                 </div>
             </div>
@@ -48,8 +152,10 @@
         {% endfor %}
     </div>
     {% else %}
-    <div class="alert alert-info">
-        No hay procesos configurados.
+    <div class="alert alert-info text-center p-5">
+        <i class="fas fa-info-circle fa-3x mb-3"></i>
+        <h4>No hay procesos configurados</h4>
+        <p class="mb-0">Actualmente no hay procesos de producción configurados en el sistema.</p>
     </div>
     {% endif %}
 </div>

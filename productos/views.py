@@ -108,7 +108,7 @@ class ProductoListView(LoginRequiredMixin, ListView):
     paginate_by = 20
 
     def get_queryset(self):
-        qs = super().get_queryset().order_by('codigo')
+        qs = super().get_queryset().select_related('cliente', 'estado').order_by('codigo')
         self.search_form = ProductoSearchForm(self.request.GET)
         if self.search_form.is_valid():
             q = self.search_form.cleaned_data.get('q')
@@ -128,7 +128,7 @@ class ProductoListView(LoginRequiredMixin, ListView):
                     {'value': obj.codigo, 'type': 'code'},
                     {'value': obj.nombre},
                     {'value': obj.cliente.razon_social if obj.cliente else '-', 'type': 'text'},
-                    {'value': obj.get_estado_display(), 'type': 'badge', 'class': 'bg-success' if obj.is_active else 'bg-danger'},
+                    {'value': obj.estado.nombre if obj.estado else '-', 'type': 'badge', 'class': 'bg-success' if obj.is_active else 'bg-danger'},
                 ]
             })
         context.update({

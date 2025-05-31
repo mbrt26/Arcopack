@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Orden de Producción #{{ orden.numero }} - ARCOPACK{% endblock %}
+{% block title %}Orden de Producción #{{ orden.op_numero }} - ARCOPACK{% endblock %}
 
 {% block content %}
 <div class="container">
@@ -9,9 +9,9 @@
         <div class="col">
             <h2>
                 <i class="fas fa-industry"></i> 
-                Orden de Producción #{{ orden.numero }}
-                <span class="badge {% if orden.estado == 'PENDIENTE' %}bg-warning{% elif orden.estado == 'EN_PROCESO' %}bg-primary{% elif orden.estado == 'COMPLETADA' %}bg-success{% else %}bg-danger{% endif %}">
-                    {{ orden.get_estado_display }}
+                Orden de Producción #{{ orden.op_numero }}
+                <span class="badge {% if orden.etapa_actual == 'PLAN' %}bg-info{% elif orden.etapa_actual == 'PROG' %}bg-warning{% elif orden.etapa_actual == 'LIBR' %}bg-primary{% elif orden.etapa_actual == 'IMPR' or orden.etapa_actual == 'REFI' or orden.etapa_actual == 'SELL' or orden.etapa_actual == 'DOBL' %}bg-primary{% elif orden.etapa_actual == 'TERM' or orden.etapa_actual == 'CTOTAL' or orden.etapa_actual == 'CPARC' %}bg-success{% elif orden.etapa_actual == 'ANUL' %}bg-danger{% else %}bg-secondary{% endif %}">
+                    {{ orden.get_etapa_actual_display }}
                 </span>
             </h2>
         </div>
@@ -21,7 +21,7 @@
                     <i class="fas fa-print"></i> Imprimir
                 </button>
                 {% if orden.estado == 'PENDIENTE' %}
-                    <a href="{% url 'produccion:orden-produccion-update' orden.id %}" class="btn btn-warning">
+                    <a href="{% url 'produccion_web:orden-produccion-update' orden.id %}" class="btn btn-warning">
                         <i class="fas fa-edit"></i> Editar
                     </a>
                     <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#cancelarModal">
@@ -226,7 +226,7 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Cancelar Orden #{{ orden.numero }}</h5>
+                <h5 class="modal-title">Cancelar Orden #{{ orden.op_numero }}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <form method="post" action="{% url 'produccion_web:anular_orden' orden.id %}">

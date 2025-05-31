@@ -9,7 +9,7 @@
             <h2><i class="fas fa-user-tie"></i> Personal</h2>
         </div>
         <div class="col text-end">
-            <a href="{% url 'personal:colaborador-create' %}" class="btn btn-primary">
+            <a href="{% url 'personal_web:colaborador_create' %}" class="btn btn-primary">
                 <i class="fas fa-plus"></i> Nuevo Colaborador
             </a>
         </div>
@@ -37,7 +37,7 @@
                         <button type="submit" class="btn btn-primary">
                             <i class="fas fa-search"></i> Buscar
                         </button>
-                        <a href="{% url 'personal:colaborador-list' %}" class="btn btn-secondary">
+                        <a href="{% url 'personal_web:colaborador_list' %}" class="btn btn-secondary">
                             <i class="fas fa-times"></i> Limpiar
                         </a>
                     </div>
@@ -79,11 +79,11 @@
                             </td>
                             <td>
                                 <div class="btn-group">
-                                    <a href="{% url 'personal:colaborador-detail' colaborador.pk %}" 
+                                    <a href="{% url 'personal_web:colaborador_detail' colaborador.pk %}" 
                                        class="btn btn-sm btn-info" title="Ver detalle">
                                         <i class="fas fa-eye"></i>
                                     </a>
-                                    <a href="{% url 'personal:colaborador-update' colaborador.pk %}" 
+                                    <a href="{% url 'personal_web:colaborador_update' colaborador.pk %}" 
                                        class="btn btn-sm btn-warning" title="Editar">
                                         <i class="fas fa-edit"></i>
                                     </a>

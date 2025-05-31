@@ -1,0 +1,490 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_title }} - ARCOPACK{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <h2><i class="fas fa-industry"></i> {{ page_title }}</h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'produccion_web:orden-produccion-list' %}">Órdenes de Producción</a></li>
+                    <li class="breadcrumb-item active">{{ form_action }}</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    {% if form.errors %}
+    <div class="alert alert-danger">
+        <h5><i class="fas fa-exclamation-triangle"></i> Por favor corrige los siguientes errores:</h5>
+        <ul class="mb-0">
+            {% for field, errors in form.errors.items %}
+                {% for error in errors %}
+                    <li>{{ field }}: {{ error }}</li>
+                {% endfor %}
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <form method="post" novalidate>
+        {% csrf_token %}
+        
+        <div class="row">
+            <!-- Información General -->
+            <div class="col-lg-8">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-info-circle"></i> Información General</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.op_numero.id_for_label }}" class="form-label">
+                                        Número de OP <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" 
+                                           class="form-control{% if form.op_numero.errors %} is-invalid{% endif %}" 
+                                           name="{{ form.op_numero.name }}" 
+                                           id="{{ form.op_numero.id_for_label }}"
+                                           value="{{ form.op_numero.value|default:'' }}"
+                                           placeholder="Ej: OP-2025-0001"
+                                           required>
+                                    {% if form.op_numero.errors %}
+                                        <div class="invalid-feedback">
+                                            {{ form.op_numero.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.pedido_cliente.id_for_label }}" class="form-label">
+                                        Pedido Cliente
+                                    </label>
+                                    <input type="text" 
+                                           class="form-control{% if form.pedido_cliente.errors %} is-invalid{% endif %}" 
+                                           name="{{ form.pedido_cliente.name }}" 
+                                           id="{{ form.pedido_cliente.id_for_label }}"
+                                           value="{{ form.pedido_cliente.value|default:'' }}"
+                                           placeholder="Número de pedido del cliente">
+                                    {% if form.pedido_cliente.errors %}
+                                        <div class="invalid-feedback">
+                                            {{ form.pedido_cliente.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.cliente.id_for_label }}" class="form-label">
+                                        Cliente <span class="text-danger">*</span>
+                                    </label>
+                                    <select class="form-select{% if form.cliente.errors %} is-invalid{% endif %}" 
+                                            name="{{ form.cliente.name }}" 
+                                            id="{{ form.cliente.id_for_label }}"
+                                            required>
+                                        <option value="">Seleccionar cliente...</option>
+                                        {% for choice in form.cliente.field.queryset %}
+                                            <option value="{{ choice.pk }}" 
+                                                    {% if form.cliente.value == choice.pk %}selected{% endif %}>
+                                                {{ choice }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                    {% if form.cliente.errors %}
+                                        <div class="invalid-feedback">
+                                            {{ form.cliente.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.producto.id_for_label }}" class="form-label">
+                                        Producto <span class="text-danger">*</span>
+                                    </label>
+                                    <select class="form-select{% if form.producto.errors %} is-invalid{% endif %}" 
+                                            name="{{ form.producto.name }}" 
+                                            id="{{ form.producto.id_for_label }}"
+                                            required>
+                                        <option value="">Seleccionar producto...</option>
+                                        {% for choice in form.producto.field.queryset %}
+                                            <option value="{{ choice.pk }}" 
+                                                    {% if form.producto.value == choice.pk %}selected{% endif %}>
+                                                {{ choice }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                    {% if form.producto.errors %}
+                                        <div class="invalid-feedback">
+                                            {{ form.producto.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.cantidad_solicitada_kg.id_for_label }}" class="form-label">
+                                        Cantidad Solicitada (kg) <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="number" 
+                                           class="form-control{% if form.cantidad_solicitada_kg.errors %} is-invalid{% endif %}" 
+                                           name="{{ form.cantidad_solicitada_kg.name }}" 
+                                           id="{{ form.cantidad_solicitada_kg.id_for_label }}"
+                                           value="{{ form.cantidad_solicitada_kg.value|default:'' }}"
+                                           step="0.01" 
+                                           min="0.01"
+                                           required>
+                                    {% if form.cantidad_solicitada_kg.errors %}
+                                        <div class="invalid-feedback">
+                                            {{ form.cantidad_solicitada_kg.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.id_pedido_contable.id_for_label }}" class="form-label">
+                                        ID Pedido Contable
+                                    </label>
+                                    <input type="text" 
+                                           class="form-control{% if form.id_pedido_contable.errors %} is-invalid{% endif %}" 
+                                           name="{{ form.id_pedido_contable.name }}" 
+                                           id="{{ form.id_pedido_contable.id_for_label }}"
+                                           value="{{ form.id_pedido_contable.value|default:'' }}">
+                                    {% if form.id_pedido_contable.errors %}
+                                        <div class="invalid-feedback">
+                                            {{ form.id_pedido_contable.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.fecha_compromiso_entrega.id_for_label }}" class="form-label">
+                                        Fecha Compromiso Entrega
+                                    </label>
+                                    <input type="date" 
+                                           class="form-control{% if form.fecha_compromiso_entrega.errors %} is-invalid{% endif %}" 
+                                           name="{{ form.fecha_compromiso_entrega.name }}" 
+                                           id="{{ form.fecha_compromiso_entrega.id_for_label }}"
+                                           value="{{ form.fecha_compromiso_entrega.value|date:'Y-m-d'|default:'' }}">
+                                    {% if form.fecha_compromiso_entrega.errors %}
+                                        <div class="invalid-feedback">
+                                            {{ form.fecha_compromiso_entrega.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.fecha_estimada_inicio.id_for_label }}" class="form-label">
+                                        Fecha Estimada Inicio
+                                    </label>
+                                    <input type="date" 
+                                           class="form-control{% if form.fecha_estimada_inicio.errors %} is-invalid{% endif %}" 
+                                           name="{{ form.fecha_estimada_inicio.name }}" 
+                                           id="{{ form.fecha_estimada_inicio.id_for_label }}"
+                                           value="{{ form.fecha_estimada_inicio.value|date:'Y-m-d'|default:'' }}">
+                                    {% if form.fecha_estimada_inicio.errors %}
+                                        <div class="invalid-feedback">
+                                            {{ form.fecha_estimada_inicio.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        {% if form.etapa_actual %}
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.etapa_actual.id_for_label }}" class="form-label">
+                                        Etapa Actual
+                                    </label>
+                                    <select class="form-select{% if form.etapa_actual.errors %} is-invalid{% endif %}" 
+                                            name="{{ form.etapa_actual.name }}" 
+                                            id="{{ form.etapa_actual.id_for_label }}">
+                                        {% for choice_value, choice_label in form.etapa_actual.field.choices %}
+                                            <option value="{{ choice_value }}" 
+                                                    {% if form.etapa_actual.value == choice_value %}selected{% endif %}>
+                                                {{ choice_label }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                    {% if form.etapa_actual.errors %}
+                                        <div class="invalid-feedback">
+                                            {{ form.etapa_actual.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <div class="mb-3">
+                            <label for="{{ form.observaciones.id_for_label }}" class="form-label">
+                                Observaciones
+                            </label>
+                            <textarea class="form-control{% if form.observaciones.errors %} is-invalid{% endif %}" 
+                                      name="{{ form.observaciones.name }}" 
+                                      id="{{ form.observaciones.id_for_label }}"
+                                      rows="3">{{ form.observaciones.value|default:'' }}</textarea>
+                            {% if form.observaciones.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.observaciones.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Especificaciones del Sustrato -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-layer-group"></i> Especificaciones del Sustrato</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.sustrato.id_for_label }}" class="form-label">
+                                        Sustrato
+                                    </label>
+                                    <select class="form-select{% if form.sustrato.errors %} is-invalid{% endif %}" 
+                                            name="{{ form.sustrato.name }}" 
+                                            id="{{ form.sustrato.id_for_label }}">
+                                        <option value="">Seleccionar sustrato...</option>
+                                        {% for choice in form.sustrato.field.queryset %}
+                                            <option value="{{ choice.pk }}" 
+                                                    {% if form.sustrato.value == choice.pk %}selected{% endif %}>
+                                                {{ choice }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                    {% if form.sustrato.errors %}
+                                        <div class="invalid-feedback">
+                                            {{ form.sustrato.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.ancho_sustrato_mm.id_for_label }}" class="form-label">
+                                        Ancho Sustrato (mm)
+                                    </label>
+                                    <input type="number" 
+                                           class="form-control{% if form.ancho_sustrato_mm.errors %} is-invalid{% endif %}" 
+                                           name="{{ form.ancho_sustrato_mm.name }}" 
+                                           id="{{ form.ancho_sustrato_mm.id_for_label }}"
+                                           value="{{ form.ancho_sustrato_mm.value|default:'' }}"
+                                           step="0.01" 
+                                           min="0.01">
+                                    {% if form.ancho_sustrato_mm.errors %}
+                                        <div class="invalid-feedback">
+                                            {{ form.ancho_sustrato_mm.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.calibre_sustrato_um.id_for_label }}" class="form-label">
+                                        Calibre Sustrato (μm)
+                                    </label>
+                                    <input type="number" 
+                                           class="form-control{% if form.calibre_sustrato_um.errors %} is-invalid{% endif %}" 
+                                           name="{{ form.calibre_sustrato_um.name }}" 
+                                           id="{{ form.calibre_sustrato_um.id_for_label }}"
+                                           value="{{ form.calibre_sustrato_um.value|default:'' }}"
+                                           step="0.01" 
+                                           min="0">
+                                    {% if form.calibre_sustrato_um.errors %}
+                                        <div class="invalid-feedback">
+                                            {{ form.calibre_sustrato_um.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.tratamiento_sustrato.id_for_label }}" class="form-label">
+                                        Tratamiento Sustrato
+                                    </label>
+                                    <input type="text" 
+                                           class="form-control{% if form.tratamiento_sustrato.errors %} is-invalid{% endif %}" 
+                                           name="{{ form.tratamiento_sustrato.name }}" 
+                                           id="{{ form.tratamiento_sustrato.id_for_label }}"
+                                           value="{{ form.tratamiento_sustrato.value|default:'' }}">
+                                    {% if form.tratamiento_sustrato.errors %}
+                                        <div class="invalid-feedback">
+                                            {{ form.tratamiento_sustrato.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.color_sustrato.id_for_label }}" class="form-label">
+                                        Color Sustrato
+                                    </label>
+                                    <input type="text" 
+                                           class="form-control{% if form.color_sustrato.errors %} is-invalid{% endif %}" 
+                                           name="{{ form.color_sustrato.name }}" 
+                                           id="{{ form.color_sustrato.id_for_label }}"
+                                           value="{{ form.color_sustrato.value|default:'' }}">
+                                    {% if form.color_sustrato.errors %}
+                                        <div class="invalid-feedback">
+                                            {{ form.color_sustrato.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel Lateral -->
+            <div class="col-lg-4">
+                <!-- Procesos -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-cogs"></i> Procesos</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="{{ form.procesos.id_for_label }}" class="form-label">
+                                Seleccionar Procesos
+                            </label>
+                            <select class="form-select{% if form.procesos.errors %} is-invalid{% endif %}" 
+                                    name="{{ form.procesos.name }}" 
+                                    id="{{ form.procesos.id_for_label }}"
+                                    multiple 
+                                    size="5">
+                                {% for choice in form.procesos.field.queryset %}
+                                    <option value="{{ choice.pk }}" 
+                                            {% if choice.pk in form.procesos.value %}selected{% endif %}>
+                                        {{ choice }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            {% if form.procesos.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.procesos.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <small class="form-text text-muted">
+                                Mantén presionado Ctrl (Cmd en Mac) para seleccionar múltiples procesos.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Observaciones Adicionales -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-comment-alt"></i> Observaciones Adicionales</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="{{ form.observaciones_generales.id_for_label }}" class="form-label">
+                                Observaciones Generales
+                            </label>
+                            <textarea class="form-control{% if form.observaciones_generales.errors %} is-invalid{% endif %}" 
+                                      name="{{ form.observaciones_generales.name }}" 
+                                      id="{{ form.observaciones_generales.id_for_label }}"
+                                      rows="3">{{ form.observaciones_generales.value|default:'' }}</textarea>
+                            {% if form.observaciones_generales.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.observaciones_generales.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.observaciones_produccion.id_for_label }}" class="form-label">
+                                Observaciones de Producción
+                            </label>
+                            <textarea class="form-control{% if form.observaciones_produccion.errors %} is-invalid{% endif %}" 
+                                      name="{{ form.observaciones_produccion.name }}" 
+                                      id="{{ form.observaciones_produccion.id_for_label }}"
+                                      rows="3">{{ form.observaciones_produccion.value|default:'' }}</textarea>
+                            {% if form.observaciones_produccion.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.observaciones_produccion.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botones de Acción -->
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> {{ form_action }} Orden
+                            </button>
+                            <a href="{% url 'produccion_web:orden-produccion-list' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Cancelar
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Validación en tiempo real para campos numéricos
+    $('input[type="number"]').on('input', function() {
+        let value = parseFloat($(this).val());
+        let min = parseFloat($(this).attr('min'));
+        
+        if (value < min) {
+            $(this).addClass('is-invalid');
+        } else {
+            $(this).removeClass('is-invalid');
+        }
+    });
+
+    // Auto-generar número de OP si está vacío (solo en creación)
+    {% if form_action == 'Crear' %}
+    if ($('#id_op_numero').val() === '') {
+        let today = new Date();
+        let year = today.getFullYear();
+        let month = String(today.getMonth() + 1).padStart(2, '0');
+        let day = String(today.getDate()).padStart(2, '0');
+        let suggested = `OP-${year}${month}${day}-`;
+        $('#id_op_numero').attr('placeholder', suggested + 'XXXX');
+    }
+    {% endif %}
+});
+</script>
+{% endblock %}

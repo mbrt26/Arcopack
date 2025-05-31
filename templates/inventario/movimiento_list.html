@@ -49,17 +49,17 @@
         <div class="card-body">
             <div class="table-responsive">
                 <table class="table table-bordered" id="dataTableMovimientos" width="100%" cellspacing="0">
-                    <thead class="table-dark">
+                    <thead style="background-color: #f8f9fa; color: black;">
                         <tr>
-                            <th>Fecha/Hora</th>
-                            <th>Tipo</th>
-                            <th>Lote</th>
-                            <th>Item</th>
-                            <th>Cantidad</th>
-                            <th>Origen</th>
-                            <th>Destino</th>
-                            <th>Usuario</th>
-                            <th>Documento</th>
+                            <th style="color: black; font-weight: bold;">Fecha/Hora</th>
+                            <th style="color: black; font-weight: bold;">Tipo</th>
+                            <th style="color: black; font-weight: bold;">Lote</th>
+                            <th style="color: black; font-weight: bold;">Item</th>
+                            <th style="color: black; font-weight: bold;">Cantidad</th>
+                            <th style="color: black; font-weight: bold;">Origen</th>
+                            <th style="color: black; font-weight: bold;">Destino</th>
+                            <th style="color: black; font-weight: bold;">Usuario</th>
+                            <th style="color: black; font-weight: bold;">Documento</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -71,13 +71,23 @@
                                     {{ mov.get_tipo_movimiento_display }}
                                 </span>
                             </td>
-                            <td>{{ mov.lote_content_object.lote_id|default:"-" }}</td>
                             <td>
-                                {% with item=mov.lote_content_object.item_principal %}
-                                    {{ item.codigo }} - {{ item.nombre|truncatechars:30 }}
-                                {% endwith %}
+                                {% if mov.lote_content_object %}
+                                    {{ mov.lote_content_object.lote_id|default:"-" }}
+                                {% else %}
+                                    -
+                                {% endif %}
                             </td>
-                            <td class="text-right">{{ mov.cantidad|floatformat:3 }} {{ mov.unidad_medida.abreviatura }}</td>
+                            <td>
+                                {% if mov.lote_content_object and mov.lote_content_object.item_principal %}
+                                    {% with item=mov.lote_content_object.item_principal %}
+                                        {{ item.codigo }} - {{ item.nombre|truncatechars:30 }}
+                                    {% endwith %}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td class="text-right">{{ mov.cantidad|floatformat:3 }} {{ mov.unidad_medida.codigo }}</td>
                             <td>{{ mov.ubicacion_origen.nombre|default:"-" }}</td>
                             <td>{{ mov.ubicacion_destino.nombre|default:"-" }}</td>
                             <td>{{ mov.usuario.get_username }}</td>

@@ -1,0 +1,147 @@
+/* Estilos para el Kanban de Producción */
+
+.kanban-container {
+    display: flex;
+    gap: 20px;
+    overflow-x: auto;
+    padding: 10px 0;
+    min-height: 70vh;
+}
+
+.kanban-column {
+    flex: 0 0 300px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+    display: flex;
+    flex-direction: column;
+}
+
+.kanban-column-header {
+    padding: 15px;
+    background: #e9ecef;
+    border-bottom: 1px solid #dee2e6;
+    border-radius: 8px 8px 0 0;
+    display: flex;
+    justify-content: between;
+    align-items: center;
+}
+
+.kanban-column-header h5 {
+    color: #495057;
+    font-weight: 600;
+    margin: 0;
+}
+
+.kanban-column-content {
+    flex: 1;
+    padding: 15px;
+    overflow-y: auto;
+    max-height: 600px;
+}
+
+/* Estilos para las tarjetas de orden */
+.orden-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    cursor: grab;
+    border: 1px solid #dee2e6;
+}
+
+.orden-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.orden-card:active {
+    cursor: grabbing;
+}
+
+.orden-card.dragging {
+    opacity: 0.5;
+    transform: rotate(5deg);
+}
+
+/* Badges de estado */
+.estado-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+}
+
+.proceso-badge {
+    font-size: 0.7rem;
+    margin-bottom: 2px;
+}
+
+/* Estados específicos */
+.bg-plan { background-color: #17a2b8 !important; }
+.bg-prog { background-color: #ffc107 !important; color: #212529; }
+.bg-libr { background-color: #007bff !important; }
+.bg-impr { background-color: #6f42c1 !important; }
+.bg-refi { background-color: #fd7e14 !important; }
+.bg-sell { background-color: #20c997 !important; }
+.bg-dobl { background-color: #e83e8c !important; }
+.bg-pend { background-color: #ffc107 !important; color: #212529; }
+.bg-term { background-color: #28a745 !important; }
+.bg-ctotal { background-color: #155724 !important; }
+.bg-cparc { background-color: #28a745 !important; }
+.bg-anul { background-color: #dc3545 !important; }
+
+/* Efectos de drag and drop */
+.kanban-column-content.drag-over {
+    background-color: #e3f2fd;
+    border: 2px dashed #1976d2;
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+    .kanban-container {
+        flex-direction: column;
+    }
+    
+    .kanban-column {
+        flex: none;
+        margin-bottom: 20px;
+    }
+    
+    .kanban-column-content {
+        max-height: 400px;
+    }
+}
+
+/* Animaciones */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.proceso-item:hover {
+    animation: pulse 0.3s ease-in-out;
+}
+
+/* Botones específicos del kanban */
+.btn-kanban-action {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    border-radius: 0.25rem;
+}
+
+/* Indicadores de progreso */
+.progress-mini {
+    height: 4px;
+    margin-top: 10px;
+}
+
+/* Tooltips personalizados */
+.tooltip-kanban {
+    font-size: 0.75rem;
+}
+
+/* Estilos para las estadísticas */
+.stats-card {
+    transition: transform 0.2s ease;
+}
+
+.stats-card:hover {
+    transform: translateY(-1px);
+}

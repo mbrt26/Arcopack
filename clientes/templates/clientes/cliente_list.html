@@ -9,7 +9,7 @@
             <h2><i class="fas fa-users"></i> Clientes</h2>
         </div>
         <div class="col text-end">
-            <a href="{% url 'clientes:cliente-create' %}" class="btn btn-primary">
+            <a href="{% url 'clientes_web:cliente_create' %}" class="btn btn-primary">
                 <i class="fas fa-plus"></i> Nuevo Cliente
             </a>
         </div>
@@ -37,7 +37,7 @@
                         <button type="submit" class="btn btn-primary">
                             <i class="fas fa-search"></i> Buscar
                         </button>
-                        <a href="{% url 'clientes:cliente-list' %}" class="btn btn-secondary">
+                        <a href="{% url 'clientes_web:cliente_list' %}" class="btn btn-secondary">
                             <i class="fas fa-times"></i> Limpiar
                         </a>
                     </div>
@@ -79,11 +79,11 @@
                             </td>
                             <td>
                                 <div class="btn-group">
-                                    <a href="{% url 'clientes:cliente-detail' cliente.pk %}" 
+                                    <a href="{% url 'clientes_web:cliente_detail' cliente.pk %}" 
                                        class="btn btn-sm btn-info" title="Ver detalle">
                                         <i class="fas fa-eye"></i>
                                     </a>
-                                    <a href="{% url 'clientes:cliente-update' cliente.pk %}" 
+                                    <a href="{% url 'clientes_web:cliente_update' cliente.pk %}" 
                                        class="btn btn-sm btn-warning" title="Editar">
                                         <i class="fas fa-edit"></i>
                                     </a>

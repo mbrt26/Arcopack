@@ -13,10 +13,67 @@
         <div class="col">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h1>{{ titulo }}</h1>
-                <a href="{% url 'produccion_web:proceso-list' %}" class="btn btn-outline-primary">
-                    <i class="fas fa-arrow-left"></i> Volver a Procesos
-                </a>
+                <div>
+                    <a href="{{ create_url }}" class="btn btn-primary me-2">
+                        <i class="fas fa-plus"></i> {{ create_button_text|default:"Nuevo Registro" }}
+                    </a>
+                    <div class="btn-group me-2" role="group">
+                        <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                            <i class="fas fa-filter"></i> Filtros
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#" onclick="filtrarPorPrioridad('ALTA')">Prioridad Alta</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="filtrarPorPrioridad('MEDIA')">Prioridad Media</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="filtrarPorPrioridad('BAJA')">Prioridad Baja</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" onclick="mostrarTodos()">Mostrar Todos</a></li>
+                        </ul>
+                    </div>
+                    <button type="button" class="btn btn-outline-info me-2" onclick="actualizarKanban()">
+                        <i class="fas fa-sync-alt"></i> Actualizar
+                    </button>
+                    <a href="{% url 'produccion_web:proceso-list' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-left"></i> Volver a Procesos
+                    </a>
+                </div>
             </div>
+            
+            <!-- Barra de estadísticas -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-light">
+                        <div class="card-body text-center">
+                            <h4 class="text-secondary">{{ ordenes_pendientes|length }}</h4>
+                            <small>Pendientes</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body text-center">
+                            <h4>{{ ordenes_proceso|length }}</h4>
+                            <small>En Proceso</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-warning">
+                        <div class="card-body text-center">
+                            <h4>{{ ordenes_pausadas|length }}</h4>
+                            <small>Pausadas</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body text-center">
+                            <h4>{{ ordenes_terminadas|length }}</h4>
+                            <small>Terminadas</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
             <div class="kanban-container">
                 {% block kanban_columns %}{% endblock %}
             </div>
@@ -31,5 +88,53 @@
     setTimeout(function() {
         window.location.reload();
     }, 5 * 60 * 1000);
+    
+    // Funciones para filtros
+    function filtrarPorPrioridad(prioridad) {
+        const ordenes = document.querySelectorAll('.orden-card');
+        ordenes.forEach(orden => {
+            const badge = orden.querySelector('.estado-badge');
+            if (badge && badge.textContent.toLowerCase().includes(prioridad.toLowerCase())) {
+                orden.style.display = 'block';
+            } else {
+                orden.style.display = 'none';
+            }
+        });
+    }
+    
+    function mostrarTodos() {
+        const ordenes = document.querySelectorAll('.orden-card');
+        ordenes.forEach(orden => {
+            orden.style.display = 'block';
+        });
+    }
+    
+    function actualizarKanban() {
+        window.location.reload();
+    }
+    
+    // Drag and drop para kanban (opcional)
+    document.addEventListener('DOMContentLoaded', function() {
+        const columns = document.querySelectorAll('.kanban-column-content');
+        columns.forEach(column => {
+            column.addEventListener('dragover', function(e) {
+                e.preventDefault();
+            });
+            
+            column.addEventListener('drop', function(e) {
+                e.preventDefault();
+                // Aquí se puede implementar la lógica para cambiar el estado de la orden
+                console.log('Orden movida a nueva columna');
+            });
+        });
+        
+        const cards = document.querySelectorAll('.orden-card');
+        cards.forEach(card => {
+            card.draggable = true;
+            card.addEventListener('dragstart', function(e) {
+                e.dataTransfer.setData('text/plain', this.dataset.ordenId);
+            });
+        });
+    });
 </script>
 {% endblock %}

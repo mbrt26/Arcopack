@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}{% if form.instance.pk %}Editar{% else %}Nueva{% endif %} Máquina - ARCOPACK{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h2>
+                <i class="fas fa-{% if form.instance.pk %}edit{% else %}plus{% endif %}"></i> 
+                {% if form.instance.pk %}Editar{% else %}Nueva{% endif %} Máquina
+            </h2>
+        </div>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-industry"></i> Información de la Máquina
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Código *</label>
+                                    {{ form.codigo }}
+                                    {% if form.codigo.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.codigo.errors|join:", " }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Nombre *</label>
+                                    {{ form.nombre }}
+                                    {% if form.nombre.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.nombre.errors|join:", " }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Ubicación</label>
+                                    {{ form.ubicacion }}
+                                    {% if form.ubicacion.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.ubicacion.errors|join:", " }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Proceso</label>
+                                    {{ form.proceso }}
+                                    {% if form.proceso.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.proceso.errors|join:", " }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Capacidad por Hora</label>
+                                    {{ form.capacidad_hora }}
+                                    {% if form.capacidad_hora.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.capacidad_hora.errors|join:", " }}
+                                        </div>
+                                    {% endif %}
+                                    <div class="form-text">Unidades que puede procesar por hora</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        {{ form.is_active }}
+                                        <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                            Activo
+                                        </label>
+                                    </div>
+                                    {% if form.is_active.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.is_active.errors|join:", " }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Descripción</label>
+                            {{ form.descripcion }}
+                            {% if form.descripcion.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.descripcion.errors|join:", " }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botones de acción -->
+        <div class="row mb-4">
+            <div class="col text-end">
+                <a href="{% url 'configuracion_web:maquina-list' %}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> Cancelar
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Guardar
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

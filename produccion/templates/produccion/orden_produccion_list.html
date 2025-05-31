@@ -9,7 +9,7 @@
             <h2><i class="fas fa-industry"></i> Órdenes de Producción</h2>
         </div>
         <div class="col text-end">
-            <a href="{% url 'produccion_web:ordenproduccion-list' %}" class="btn btn-primary">
+            <a href="{% url 'produccion_web:orden-produccion-create' %}" class="btn btn-primary">
                 <i class="fas fa-plus"></i> Nueva Orden
             </a>
         </div>
@@ -44,16 +44,14 @@
                     <label class="form-label">Producto</label>
                     <select name="producto" class="form-select">
                         <option value="">Todos</option>
-                        {% for producto in productos %}
-                            <option value="{{ producto.id }}">{{ producto.nombre }}</option>
-                        {% endfor %}
+                        {% comment %} Los productos se cargarán cuando se implemente la funcionalidad {% endcomment %}
                     </select>
                 </div>
                 <div class="col-md-12">
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-search"></i> Filtrar
                     </button>
-                    <a href="{% url 'produccion_web:produccion_orden_list' %}" class="btn btn-secondary">
+                    <a href="{% url 'produccion_web:orden-produccion-list' %}" class="btn btn-secondary">
                         <i class="fas fa-undo"></i> Limpiar
                     </a>
                 </div>
@@ -82,78 +80,68 @@
                     <tbody>
                         {% for orden in ordenes %}
                         <tr>
-                            <td>{{ orden.numero }}</td>
-                            <td>{{ orden.producto.nombre }}</td>
-                            <td>{{ orden.cliente.razon_social }}</td>
-                            <td>{{ orden.cantidad }} {{ orden.producto.unidad_medida.codigo }}</td>
-                            <td>{{ orden.fecha_inicio|date:"d/m/Y" }}</td>
-                            <td>{{ orden.fecha_fin|date:"d/m/Y"|default:"-" }}</td>
+                            <td>{{ orden.op_numero }}</td>
+                            <td>{{ orden.producto.nombre|default:"Sin producto" }}</td>
+                            <td>{{ orden.cliente.razon_social|default:"Sin cliente" }}</td>
+                            <td>{{ orden.cantidad_solicitada_kg|default:0 }} kg</td>
+                            <td>{{ orden.fecha_real_inicio|date:"d/m/Y"|default:"-" }}</td>
+                            <td>{{ orden.fecha_real_terminacion|date:"d/m/Y"|default:"-" }}</td>
                             <td>
-                                {% if orden.estado == 'PENDIENTE' %}
-                                    <span class="badge bg-warning">Pendiente</span>
-                                {% elif orden.estado == 'EN_PROCESO' %}
-                                    <span class="badge bg-primary">En Proceso</span>
-                                {% elif orden.estado == 'COMPLETADA' %}
-                                    <span class="badge bg-success">Completada</span>
+                                {% if orden.etapa_actual == 'PLAN' %}
+                                    <span class="badge bg-info">Planeada</span>
+                                {% elif orden.etapa_actual == 'PROG' %}
+                                    <span class="badge bg-warning">Programada</span>
+                                {% elif orden.etapa_actual == 'LIBR' %}
+                                    <span class="badge bg-primary">Liberada</span>
+                                {% elif orden.etapa_actual == 'IMPR' %}
+                                    <span class="badge bg-primary">En Impresión</span>
+                                {% elif orden.etapa_actual == 'REFI' %}
+                                    <span class="badge bg-primary">En Refilado</span>
+                                {% elif orden.etapa_actual == 'SELL' %}
+                                    <span class="badge bg-primary">En Sellado</span>
+                                {% elif orden.etapa_actual == 'DOBL' %}
+                                    <span class="badge bg-primary">En Doblado</span>
+                                {% elif orden.etapa_actual == 'PEND' %}
+                                    <span class="badge bg-warning">Pendiente Calidad</span>
+                                {% elif orden.etapa_actual == 'TERM' %}
+                                    <span class="badge bg-success">Terminada</span>
+                                {% elif orden.etapa_actual == 'CTOTAL' %}
+                                    <span class="badge bg-success">Cerrada Total</span>
+                                {% elif orden.etapa_actual == 'CPARC' %}
+                                    <span class="badge bg-success">Cerrada Parcial</span>
+                                {% elif orden.etapa_actual == 'ANUL' %}
+                                    <span class="badge bg-danger">Anulada</span>
                                 {% else %}
-                                    <span class="badge bg-danger">Cancelada</span>
+                                    <span class="badge bg-secondary">{{ orden.get_etapa_actual_display|default:"Sin estado" }}</span>
                                 {% endif %}
                             </td>
                             <td>
                                 <div class="progress">
-                                    {% with completados=orden.procesos_completados total=orden.total_procesos %}
                                     <div class="progress-bar" role="progressbar" 
-                                         style="width: {% widthratio completados total 100 %}%"
-                                         aria-valuenow="{{ completados }}" 
+                                         style="width: 25%"
+                                         aria-valuenow="1" 
                                          aria-valuemin="0" 
-                                         aria-valuemax="{{ total }}">
-                                        {{ completados }}/{{ total }}
+                                         aria-valuemax="4">
+                                        1/4
                                     </div>
-                                    {% endwith %}
                                 </div>
                             </td>
                             <td>
                                 <div class="btn-group">
-                                    <a href="{% url 'produccion_web:produccion_orden_detail' orden.id %}" 
+                                    <a href="{% url 'produccion_web:orden-produccion-detail' orden.id %}" 
                                        class="btn btn-sm btn-info" title="Ver Detalle">
                                         <i class="fas fa-eye"></i>
                                     </a>
-                                    {% if orden.estado == 'PENDIENTE' %}
-                                    <a href="{% url 'produccion_web:produccion_orden_update' orden.id %}" 
+                                    {% if orden.etapa_actual == 'PLAN' %}
+                                    <a href="{% url 'produccion_web:orden-produccion-update' orden.id %}" 
                                        class="btn btn-sm btn-warning" title="Editar">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    <button type="button" class="btn btn-sm btn-danger" title="Cancelar"
-                                            data-bs-toggle="modal" data-bs-target="#cancelarModal{{ orden.id }}">
+                                    <a href="{% url 'produccion_web:orden-produccion-anular' orden.id %}" 
+                                       class="btn btn-sm btn-danger" title="Anular">
                                         <i class="fas fa-times"></i>
-                                    </button>
+                                    </a>
                                     {% endif %}
-                                </div>
-                                
-                                <!-- Modal de Cancelación -->
-                                <div class="modal fade" id="cancelarModal{{ orden.id }}" tabindex="-1">
-                                    <div class="modal-dialog">
-                                        <div class="modal-content">
-                                            <div class="modal-header">
-                                                <h5 class="modal-title">Cancelar Orden #{{ orden.numero }}</h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                            </div>
-                                            <form method="post" action="{% url 'produccion_web:anular_orden' orden.id %}">
-                                                {% csrf_token %}
-                                                <div class="modal-body">
-                                                    <p>¿Está seguro que desea cancelar esta orden de producción?</p>
-                                                    <div class="mb-3">
-                                                        <label class="form-label">Motivo de Cancelación</label>
-                                                        <textarea name="motivo" class="form-control" required></textarea>
-                                                    </div>
-                                                </div>
-                                                <div class="modal-footer">
-                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
-                                                    <button type="submit" class="btn btn-danger">Sí, Cancelar</button>
-                                                </div>
-                                            </form>
-                                        </div>
-                                    </div>
                                 </div>
                             </td>
                         </tr>

@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     # Apps de Terceros
     'import_export', # Añadir esta línea
     'rest_framework',
+    'widget_tweaks',  # Para mejorar el manejo de widgets de formularios
 ]
 
 MIDDLEWARE = [

@@ -13,13 +13,15 @@
         </div>
     </div>
 
-    <div class="row">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-body">
-                    <form method="post" id="unidadMedidaForm">
-                        {% csrf_token %}
-                        
+    <form method="post">
+        {% csrf_token %}
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-ruler"></i> Información de la Unidad
+                    </div>
+                    <div class="card-body">
                         <div class="mb-3">
                             <label class="form-label">Código *</label>
                             {{ form.codigo }}
@@ -27,9 +29,6 @@
                                 <div class="invalid-feedback d-block">
                                     {{ form.codigo.errors|join:", " }}
                                 </div>
-                            {% endif %}
-                            {% if form.codigo.help_text %}
-                                <div class="form-text">{{ form.codigo.help_text }}</div>
                             {% endif %}
                         </div>
 
@@ -41,24 +40,34 @@
                                     {{ form.nombre.errors|join:", " }}
                                 </div>
                             {% endif %}
-                            {% if form.nombre.help_text %}
-                                <div class="form-text">{{ form.nombre.help_text }}</div>
-                            {% endif %}
                         </div>
 
-                        <div class="mt-4">
-                            <a href="{% url 'configuracion:unidad-medida-list' %}" class="btn btn-secondary">
-                                <i class="fas fa-times"></i> Cancelar
-                            </a>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save"></i> Guardar
-                            </button>
+                        <div class="mb-3">
+                            <label class="form-label">Descripción</label>
+                            {{ form.descripcion }}
+                            {% if form.descripcion.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.descripcion.errors|join:", " }}
+                                </div>
+                            {% endif %}
                         </div>
-                    </form>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+
+        <!-- Botones de acción -->
+        <div class="row mb-4">
+            <div class="col text-end">
+                <a href="{% url 'configuracion_web:unidad-medida-list' %}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> Cancelar
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Guardar
+                </button>
+            </div>
+        </div>
+    </form>
 </div>
 {% endblock %}
 

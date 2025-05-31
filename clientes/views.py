@@ -50,7 +50,7 @@ class ClienteCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView)
         'direccion_principal', 'ciudad', 'departamento', 'pais',
         'telefono_principal', 'email_principal',
         'nombre_contacto_principal', 'email_contacto_principal',
-        'condiciones_pago', 'cupo_credito', 'activo'
+        'condiciones_pago', 'cupo_credito', 'is_active'
     ]
     template_name = 'clientes/cliente_form.html'
     permission_required = 'clientes.add_cliente'
@@ -60,7 +60,7 @@ class ClienteCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView)
         return super().form_valid(form)
     
     def get_success_url(self):
-        return reverse_lazy('clientes:cliente_detail', kwargs={'pk': self.object.pk})
+        return reverse_lazy('clientes_web:cliente_detail', kwargs={'pk': self.object.pk})
 
 
 class ClienteUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
@@ -71,7 +71,7 @@ class ClienteUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView)
         'direccion_principal', 'ciudad', 'departamento', 'pais',
         'telefono_principal', 'email_principal',
         'nombre_contacto_principal', 'email_contacto_principal',
-        'condiciones_pago', 'cupo_credito', 'activo'
+        'condiciones_pago', 'cupo_credito', 'is_active'
     ]
     template_name = 'clientes/cliente_form.html'
     permission_required = 'clientes.change_cliente'
@@ -81,14 +81,14 @@ class ClienteUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView)
         return super().form_valid(form)
     
     def get_success_url(self):
-        return reverse_lazy('clientes:cliente_detail', kwargs={'pk': self.object.pk})
+        return reverse_lazy('clientes_web:cliente_detail', kwargs={'pk': self.object.pk})
 
 
 class ClienteDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
     """Vista para eliminar un cliente."""
     model = Cliente
     template_name = 'clientes/confirm_delete.html'
-    success_url = reverse_lazy('clientes:cliente_list')
+    success_url = reverse_lazy('clientes_web:cliente_list')
     permission_required = 'clientes.delete_cliente'
     
     def delete(self, request, *args, **kwargs):

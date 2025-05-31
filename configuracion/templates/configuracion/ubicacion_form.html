@@ -1,91 +1,86 @@
-{% extends 'base.html' %}
-{% load static %}
+{% extends "base.html" %}
 
-{% block title %}{{ object.pk|yesno:"Editar,Nueva" }} Ubicación{% endblock %}
+{% block title %}{% if form.instance.pk %}Editar{% else %}Nueva{% endif %} Ubicación - ARCOPACK{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
-    <div class="row justify-content-center">
-        <div class="col-12 col-xl-8">
-            <div class="card">
-                <div class="card-header">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h3 class="card-title mb-0">{{ object.pk|yesno:"Editar,Nueva" }} Ubicación</h3>
-                        <a href="{% url 'configuracion:ubicacion_list' %}" class="btn btn-outline-secondary">
-                            <i class="bi bi-arrow-left"></i> Volver
-                        </a>
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h2>
+                <i class="fas fa-{% if form.instance.pk %}edit{% else %}plus{% endif %}"></i> 
+                {% if form.instance.pk %}Editar{% else %}Nueva{% endif %} Ubicación
+            </h2>
+        </div>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-map-marker-alt"></i> Información de la Ubicación
                     </div>
-                </div>
-                <div class="card-body">
-                    {% include "configuracion/components/_form_errors.html" %}
-                    
-                    <form method="post" novalidate>
-                        {% csrf_token %}
-                        
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label for="{{ form.codigo.id_for_label }}" class="form-label">Código *</label>
-                                {{ form.codigo }}
-                                {% if form.codigo.errors %}
-                                <div class="invalid-feedback">{{ form.codigo.errors.0 }}</div>
-                                {% endif %}
-                            </div>
-                            <div class="col-md-6">
-                                <label for="{{ form.nombre.id_for_label }}" class="form-label">Nombre *</label>
-                                {{ form.nombre }}
-                                {% if form.nombre.errors %}
-                                <div class="invalid-feedback">{{ form.nombre.errors.0 }}</div>
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label for="{{ form.tipo.id_for_label }}" class="form-label">Tipo *</label>
-                                {{ form.tipo }}
-                                {% if form.tipo.errors %}
-                                <div class="invalid-feedback">{{ form.tipo.errors.0 }}</div>
-                                {% endif %}
-                            </div>
-                            <div class="col-md-6">
-                                <label for="{{ form.capacidad_kg.id_for_label }}" class="form-label">Capacidad (kg)</label>
-                                {{ form.capacidad_kg }}
-                                {% if form.capacidad_kg.errors %}
-                                <div class="invalid-feedback">{{ form.capacidad_kg.errors.0 }}</div>
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        <div class="row mb-3">
-                            <div class="col-12">
-                                <label for="{{ form.descripcion.id_for_label }}" class="form-label">Descripción</label>
-                                {{ form.descripcion }}
-                                {% if form.descripcion.errors %}
-                                <div class="invalid-feedback">{{ form.descripcion.errors.0 }}</div>
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        <div class="row mb-3">
-                            <div class="col-12">
-                                <div class="form-check">
-                                    {{ form.is_active }}
-                                    <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
-                                        Ubicación Activa
-                                    </label>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">Código *</label>
+                            {{ form.codigo }}
+                            {% if form.codigo.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.codigo.errors|join:", " }}
                                 </div>
-                            </div>
+                            {% endif %}
                         </div>
 
-                        <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-save"></i> Guardar
-                            </button>
+                        <div class="mb-3">
+                            <label class="form-label">Nombre *</label>
+                            {{ form.nombre }}
+                            {% if form.nombre.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.nombre.errors|join:", " }}
+                                </div>
+                            {% endif %}
                         </div>
-                    </form>
+
+                        <div class="mb-3">
+                            <label class="form-label">Descripción</label>
+                            {{ form.descripcion }}
+                            {% if form.descripcion.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.descripcion.errors|join:", " }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                {{ form.is_active }}
+                                <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                    Activo
+                                </label>
+                            </div>
+                            {% if form.is_active.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.is_active.errors|join:", " }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+
+        <!-- Botones de acción -->
+        <div class="row mb-4">
+            <div class="col text-end">
+                <a href="{% url 'configuracion_web:ubicacion-list' %}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> Cancelar
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Guardar
+                </button>
+            </div>
+        </div>
+    </form>
 </div>
 {% endblock %}

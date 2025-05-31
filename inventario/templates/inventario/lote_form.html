@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block title %}Nuevo Lote - ARCOPACK{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h2><i class="fas fa-box"></i> Nuevo Lote</h2>
+        </div>
+        <div class="col text-end">
+            <a href="{% url 'inventario_web:lote-list' %}" class="btn btn-secondary">
+                <i class="fas fa-list"></i> Volver al Listado
+            </a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <form method="post" novalidate>
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="{{ form.materia_prima.id_for_label }}" class="form-label">Materia Prima *</label>
+                            {{ form.materia_prima }}
+                            {% if form.materia_prima.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.materia_prima.errors|join:", " }}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.lote_id.id_for_label }}" class="form-label">ID de Lote *</label>
+                            {{ form.lote_id }}
+                            {% if form.lote_id.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.lote_id.errors|join:", " }}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.cantidad_recibida.id_for_label }}" class="form-label">Cantidad Recibida *</label>
+                            {{ form.cantidad_recibida }}
+                            {% if form.cantidad_recibida.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.cantidad_recibida.errors|join:", " }}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.ubicacion.id_for_label }}" class="form-label">Ubicación *</label>
+                            {{ form.ubicacion }}
+                            {% if form.ubicacion.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.ubicacion.errors|join:", " }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="{{ form.proveedor.id_for_label }}" class="form-label">Proveedor</label>
+                            {{ form.proveedor }}
+                            {% if form.proveedor.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.proveedor.errors|join:", " }}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.fecha_recepcion.id_for_label }}" class="form-label">Fecha de Recepción *</label>
+                            {{ form.fecha_recepcion }}
+                            {% if form.fecha_recepcion.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.fecha_recepcion.errors|join:", " }}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.fecha_vencimiento.id_for_label }}" class="form-label">Fecha de Vencimiento</label>
+                            {{ form.fecha_vencimiento }}
+                            {% if form.fecha_vencimiento.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.fecha_vencimiento.errors|join:", " }}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.observaciones.id_for_label }}" class="form-label">Observaciones</label>
+                            {{ form.observaciones }}
+                            {% if form.observaciones.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.observaciones.errors|join:", " }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Guardar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Inicializar datepickers
+    const fechaRecepcion = document.getElementById('{{ form.fecha_recepcion.id_for_label }}');
+    const fechaVencimiento = document.getElementById('{{ form.fecha_vencimiento.id_for_label }}');
+    
+    if (fechaRecepcion) {
+        fechaRecepcion.type = 'date';
+    }
+    if (fechaVencimiento) {
+        fechaVencimiento.type = 'date';
+    }
+
+    // Aplicar clases de Bootstrap a los campos del formulario
+    const formControls = document.querySelectorAll('input, select, textarea');
+    formControls.forEach(control => {
+        control.classList.add('form-control');
+    });
+
+    // Validaciones del formulario
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const fechaRecepcionVal = fechaRecepcion ? fechaRecepcion.value : null;
+        const fechaVencimientoVal = fechaVencimiento ? fechaVencimiento.value : null;
+        
+        if (fechaRecepcionVal && fechaVencimientoVal && fechaVencimientoVal <= fechaRecepcionVal) {
+            e.preventDefault();
+            alert('La fecha de vencimiento debe ser posterior a la fecha de recepción');
+            return false;
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,366 @@
+{% extends "produccion/layouts/produccion_base.html" %}
+{% load widget_tweaks %}
+
+{% block title %}Nuevo Registro de Doblado - ARCOPACK{% endblock %}
+
+{% block page_title %}{{ page_title|default:"Nuevo Registro de Doblado" }}{% endblock %}
+
+{% block produccion_content %}
+<div class="row">
+    <div class="col-lg-12">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <i class="fas fa-layer-group me-2"></i>Nuevo Registro de Doblado
+            </div>
+            <div class="card-body">
+                <form method="post" id="registroDobladoForm">
+                    {% csrf_token %}
+                    
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {% for error in form.non_field_errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form.orden_produccion.label_tag }}
+                                {% render_field form.orden_produccion class="form-control" %}
+                                {% if form.orden_produccion.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.orden_produccion.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form.maquina.label_tag }}
+                                {% render_field form.maquina class="form-control" %}
+                                {% if form.maquina.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.maquina.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form.operario_principal.label_tag }}
+                                {% render_field form.operario_principal class="form-control" %}
+                                {% if form.operario_principal.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.operario_principal.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form.fecha.label_tag }}
+                                {% render_field form.fecha class="form-control" %}
+                                {% if form.fecha.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.fecha.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form.hora_inicio.label_tag }}
+                                {% render_field form.hora_inicio class="form-control" %}
+                                {% if form.hora_inicio.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.hora_inicio.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form.hora_final.label_tag }}
+                                {% render_field form.hora_final class="form-control" %}
+                                {% if form.hora_final.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.hora_final.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form.bolsas_procesadas.label_tag }}
+                                {% render_field form.bolsas_procesadas class="form-control" %}
+                                {% if form.bolsas_procesadas.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.bolsas_procesadas.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form.observaciones.label_tag }}
+                                {% render_field form.observaciones class="form-control" %}
+                                {% if form.observaciones.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.observaciones.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h4>Paros</h4>
+                        </div>
+                        <div class="card-body">
+                            {{ paro_formset.management_form }}
+                            <div id="paro-forms">
+                                {% for form in paro_formset %}
+                                <div class="paro-form mb-3 border p-3">
+                                    {% for field in form %}
+                                    <div class="mb-2">
+                                        <label class="form-label">{{ field.label }}</label>
+                                        {% render_field field class="form-control" %}
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                {% endfor %}
+                            </div>
+                            <button type="button" class="btn btn-secondary" id="add-paro">Agregar Paro</button>
+                        </div>
+                    </div>
+
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h4>Consumo de WIP</h4>
+                        </div>
+                        <div class="card-body">
+                            {{ consumo_wip_formset.management_form }}
+                            <div id="consumo-wip-forms">
+                                {% for form in consumo_wip_formset %}
+                                <div class="consumo-wip-form mb-3 border p-3">
+                                    {% for field in form %}
+                                    <div class="mb-2">
+                                        <label class="form-label">{{ field.label }}</label>
+                                        {% render_field field class="form-control" %}
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                {% endfor %}
+                            </div>
+                            <button type="button" class="btn btn-secondary" id="add-consumo-wip">Agregar Consumo WIP</button>
+                        </div>
+                    </div>
+
+                    <div class="card mb-4">
+                        <div class="card-header bg-success text-white">
+                            <h4><i class="fas fa-boxes me-2"></i>Bolsas Procesadas</h4>
+                        </div>
+                        <div class="card-body">
+                            {{ produccion_formset.management_form }}
+                            <div id="produccion-forms">
+                                {% for form in produccion_formset %}
+                                <div class="produccion-form mb-3 border p-3">
+                                    <div class="row">
+                                        <div class="col-md-2">
+                                            <div class="mb-2">
+                                                <label class="form-label">{{ form.lote_id.label }}</label>
+                                                {% render_field form.lote_id class="form-control" %}
+                                                {% if form.lote_id.errors %}
+                                                    <div class="invalid-feedback d-block">
+                                                        {{ form.lote_id.errors }}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <div class="mb-2">
+                                                <label class="form-label">{{ form.cantidad_procesada.label }}</label>
+                                                {% render_field form.cantidad_procesada class="form-control" %}
+                                                {% if form.cantidad_procesada.errors %}
+                                                    <div class="invalid-feedback d-block">
+                                                        {{ form.cantidad_procesada.errors }}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="mb-2">
+                                                <label class="form-label">{{ form.ubicacion.label }}</label>
+                                                {% render_field form.ubicacion class="form-control" %}
+                                                {% if form.ubicacion.errors %}
+                                                    <div class="invalid-feedback d-block">
+                                                        {{ form.ubicacion.errors }}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="mb-2">
+                                                <div class="d-flex align-items-end">
+                                                    {% if produccion_formset.can_delete %}
+                                                        <div class="form-check">
+                                                            {% render_field form.DELETE class="form-check-input" %}
+                                                            <label class="form-check-label" for="{{ form.DELETE.id_for_label }}">
+                                                                Eliminar
+                                                            </label>
+                                                        </div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-12">
+                                            <div class="mb-2">
+                                                <label class="form-label">{{ form.observaciones.label }}</label>
+                                                {% render_field form.observaciones class="form-control" %}
+                                                {% if form.observaciones.errors %}
+                                                    <div class="invalid-feedback d-block">
+                                                        {{ form.observaciones.errors }}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% for hidden in form.hidden_fields %}
+                                        {{ hidden }}
+                                    {% endfor %}
+                                </div>
+                                {% endfor %}
+                            </div>
+                            <button type="button" class="btn btn-success" id="add-produccion">
+                                <i class="fas fa-plus me-2"></i>Agregar Lote Procesado
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{{ cancel_url }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Guardar Registro
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Funcionalidad para agregar/eliminar formularios dinámicamente
+        function setupFormsetManagement(prefix, containerSelector, addButtonSelector, formClass) {
+            const container = document.querySelector(containerSelector);
+            const addButton = document.querySelector(addButtonSelector);
+            
+            if (!container || !addButton) return;
+
+            addButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                const totalForms = document.querySelector(`#id_${prefix}-TOTAL_FORMS`);
+                const formCount = parseInt(totalForms.value);
+                const newForm = container.querySelector(`.${formClass}`).cloneNode(true);
+                
+                // Actualizar los nombres e IDs de los campos del nuevo formulario
+                const formRegex = new RegExp(`${prefix}-(\\d+)-`, 'g');
+                newForm.innerHTML = newForm.innerHTML.replace(formRegex, `${prefix}-${formCount}-`);
+                
+                // Limpiar los valores del nuevo formulario
+                const inputs = newForm.querySelectorAll('input, select, textarea');
+                inputs.forEach(input => {
+                    if (input.type === 'checkbox') {
+                        input.checked = false;
+                    } else {
+                        input.value = '';
+                    }
+                });
+                
+                // Agregar el nuevo formulario al contenedor
+                container.appendChild(newForm);
+                
+                // Actualizar el contador de formularios
+                totalForms.value = formCount + 1;
+                
+                // Agregar funcionalidad de eliminar al nuevo formulario
+                setupDeleteButton(newForm);
+            });
+        }
+
+        function setupDeleteButton(formElement) {
+            const deleteCheckbox = formElement.querySelector('input[name$="-DELETE"]');
+            if (deleteCheckbox) {
+                const deleteLabel = formElement.querySelector('label[for="' + deleteCheckbox.id + '"]');
+                if (deleteLabel) {
+                    deleteLabel.addEventListener('click', function() {
+                        if (deleteCheckbox.checked) {
+                            formElement.style.display = 'none';
+                        } else {
+                            formElement.style.display = 'block';
+                        }
+                    });
+                }
+            }
+        }
+
+        // Configurar manejo de formsets
+        setupFormsetManagement('form', '#paro-forms', '#add-paro', 'paro-form');
+        setupFormsetManagement('form', '#consumo-wip-forms', '#add-consumo-wip', 'consumo-wip-form');
+        setupFormsetManagement('form', '#produccion-forms', '#add-produccion', 'produccion-form');
+
+        // Configurar botones de eliminar existentes
+        document.querySelectorAll('.paro-form, .consumo-wip-form, .produccion-form').forEach(setupDeleteButton);
+
+        // Inicializar datepicker para el campo de fecha
+        if (typeof flatpickr !== 'undefined') {
+            flatpickr('#{{ form.fecha.id_for_label }}', {
+                dateFormat: 'Y-m-d',
+                allowInput: true,
+                defaultDate: '{{ form.fecha.value|default:"" }}',
+                locale: 'es',
+                disableMobile: true
+            });
+
+            // Configurar campos de hora
+            flatpickr('#{{ form.hora_inicio.id_for_label }}', {
+                enableTime: true,
+                noCalendar: true,
+                dateFormat: 'H:i',
+                time_24hr: true,
+                defaultDate: '{{ form.hora_inicio.value|default:"" }}',
+                locale: 'es'
+            });
+
+            flatpickr('#{{ form.hora_final.id_for_label }}', {
+                enableTime: true,
+                noCalendar: true,
+                dateFormat: 'H:i',
+                time_24hr: true,
+                defaultDate: '{{ form.hora_final.value|default:"" }}',
+                locale: 'es'
+            });
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,25 @@
+{% if form.errors or form.non_field_errors %}
+<div class="alert alert-danger" role="alert">
+    <h6 class="alert-heading"><i class="fas fa-exclamation-triangle"></i> Por favor corrige los siguientes errores:</h6>
+    
+    {% if form.non_field_errors %}
+        <ul class="mb-0">
+            {% for error in form.non_field_errors %}
+                <li>{{ error }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+    
+    {% if form.errors %}
+        <ul class="mb-0">
+            {% for field, errors in form.errors.items %}
+                {% if field != '__all__' %}
+                    {% for error in errors %}
+                        <li><strong>{{ field|title }}:</strong> {{ error }}</li>
+                    {% endfor %}
+                {% endif %}
+            {% endfor %}
+        </ul>
+    {% endif %}
+</div>
+{% endif %}

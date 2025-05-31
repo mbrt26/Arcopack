@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}Anular Orden de Producción - ARCOPACK{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-exclamation-triangle"></i> 
+                        Confirmar Anulación de Orden de Producción
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <strong>¡Atención!</strong> Esta acción no se puede deshacer.
+                    </div>
+
+                    <h5>Datos de la Orden a Anular:</h5>
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <p><strong>Número de OP:</strong> {{ orden.op_numero }}</p>
+                            <p><strong>Cliente:</strong> {{ orden.cliente.razon_social|default:"Sin cliente" }}</p>
+                            <p><strong>Producto:</strong> {{ orden.producto.nombre|default:"Sin producto" }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Cantidad Solicitada:</strong> {{ orden.cantidad_solicitada_kg|default:0 }} kg</p>
+                            <p><strong>Estado Actual:</strong> 
+                                <span class="badge bg-info">{{ orden.get_etapa_actual_display }}</span>
+                            </p>
+                            <p><strong>Fecha de Creación:</strong> {{ orden.fecha_creacion|date:"d/m/Y H:i" }}</p>
+                        </div>
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="motivo_anulacion" class="form-label">
+                                <strong>Motivo de Anulación <span class="text-danger">*</span></strong>
+                            </label>
+                            <textarea 
+                                id="motivo_anulacion" 
+                                name="motivo_anulacion" 
+                                class="form-control" 
+                                rows="4" 
+                                placeholder="Ingrese el motivo por el cual se anula esta orden de producción..."
+                                required></textarea>
+                            <small class="form-text text-muted">
+                                Este motivo quedará registrado en el historial de la orden.
+                            </small>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <a href="{% url 'produccion_web:orden-produccion-detail' orden.pk %}" 
+                                   class="btn btn-secondary w-100">
+                                    <i class="fas fa-arrow-left"></i> Cancelar
+                                </a>
+                            </div>
+                            <div class="col-md-6">
+                                <button type="submit" class="btn btn-danger w-100">
+                                    <i class="fas fa-ban"></i> Confirmar Anulación
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Confirmación adicional antes de enviar el formulario
+    $('form').on('submit', function(e) {
+        const motivo = $('#motivo_anulacion').val().trim();
+        
+        if (motivo.length < 10) {
+            e.preventDefault();
+            alert('El motivo de anulación debe tener al menos 10 caracteres.');
+            return false;
+        }
+        
+        return confirm('¿Está completamente seguro de que desea anular esta orden de producción?');
+    });
+});
+</script>
+{% endblock %}
