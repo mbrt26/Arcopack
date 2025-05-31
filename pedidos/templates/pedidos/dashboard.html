@@ -41,10 +41,10 @@
                     <p class="text-muted">Resumen ejecutivo y métricas clave</p>
                 </div>
                 <div class="d-flex gap-2">
-                    <a href="{% url 'pedidos:pedido_list' %}" class="btn btn-outline-primary">
+                    <a href="{% url 'pedidos_web:pedido_list' %}" class="btn btn-outline-primary">
                         <i class="fas fa-list"></i> Ver Todos
                     </a>
-                    <a href="{% url 'pedidos:pedido_create' %}" class="btn btn-primary">
+                    <a href="{% url 'pedidos_web:pedido_create' %}" class="btn btn-primary">
                         <i class="fas fa-plus"></i> Nuevo Pedido
                     </a>
                 </div>
@@ -68,7 +68,7 @@
                         </div>
                         <div class="col-md-4 d-flex align-items-end">
                             <button type="submit" class="btn btn-primary me-2">Filtrar</button>
-                            <a href="{% url 'pedidos:dashboard_pedidos' %}" class="btn btn-outline-secondary">Limpiar</a>
+                            <a href="{% url 'pedidos_web:dashboard_pedidos' %}" class="btn btn-outline-secondary">Limpiar</a>
                         </div>
                     </form>
                 </div>
@@ -228,7 +228,7 @@
                             {% for pedido in pedidos_proximos %}
                                 <div class="list-group-item d-flex justify-content-between align-items-center p-2">
                                     <div>
-                                        <a href="{% url 'pedidos:pedido_detail' pedido.pk %}" class="text-decoration-none">
+                                        <a href="{% url 'pedidos_web:pedido_detail' pedido.pk %}" class="text-decoration-none">
                                             <strong>{{ pedido.numero_pedido }}</strong>
                                         </a>
                                         <br>
@@ -263,7 +263,7 @@
             <div class="card dashboard-card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h6 class="m-0 font-weight-bold text-primary">Últimos Pedidos</h6>
-                    <a href="{% url 'pedidos:pedido_list' %}" class="btn btn-sm btn-outline-primary">Ver Todos</a>
+                    <a href="{% url 'pedidos_web:pedido_list' %}" class="btn btn-sm btn-outline-primary">Ver Todos</a>
                 </div>
                 <div class="card-body">
                     {% if ultimos_pedidos %}
@@ -283,7 +283,7 @@
                                     {% for pedido in ultimos_pedidos %}
                                         <tr>
                                             <td>
-                                                <a href="{% url 'pedidos:pedido_detail' pedido.pk %}" class="pedido-numero">
+                                                <a href="{% url 'pedidos_web:pedido_detail' pedido.pk %}" class="pedido-numero">
                                                     {{ pedido.numero_pedido }}
                                                 </a>
                                             </td>
@@ -296,7 +296,7 @@
                                             <td>{{ pedido.fecha_pedido|date:"d/m/Y" }}</td>
                                             <td>${{ pedido.valor_total|floatformat:0 }}</td>
                                             <td>
-                                                <a href="{% url 'pedidos:pedido_detail' pedido.pk %}" 
+                                                <a href="{% url 'pedidos_web:pedido_detail' pedido.pk %}" 
                                                    class="btn btn-sm btn-outline-primary" title="Ver detalle">
                                                     <i class="fas fa-eye"></i>
                                                 </a>
@@ -341,16 +341,16 @@
                 </div>
                 <div class="card-body">
                     <div class="d-grid gap-2">
-                        <a href="{% url 'pedidos:pedido_create' %}" class="btn btn-primary btn-accion">
+                        <a href="{% url 'pedidos_web:pedido_create' %}" class="btn btn-primary btn-accion">
                             <i class="fas fa-plus"></i> Nuevo Pedido
                         </a>
-                        <a href="{% url 'pedidos:reporte_pedidos' %}" class="btn btn-outline-secondary btn-accion">
+                        <a href="{% url 'pedidos_web:reporte_pedidos' %}" class="btn btn-outline-secondary btn-accion">
                             <i class="fas fa-chart-bar"></i> Generar Reporte
                         </a>
-                        <a href="{% url 'pedidos:pedido_list' %}?estado=CONFIRMADO" class="btn btn-outline-warning btn-accion">
+                        <a href="{% url 'pedidos_web:pedido_list' %}?estado=CONFIRMADO" class="btn btn-outline-warning btn-accion">
                             <i class="fas fa-clock"></i> Pendientes Producción
                         </a>
-                        <a href="{% url 'pedidos:pedido_list' %}?estado=PENDIENTE_FACTURAR" class="btn btn-outline-info btn-accion">
+                        <a href="{% url 'pedidos_web:pedido_list' %}?estado=PENDIENTE_FACTURAR" class="btn btn-outline-info btn-accion">
                             <i class="fas fa-file-invoice"></i> Pendientes Facturar
                         </a>
                     </div>

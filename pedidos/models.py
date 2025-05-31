@@ -146,7 +146,7 @@ class Pedido(models.Model):
         return f"Pedido {self.numero_pedido} - {self.cliente.razon_social}"
 
     def get_absolute_url(self):
-        return reverse('pedidos:pedido_detail', kwargs={'pk': self.pk})
+        return reverse('pedidos_web:pedido_detail', kwargs={'pk': self.pk})
 
     @property
     def tiene_orden_produccion(self):

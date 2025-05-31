@@ -129,7 +129,7 @@ class PedidoCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
     permission_required = 'pedidos.add_pedido'
 
     def get_success_url(self):
-        return reverse('pedidos:pedido_detail', kwargs={'pk': self.object.pk})
+        return reverse('pedidos_web:pedido_detail', kwargs={'pk': self.object.pk})
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -209,7 +209,7 @@ class PedidoUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
     permission_required = 'pedidos.change_pedido'
 
     def get_success_url(self):
-        return reverse('pedidos:pedido_detail', kwargs={'pk': self.object.pk})
+        return reverse('pedidos_web:pedido_detail', kwargs={'pk': self.object.pk})
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -241,7 +241,7 @@ class PedidoUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
                 self.request,
                 'Solo se pueden editar pedidos en estado BORRADOR'
             )
-            return redirect('pedidos:pedido_detail', pk=self.object.pk)
+            return redirect('pedidos_web:pedido_detail', pk=self.object.pk)
         
         with transaction.atomic():
             form.instance.actualizado_por = self.request.user
@@ -285,7 +285,7 @@ def cambiar_estado_pedido(request, pk):
             # Validar transición de estado
             if nuevo_estado == pedido.estado:
                 messages.warning(request, 'El pedido ya se encuentra en ese estado')
-                return redirect('pedidos:pedido_detail', pk=pk)
+                return redirect('pedidos_web:pedido_detail', pk=pk)
             
             # Validaciones específicas según el estado actual y el nuevo estado
             transiciones_validas = {
@@ -304,7 +304,7 @@ def cambiar_estado_pedido(request, pk):
                     request,
                     f'No se puede cambiar el estado de {pedido.get_estado_display()} a {dict(Pedido.ESTADO_CHOICES)[nuevo_estado]}'
                 )
-                return redirect('pedidos:pedido_detail', pk=pk)
+                return redirect('pedidos_web:pedido_detail', pk=pk)
             
             # Guardar estado anterior para el seguimiento
             estado_anterior = pedido.estado
@@ -316,7 +316,7 @@ def cambiar_estado_pedido(request, pk):
             if nuevo_estado == 'FACTURADO':
                 if not form.cleaned_data.get('numero_factura'):
                     messages.error(request, 'Debe proporcionar un número de factura')
-                    return redirect('pedidos:pedido_detail', pk=pk)
+                    return redirect('pedidos_web:pedido_detail', pk=pk)
                     
                 pedido.numero_factura = form.cleaned_data.get('numero_factura')
                 pedido.fecha_facturacion = form.cleaned_data.get('fecha_facturacion') or timezone.now().date()
@@ -328,7 +328,7 @@ def cambiar_estado_pedido(request, pk):
             # Si se está cancelando, validar que haya una observación
             if nuevo_estado == 'CANCELADO' and not observaciones:
                 messages.error(request, 'Debe proporcionar un motivo para cancelar el pedido')
-                return redirect('pedidos:pedido_detail', pk=pk)
+                return redirect('pedidos_web:pedido_detail', pk=pk)
             
             pedido.actualizado_por = request.user
             pedido.save()
@@ -348,7 +348,7 @@ def cambiar_estado_pedido(request, pk):
                 for error in errors:
                     messages.error(request, f'Error en {field}: {error}')
     
-    return redirect('pedidos:pedido_detail', pk=pk)
+    return redirect('pedidos_web:pedido_detail', pk=pk)
 
 
 @login_required
@@ -578,7 +578,7 @@ def eliminar_pedido(request, pk):
             request,
             'Solo se pueden eliminar pedidos en estado BORRADOR'
         )
-        return redirect('pedidos:pedido_detail', pk=pk)
+        return redirect('pedidos_web:pedido_detail', pk=pk)
     
     if request.method == 'POST':
         numero_pedido = pedido.numero_pedido
@@ -587,7 +587,7 @@ def eliminar_pedido(request, pk):
             request,
             f'Pedido {numero_pedido} eliminado exitosamente'
         )
-        return redirect('pedidos:pedido_list')
+        return redirect('pedidos_web:pedido_list')
     
     return render(request, 'pedidos/confirmar_eliminar.html', {
         'pedido': pedido
@@ -606,7 +606,7 @@ def crear_orden_produccion(request, pk):
             request,
             'Solo se pueden crear órdenes de producción para pedidos en estado CONFIRMADO o EN_PRODUCCION'
         )
-        return redirect('pedidos:pedido_detail', pk=pk)
+        return redirect('pedidos_web:pedido_detail', pk=pk)
     
     # Verificar si hay líneas disponibles para producción
     lineas_disponibles = pedido.lineas.filter(cantidad__gt=F('cantidad_producida'))
@@ -615,7 +615,7 @@ def crear_orden_produccion(request, pk):
             request,
             'Todas las líneas de este pedido ya tienen órdenes de producción asociadas'
         )
-        return redirect('pedidos:pedido_detail', pk=pk)
+        return redirect('pedidos_web:pedido_detail', pk=pk)
     
     if request.method == 'POST':
         form = CrearOrdenProduccionForm(pedido, request.POST)
@@ -734,4 +734,4 @@ def crear_orden_produccion(request, pk):
             'lineas_disponibles': lineas_disponibles
         })
     
-    return redirect('pedidos:pedido_detail', pk=pk)
+    return redirect('pedidos_web:pedido_detail', pk=pk)

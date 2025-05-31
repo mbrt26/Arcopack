@@ -307,7 +307,7 @@ class PedidoViewsTest(TestCase):
                 creado_por=self.user
             )
         
-        response = self.client.get(reverse('pedidos:pedido_list'))
+        response = self.client.get(reverse('pedidos_web:pedido_list'))
         
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Lista de Pedidos')
@@ -326,7 +326,7 @@ class PedidoViewsTest(TestCase):
         )
         
         response = self.client.get(
-            reverse('pedidos:pedido_detail', kwargs={'pk': pedido.pk})
+            reverse('pedidos_web:pedido_detail', kwargs={'pk': pedido.pk})
         )
         
         self.assertEqual(response.status_code, 200)
@@ -337,7 +337,7 @@ class PedidoViewsTest(TestCase):
         """Test GET de la vista de creación de pedido"""
         self.client.login(username='testuser', password='testpass123')
         
-        response = self.client.get(reverse('pedidos:pedido_create'))
+        response = self.client.get(reverse('pedidos_web:pedido_create'))
         
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Nuevo Pedido')
@@ -365,7 +365,7 @@ class PedidoViewsTest(TestCase):
             'form-0-especificaciones_tecnicas': 'Especificaciones de prueba'
         }
         
-        response = self.client.post(reverse('pedidos:pedido_create'), data)
+        response = self.client.post(reverse('pedidos_web:pedido_create'), data)
         
         # Debería redireccionar al detalle del pedido creado
         self.assertEqual(response.status_code, 302)
@@ -394,7 +394,7 @@ class PedidoViewsTest(TestCase):
         }
         
         response = self.client.post(
-            reverse('pedidos:cambiar_estado', kwargs={'pk': pedido.pk}),
+            reverse('pedidos_web:cambiar_estado_pedido', kwargs={'pk': pedido.pk}),
             data
         )
         
@@ -423,7 +423,7 @@ class PedidoViewsTest(TestCase):
                 creado_por=self.user
             )
         
-        response = self.client.get(reverse('pedidos:dashboard'))
+        response = self.client.get(reverse('pedidos_web:dashboard_pedidos'))
         
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Dashboard de Pedidos')
@@ -502,7 +502,7 @@ class PedidoAPITest(TestCase):
         self.client.login(username='testuser', password='testpass123')
         
         response = self.client.get(
-            reverse('pedidos:get_producto_info'),
+            reverse('pedidos_web:get_producto_info'),
             {'producto_id': self.producto.pk}
         )
         
@@ -519,7 +519,7 @@ class PedidoAPITest(TestCase):
         self.client.login(username='testuser', password='testpass123')
         
         response = self.client.get(
-            reverse('pedidos:get_producto_info'),
+            reverse('pedidos_web:get_producto_info'),
             {'producto_id': 99999}
         )
         

@@ -280,6 +280,14 @@
                     </a>
                 </li>
 
+                <!-- Pedidos -->
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.app_name == 'pedidos_web' %}active{% endif %}"
+                       href="{% url 'pedidos_web:pedido_list' %}">
+                        <i class="fas fa-shopping-cart"></i> Pedidos
+                    </a>
+                </li>
+
                 <!-- Personal -->
                 <li class="nav-item">
                     <a class="nav-link {% if request.resolver_match.app_name == 'personal_web' %}active{% endif %}"
