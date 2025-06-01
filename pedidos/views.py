@@ -7,7 +7,7 @@ from django.views.generic import ListView, DetailView, CreateView, UpdateView
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.urls import reverse_lazy, reverse
 from django.db import transaction
-from django.db.models import Q, Sum, Count, F, Case, When, Value, IntegerField
+from django.db.models import Q, Sum, Count, F, Case, When, Value, IntegerField, Avg
 from django.utils import timezone
 from django.core.paginator import Paginator
 from django.http import Http404
@@ -25,7 +25,7 @@ from productos.models import ProductoTerminado
 
 
 class PedidoListView(LoginRequiredMixin, ListView):
-    """Vista para listar pedidos con filtros"""
+    """Vista para listar pedidos con filtros optimizada para HTML"""
     model = Pedido
     template_name = 'pedidos/pedido_list.html'
     context_object_name = 'pedidos'
@@ -36,53 +36,112 @@ class PedidoListView(LoginRequiredMixin, ListView):
             'lineas__producto'
         ).order_by('-fecha_pedido', '-numero_pedido')
 
-        # Aplicar filtros
-        form = FiltrosPedidoForm(self.request.GET)
-        if form.is_valid():
-            if form.cleaned_data['cliente']:
-                queryset = queryset.filter(cliente=form.cleaned_data['cliente'])
-            
-            if form.cleaned_data['estado']:
-                queryset = queryset.filter(estado=form.cleaned_data['estado'])
-            
-            if form.cleaned_data['prioridad']:
-                queryset = queryset.filter(prioridad=form.cleaned_data['prioridad'])
-            
-            if form.cleaned_data['numero_pedido']:
-                queryset = queryset.filter(
-                    numero_pedido__icontains=form.cleaned_data['numero_pedido']
-                )
-            
-            if form.cleaned_data['fecha_desde']:
-                queryset = queryset.filter(fecha_pedido__gte=form.cleaned_data['fecha_desde'])
-            
-            if form.cleaned_data['fecha_hasta']:
-                queryset = queryset.filter(fecha_pedido__lte=form.cleaned_data['fecha_hasta'])
+        # Aplicar filtros desde GET parameters
+        estado = self.request.GET.get('estado')
+        prioridad = self.request.GET.get('prioridad')
+        cliente_id = self.request.GET.get('cliente')
+        numero_pedido = self.request.GET.get('numero_pedido')
+        fecha_desde = self.request.GET.get('fecha_desde')
+        fecha_hasta = self.request.GET.get('fecha_hasta')
+        search = self.request.GET.get('search')
+        con_orden = self.request.GET.get('con_orden')
+
+        if estado:
+            queryset = queryset.filter(estado=estado)
+        
+        if prioridad:
+            queryset = queryset.filter(prioridad=prioridad)
+        
+        if cliente_id:
+            queryset = queryset.filter(cliente_id=cliente_id)
+        
+        if numero_pedido:
+            queryset = queryset.filter(numero_pedido__icontains=numero_pedido)
+        
+        if fecha_desde:
+            queryset = queryset.filter(fecha_pedido__gte=fecha_desde)
+        
+        if fecha_hasta:
+            queryset = queryset.filter(fecha_pedido__lte=fecha_hasta)
+
+        if search:
+            queryset = queryset.filter(
+                Q(numero_pedido__icontains=search) |
+                Q(cliente__razon_social__icontains=search) |
+                Q(pedido_cliente_referencia__icontains=search)
+            )
+
+        # Corregir el filtro de órdenes de producción
+        if con_orden == 'si':
+            try:
+                from produccion.models import OrdenProduccion
+                # Obtener pedidos que tienen órdenes de producción asociadas
+                pedidos_con_op = OrdenProduccion.objects.filter(
+                    id_pedido_contable__isnull=False
+                ).values_list('id_pedido_contable', flat=True).distinct()
+                queryset = queryset.filter(numero_pedido__in=pedidos_con_op)
+            except ImportError:
+                # Si no existe el módulo de producción, ignorar este filtro
+                pass
+        elif con_orden == 'no':
+            try:
+                from produccion.models import OrdenProduccion
+                # Obtener pedidos que NO tienen órdenes de producción asociadas
+                pedidos_con_op = OrdenProduccion.objects.filter(
+                    id_pedido_contable__isnull=False
+                ).values_list('id_pedido_contable', flat=True).distinct()
+                queryset = queryset.exclude(numero_pedido__in=pedidos_con_op)
+            except ImportError:
+                # Si no existe el módulo de producción, ignorar este filtro
+                pass
 
         return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['filtros_form'] = FiltrosPedidoForm(self.request.GET)
         
-        # Estadísticas rápidas
+        # Datos para filtros
+        context['estados'] = Pedido.ESTADO_CHOICES
+        context['prioridades'] = Pedido.PRIORIDAD_CHOICES
+        context['clientes'] = Cliente.objects.filter(is_active=True).order_by('razon_social')
+        context['today'] = timezone.now().date()
+        
+        # Filtros aplicados
+        context['filtros'] = {
+            'estado': self.request.GET.get('estado', ''),
+            'prioridad': self.request.GET.get('prioridad', ''),
+            'cliente': self.request.GET.get('cliente', ''),
+            'numero_pedido': self.request.GET.get('numero_pedido', ''),
+            'fecha_desde': self.request.GET.get('fecha_desde', ''),
+            'fecha_hasta': self.request.GET.get('fecha_hasta', ''),
+            'search': self.request.GET.get('search', ''),
+            'con_orden': self.request.GET.get('con_orden', ''),
+        }
+        
+        # Estadísticas rápidas - corregir consultas
+        total_queryset = Pedido.objects.all()
+        
+        # Calcular pedidos sin orden de producción
+        try:
+            from produccion.models import OrdenProduccion
+            pedidos_con_op = OrdenProduccion.objects.filter(
+                id_pedido_contable__isnull=False
+            ).values_list('id_pedido_contable', flat=True).distinct()
+            sin_orden_produccion = total_queryset.exclude(numero_pedido__in=pedidos_con_op).count()
+        except ImportError:
+            sin_orden_produccion = 0
+        
         context['estadisticas'] = {
-            'total_pedidos': Pedido.objects.count(),
-            'borradores': Pedido.objects.filter(estado='BORRADOR').count(),
-            'confirmados': Pedido.objects.filter(estado='CONFIRMADO').count(),
-            'en_produccion': Pedido.objects.filter(estado='EN_PRODUCCION').count(),
-            'facturados_mes': Pedido.objects.filter(
-                estado='FACTURADO',
-                fecha_facturacion__month=timezone.now().month,
-                fecha_facturacion__year=timezone.now().year
-            ).count()
+            'total_pedidos': total_queryset.count(),
+            'sin_orden_produccion': sin_orden_produccion,
+            'pendientes_facturar': total_queryset.filter(estado='PENDIENTE_FACTURAR').count(),
         }
         
         return context
 
 
 class PedidoDetailView(LoginRequiredMixin, DetailView):
-    """Vista de detalle de un pedido"""
+    """Vista de detalle de un pedido optimizada para HTML"""
     model = Pedido
     template_name = 'pedidos/pedido_detail.html'
     context_object_name = 'pedido'
@@ -99,37 +158,60 @@ class PedidoDetailView(LoginRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         pedido = self.get_object()
         
-        # Formulario para cambiar estado
-        context['cambiar_estado_form'] = CambiarEstadoPedidoForm(pedido)
+        # Información del cliente
+        context['cliente'] = pedido.cliente
         
-        # Formulario para crear órdenes de producción
-        if pedido.estado in ['CONFIRMADO', 'EN_PRODUCCION']:
-            context['crear_orden_form'] = CrearOrdenProduccionForm(pedido)
+        # Resumen de líneas con información de producción
+        resumen_lineas = []
+        for linea in pedido.lineas.all():
+            # Buscar órdenes de producción asociadas a este pedido específico
+            try:
+                from produccion.models import OrdenProduccion
+                ordenes = OrdenProduccion.objects.filter(
+                    id_pedido_contable=pedido.numero_pedido,
+                    producto=linea.producto
+                )
+                tiene_orden = ordenes.exists()
+            except ImportError:
+                ordenes = []
+                tiene_orden = False
+            
+            resumen_lineas.append({
+                'linea': linea,
+                'tiene_orden': tiene_orden,
+                'ordenes': ordenes,
+                'porcentaje_completado': linea.porcentaje_completado,
+            })
         
-        # Calcular totales
-        pedido.calcular_total()
-        context['valor_total'] = pedido.valor_total
+        context['resumen_lineas'] = resumen_lineas
         
-        # Información de producción
-        context['info_produccion'] = {
-            'lineas_pendientes': pedido.lineas.filter(
-                cantidad_producida__lt=F('cantidad')
-            ).count(),
-            'porcentaje_avance': pedido.porcentaje_completado
-        }
+        # Órdenes de producción asociadas al pedido
+        try:
+            from produccion.models import OrdenProduccion
+            context['ordenes_produccion'] = OrdenProduccion.objects.filter(
+                id_pedido_contable=pedido.numero_pedido
+            ).select_related('producto').order_by('-fecha_creacion')
+        except ImportError:
+            context['ordenes_produccion'] = []
+        
+        # Seguimientos
+        context['seguimientos'] = pedido.seguimientos.select_related('usuario').order_by('-fecha_cambio')[:10]
+        
+        # Calcular progreso general
+        context['progreso_general'] = pedido.porcentaje_completado
         
         return context
 
 
 class PedidoCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
-    """Vista para crear un nuevo pedido"""
+    """Vista para crear un nuevo pedido simplificada para HTML"""
     model = Pedido
     form_class = PedidoForm
     template_name = 'pedidos/pedido_form.html'
     permission_required = 'pedidos.add_pedido'
 
     def get_success_url(self):
-        return reverse('pedidos:pedido_detail', kwargs={'pk': self.object.pk})
+        return reverse('pedidos_web:pedido_detail', kwargs={'pk': self.object.pk})
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -142,11 +224,11 @@ class PedidoCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
         else:
             context['lineas_formset'] = LineaPedidoFormSet(instance=self.object)
         
-        context['productos_json'] = json.dumps(list(
-            ProductoTerminado.objects.filter(activo=True).values(
-                'id', 'codigo', 'nombre', 'precio_venta'
-            )
-        ))
+        # Productos activos para el formulario - CORREGIDO: usar is_active en lugar de activo
+        productos = ProductoTerminado.objects.filter(is_active=True).values(
+            'id', 'codigo', 'nombre'
+        )
+        context['productos_json'] = json.dumps(list(productos))
         
         context['es_nuevo'] = True
         return context
@@ -160,7 +242,7 @@ class PedidoCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
                 # Guardar el pedido
                 pedido = form.save(commit=False)
                 
-                # Generar número de pedido automáticamente usando el método de clase
+                # Generar número de pedido automáticamente
                 pedido.numero_pedido = Pedido.generar_numero_pedido()
                 
                 # Asignar usuario que crea
@@ -209,7 +291,7 @@ class PedidoUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
     permission_required = 'pedidos.change_pedido'
 
     def get_success_url(self):
-        return reverse('pedidos:pedido_detail', kwargs={'pk': self.object.pk})
+        return reverse('pedidos_web:pedido_detail', kwargs={'pk': self.object.pk})
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -222,11 +304,11 @@ class PedidoUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
         else:
             context['lineas_formset'] = LineaPedidoFormSet(instance=self.object)
         
-        context['productos_json'] = json.dumps(list(
-            ProductoTerminado.objects.filter(activo=True).values(
-                'id', 'codigo', 'nombre', 'precio_venta'
-            )
-        ))
+        # Productos activos para el formulario - CORREGIDO: usar is_active en lugar de activo
+        productos = ProductoTerminado.objects.filter(is_active=True).values(
+            'id', 'codigo', 'nombre'
+        )
+        context['productos_json'] = json.dumps(list(productos))
         
         context['es_nuevo'] = False
         return context
@@ -360,12 +442,12 @@ def get_producto_info(request):
         return JsonResponse({'error': 'ID de producto requerido'}, status=400)
     
     try:
-        producto = ProductoTerminado.objects.get(id=producto_id, activo=True)
+        # CORREGIDO: usar is_active en lugar de activo
+        producto = ProductoTerminado.objects.get(id=producto_id, is_active=True)
         data = {
             'id': producto.id,
             'codigo': producto.codigo,
             'nombre': producto.nombre,
-            'precio_venta': float(producto.precio_venta),
             'unidad_medida': producto.unidad_medida.simbolo if producto.unidad_medida else 'UN'
         }
         return JsonResponse(data)
@@ -375,7 +457,7 @@ def get_producto_info(request):
 
 @login_required
 def dashboard_pedidos(request):
-    """Dashboard con estadísticas de pedidos"""
+    """Dashboard con estadísticas de pedidos optimizado para HTML"""
     
     # Fechas para filtrado
     hoy = timezone.now().date()
@@ -429,7 +511,7 @@ def dashboard_pedidos(request):
         valor_total=Sum('valor_total')
     ).order_by('estado')
     
-    # Convertir a diccionario para fácil acceso
+    # Convertir a diccionario para fácil acceso en template
     estados_dict = {}
     for estado in estados_count:
         nombre_estado = dict(Pedido.ESTADO_CHOICES).get(estado['estado'], estado['estado'])
@@ -445,7 +527,6 @@ def dashboard_pedidos(request):
         count=Count('id')
     ).order_by('prioridad')
     
-    # Convertir a diccionario para fácil acceso
     prioridades_dict = {}
     for prioridad in prioridades_count:
         nombre_prioridad = dict(Pedido.PRIORIDAD_CHOICES).get(prioridad['prioridad'], prioridad['prioridad'])
@@ -504,6 +585,7 @@ def dashboard_pedidos(request):
         'ultimos_pedidos': ultimos_pedidos,
         'pedidos_proximos': pedidos_proximos,
         'top_clientes': top_clientes,
+        'today': hoy,
         'filtros': {
             'fecha_desde': fecha_desde,
             'fecha_hasta': fecha_hasta,

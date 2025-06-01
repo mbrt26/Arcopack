@@ -7,7 +7,7 @@ from django.contrib.auth import views as auth_views
 from productos.urls import api_urlpatterns as productos_api_urls
 
 def redirect_to_production(request):
-    return redirect('produccion_web:produccion_orden_list')
+    return redirect('produccion_web:orden-produccion-list')
 
 urlpatterns = [
     # Ruta raíz redirige a la lista de órdenes de producción

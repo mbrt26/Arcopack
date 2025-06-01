@@ -1,0 +1,428 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Administración del Sistema - ARCOPACK{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+<style>
+    .admin-card {
+        transition: transform 0.2s, box-shadow 0.2s;
+        height: 100%;
+    }
+    .admin-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    .stat-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 10px;
+    }
+    .stat-card .card-body {
+        padding: 1.5rem;
+    }
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+    .category-header {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+        padding: 1rem;
+        border-radius: 10px;
+        margin-bottom: 1.5rem;
+    }
+    .admin-menu-item {
+        border: 1px solid #e3e6f0;
+        border-radius: 8px;
+        padding: 1rem;
+        text-decoration: none;
+        color: #5a5c69;
+        display: block;
+        transition: all 0.3s;
+        background: white;
+    }
+    .admin-menu-item:hover {
+        color: #5a5c69;
+        background: #f8f9fc;
+        border-color: #5e72e4;
+        text-decoration: none;
+    }
+    .admin-menu-item i {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+        color: #5e72e4;
+    }
+    .quick-access {
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-cogs me-2"></i>Administración del Sistema
+        </h1>
+        <div class="d-sm-flex">
+            <a href="{% url 'admin:index' %}" class="btn btn-outline-primary btn-sm me-2">
+                <i class="fas fa-tools me-1"></i>Admin Django
+            </a>
+            <a href="{% url 'produccion_web:orden-produccion-list' %}" class="btn btn-primary btn-sm">
+                <i class="fas fa-arrow-left me-1"></i>Volver a Producción
+            </a>
+        </div>
+    </div>
+
+    <!-- Quick Access Panel -->
+    <div class="quick-access">
+        <div class="row">
+            <div class="col-md-8">
+                <h4><i class="fas fa-rocket me-2"></i>Acceso Rápido</h4>
+                <p class="mb-3">Gestiona los elementos más utilizados del sistema</p>
+                <div class="d-flex flex-wrap gap-2">
+                    <a href="{% url 'configuracion_web:maquina-list' %}" class="btn btn-light btn-sm">
+                        <i class="fas fa-industry me-1"></i>Máquinas
+                    </a>
+                    <a href="{% url 'configuracion_web:ubicacion-list' %}" class="btn btn-light btn-sm">
+                        <i class="fas fa-map-marker-alt me-1"></i>Ubicaciones
+                    </a>
+                    <a href="{% url 'configuracion_web:proveedor-list' %}" class="btn btn-light btn-sm">
+                        <i class="fas fa-truck me-1"></i>Proveedores
+                    </a>
+                    <a href="{% url 'configuracion_web:proceso-list' %}" class="btn btn-light btn-sm">
+                        <i class="fas fa-project-diagram me-1"></i>Procesos
+                    </a>
+                </div>
+            </div>
+            <div class="col-md-4 text-end">
+                <i class="fas fa-chart-line" style="font-size: 3rem; opacity: 0.3;"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stat-card admin-card">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-white-75 small">Máquinas</div>
+                            <div class="stat-number">{{ total_maquinas }}</div>
+                            <div class="text-white-50 small">{{ maquinas_activas }} activas</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-industry fa-2x text-white-25"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stat-card admin-card">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-white-75 small">Ubicaciones</div>
+                            <div class="stat-number">{{ total_ubicaciones }}</div>
+                            <div class="text-white-50 small">{{ ubicaciones_activas }} activas</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-map-marker-alt fa-2x text-white-25"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stat-card admin-card">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-white-75 small">Proveedores</div>
+                            <div class="stat-number">{{ total_proveedores }}</div>
+                            <div class="text-white-50 small">{{ proveedores_activos }} activos</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-truck fa-2x text-white-25"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stat-card admin-card">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-white-75 small">Procesos</div>
+                            <div class="stat-number">{{ total_procesos }}</div>
+                            <div class="text-white-50 small">configurados</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-project-diagram fa-2x text-white-25"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Configuration Modules -->
+    <div class="row">
+        <!-- Configuración de Producción -->
+        <div class="col-lg-6 mb-4">
+            <div class="category-header">
+                <h5 class="mb-0"><i class="fas fa-industry me-2"></i>Configuración de Producción</h5>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <a href="{% url 'configuracion_web:maquina-list' %}" class="admin-menu-item admin-card">
+                        <i class="fas fa-industry d-block"></i>
+                        <strong>Máquinas</strong>
+                        <small class="d-block text-muted">Gestionar máquinas de producción</small>
+                    </a>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <a href="{% url 'configuracion_web:proceso-list' %}" class="admin-menu-item admin-card">
+                        <i class="fas fa-project-diagram d-block"></i>
+                        <strong>Procesos</strong>
+                        <small class="d-block text-muted">Configurar procesos productivos</small>
+                    </a>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <a href="{% url 'configuracion_web:rodillo-anilox-list' %}" class="admin-menu-item admin-card">
+                        <i class="fas fa-circle d-block"></i>
+                        <strong>Rodillos Anilox</strong>
+                        <small class="d-block text-muted">Gestionar rodillos de impresión</small>
+                    </a>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <a href="{% url 'configuracion_web:causa-paro-list' %}" class="admin-menu-item admin-card">
+                        <i class="fas fa-pause-circle d-block"></i>
+                        <strong>Causas de Paro</strong>
+                        <small class="d-block text-muted">Definir causas de paros</small>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Configuración de Inventario -->
+        <div class="col-lg-6 mb-4">
+            <div class="category-header">
+                <h5 class="mb-0"><i class="fas fa-boxes me-2"></i>Configuración de Inventario</h5>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <a href="{% url 'configuracion_web:ubicacion-list' %}" class="admin-menu-item admin-card">
+                        <i class="fas fa-map-marker-alt d-block"></i>
+                        <strong>Ubicaciones</strong>
+                        <small class="d-block text-muted">Gestionar ubicaciones de almacén</small>
+                    </a>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <a href="{% url 'configuracion_web:unidad-medida-list' %}" class="admin-menu-item admin-card">
+                        <i class="fas fa-ruler d-block"></i>
+                        <strong>Unidades de Medida</strong>
+                        <small class="d-block text-muted">Configurar unidades</small>
+                    </a>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <a href="{% url 'configuracion_web:categoria-mp-list' %}" class="admin-menu-item admin-card">
+                        <i class="fas fa-tags d-block"></i>
+                        <strong>Categorías MP</strong>
+                        <small class="d-block text-muted">Categorías de materia prima</small>
+                    </a>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <a href="{% url 'configuracion_web:tipo-desperdicio-list' %}" class="admin-menu-item admin-card">
+                        <i class="fas fa-trash d-block"></i>
+                        <strong>Tipos Desperdicio</strong>
+                        <small class="d-block text-muted">Clasificar desperdicios</small>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Configuración de Productos -->
+        <div class="col-lg-6 mb-4">
+            <div class="category-header">
+                <h5 class="mb-0"><i class="fas fa-cube me-2"></i>Configuración de Productos</h5>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <a href="{% url 'configuracion_web:categoria-producto-list' %}" class="admin-menu-item admin-card">
+                        <i class="fas fa-layer-group d-block"></i>
+                        <strong>Categorías</strong>
+                        <small class="d-block text-muted">Categorías de productos</small>
+                    </a>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <a href="{% url 'configuracion_web:estado-producto-list' %}" class="admin-menu-item admin-card">
+                        <i class="fas fa-toggle-on d-block"></i>
+                        <strong>Estados</strong>
+                        <small class="d-block text-muted">Estados de productos</small>
+                    </a>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <a href="{% url 'configuracion_web:sublinea-list' %}" class="admin-menu-item admin-card">
+                        <i class="fas fa-sitemap d-block"></i>
+                        <strong>SubLíneas</strong>
+                        <small class="d-block text-muted">Sublíneas de productos</small>
+                    </a>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <a href="{% url 'configuracion_web:tipo-material-list' %}" class="admin-menu-item admin-card">
+                        <i class="fas fa-puzzle-piece d-block"></i>
+                        <strong>Tipos Material</strong>
+                        <small class="d-block text-muted">Tipos de material</small>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Configuración de Proveedores -->
+        <div class="col-lg-6 mb-4">
+            <div class="category-header">
+                <h5 class="mb-0"><i class="fas fa-handshake me-2"></i>Configuración Comercial</h5>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <a href="{% url 'configuracion_web:proveedor-list' %}" class="admin-menu-item admin-card">
+                        <i class="fas fa-truck d-block"></i>
+                        <strong>Proveedores</strong>
+                        <small class="d-block text-muted">Gestionar proveedores</small>
+                    </a>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <a href="{% url 'configuracion_web:servicio-list' %}" class="admin-menu-item admin-card">
+                        <i class="fas fa-concierge-bell d-block"></i>
+                        <strong>Servicios</strong>
+                        <small class="d-block text-muted">Catálogo de servicios</small>
+                    </a>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <a href="{% url 'configuracion_web:cuenta-contable-list' %}" class="admin-menu-item admin-card">
+                        <i class="fas fa-calculator d-block"></i>
+                        <strong>Cuentas Contables</strong>
+                        <small class="d-block text-muted">Plan contable</small>
+                    </a>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <a href="{% url 'configuracion_web:tipo-materia-prima-list' %}" class="admin-menu-item admin-card">
+                        <i class="fas fa-industry d-block"></i>
+                        <strong>Tipos MP Base</strong>
+                        <small class="d-block text-muted">Tipos base de materia prima</small>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Configuración Técnica -->
+    <div class="row">
+        <div class="col-12">
+            <div class="category-header">
+                <h5 class="mb-0"><i class="fas fa-cog me-2"></i>Configuración Técnica</h5>
+            </div>
+            <div class="row">
+                <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                    <a href="{% url 'configuracion_web:lamina-list' %}" class="admin-menu-item admin-card">
+                        <i class="fas fa-file-alt d-block"></i>
+                        <strong>Láminas</strong>
+                        <small class="d-block text-muted">Tipos de lámina</small>
+                    </a>
+                </div>
+                <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                    <a href="{% url 'configuracion_web:tratamiento-list' %}" class="admin-menu-item admin-card">
+                        <i class="fas fa-magic d-block"></i>
+                        <strong>Tratamientos</strong>
+                        <small class="d-block text-muted">Tratamientos superficie</small>
+                    </a>
+                </div>
+                <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                    <a href="{% url 'configuracion_web:tipo-tinta-list' %}" class="admin-menu-item admin-card">
+                        <i class="fas fa-palette d-block"></i>
+                        <strong>Tipos Tinta</strong>
+                        <small class="d-block text-muted">Clasificación tintas</small>
+                    </a>
+                </div>
+                <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                    <a href="{% url 'configuracion_web:tipo-sellado-list' %}" class="admin-menu-item admin-card">
+                        <i class="fas fa-lock d-block"></i>
+                        <strong>Tipos Sellado</strong>
+                        <small class="d-block text-muted">Métodos de sellado</small>
+                    </a>
+                </div>
+                <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                    <a href="{% url 'configuracion_web:tipo-troquel-list' %}" class="admin-menu-item admin-card">
+                        <i class="fas fa-cut d-block"></i>
+                        <strong>Tipos Troquel</strong>
+                        <small class="d-block text-muted">Métodos de troquelado</small>
+                    </a>
+                </div>
+                <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                    <a href="{% url 'configuracion_web:tipo-impresion-list' %}" class="admin-menu-item admin-card">
+                        <i class="fas fa-print d-block"></i>
+                        <strong>Tipos Impresión</strong>
+                        <small class="d-block text-muted">Métodos de impresión</small>
+                    </a>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                    <a href="{% url 'configuracion_web:tipo-zipper-list' %}" class="admin-menu-item admin-card">
+                        <i class="fas fa-compress-arrows-alt d-block"></i>
+                        <strong>Tipos Zipper</strong>
+                        <small class="d-block text-muted">Sistemas de cierre</small>
+                    </a>
+                </div>
+                <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                    <a href="{% url 'configuracion_web:tipo-valvula-list' %}" class="admin-menu-item admin-card">
+                        <i class="fas fa-valve d-block"></i>
+                        <strong>Tipos Válvula</strong>
+                        <small class="d-block text-muted">Sistemas de válvulas</small>
+                    </a>
+                </div>
+                <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                    <a href="{% url 'configuracion_web:programa-lamina-list' %}" class="admin-menu-item admin-card">
+                        <i class="fas fa-code d-block"></i>
+                        <strong>Programas</strong>
+                        <small class="d-block text-muted">Programas de lámina</small>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Agregar efectos de hover suaves
+    const cards = document.querySelectorAll('.admin-card');
+    cards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transition = 'all 0.3s ease';
+        });
+    });
+    
+    // Mensaje de bienvenida
+    console.log('🚀 Panel de Administración ARCOPACK cargado exitosamente');
+});
+</script>
+{% endblock %}

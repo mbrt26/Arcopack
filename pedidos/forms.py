@@ -109,8 +109,8 @@ class LineaPedidoForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Filtrar productos activos
-        self.fields['producto'].queryset = ProductoTerminado.objects.filter(activo=True).order_by('codigo')
+        # Filtrar productos activos - CORREGIDO: usar is_active en lugar de activo
+        self.fields['producto'].queryset = ProductoTerminado.objects.filter(is_active=True).order_by('codigo')
         
         # Campos requeridos
         self.fields['producto'].required = True

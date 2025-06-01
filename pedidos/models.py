@@ -151,12 +151,24 @@ class Pedido(models.Model):
     @property
     def tiene_orden_produccion(self):
         """Verifica si el pedido tiene al menos una orden de producción asociada."""
-        return self.ordenes_produccion.exists()
+        try:
+            from produccion.models import OrdenProduccion
+            return OrdenProduccion.objects.filter(
+                id_pedido_contable=self.numero_pedido
+            ).exists()
+        except ImportError:
+            return False
     
     @property
     def ordenes_produccion_asociadas(self):
         """Retorna las órdenes de producción asociadas a este pedido."""
-        return self.ordenes_produccion.all()
+        try:
+            from produccion.models import OrdenProduccion
+            return OrdenProduccion.objects.filter(
+                id_pedido_contable=self.numero_pedido
+            )
+        except ImportError:
+            return []
     
     @property
     def porcentaje_completado(self):

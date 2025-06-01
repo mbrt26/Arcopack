@@ -9,350 +9,222 @@
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <!-- DataTables CSS -->
     <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
     <!-- Select2 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet">
-    <!-- Custom CSS -->
+    
+    <!-- Custom CSS Global -->
     <style>
-        /* Sidebar */
+        :root {
+            --primary-color: #0d6efd;
+            --secondary-color: #6c757d;
+            --success-color: #198754;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --info-color: #0dcaf0;
+            --light-color: #f8f9fa;
+            --dark-color: #212529;
+            --sidebar-width: 280px;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+        }
+
+        /* Layout */
         .sidebar {
             position: fixed;
             top: 0;
             bottom: 0;
             left: 0;
             z-index: 100;
-            padding: 48px 0 0;
-            box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
-            background-color: #f8f9fa;
+            width: var(--sidebar-width);
+            padding: 80px 0 0;
+            background: linear-gradient(180deg, #ffffff 0%, #f8f9fa 100%);
+            border-right: 1px solid #dee2e6;
+            transition: all 0.3s ease;
         }
 
-        .sidebar-sticky {
-            position: relative;
-            top: 0;
-            height: calc(100vh - 48px);
-            padding-top: .5rem;
-            overflow-x: hidden;
-            overflow-y: auto;
-        }
-
-        /* Navbar */
-        .navbar {
-            box-shadow: 0 2px 4px rgba(0,0,0,.1);
-        }
-
-        /* Main content */
         .main-content {
-            margin-left: 240px;
-            padding: 4rem 2rem 2rem 2rem;  /* Aumentado el padding-top a 4rem */
+            margin-left: var(--sidebar-width);
+            padding: 100px 2rem 2rem 2rem;
+            min-height: 100vh;
+            transition: all 0.3s ease;
         }
 
-        /* Cards */
+        /* Cards mejoradas */
         .card {
-            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-            margin-bottom: 1rem;
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+            margin-bottom: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
         }
 
         .card-header {
-            background-color: #f8f9fa;
-            border-bottom: 1px solid rgba(0,0,0,.125);
+            background: linear-gradient(90deg, var(--light-color) 0%, #ffffff 100%);
+            border-bottom: 1px solid #dee2e6;
+            border-radius: 12px 12px 0 0 !important;
+            font-weight: 600;
         }
 
-        /* Tables */
+        /* Botones mejorados */
+        .btn {
+            border-radius: 8px;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+        }
+
+        /* Formularios */
+        .form-control, .form-select {
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+            transition: all 0.2s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
+        }
+
+        /* Tablas */
+        .table {
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
         .table th {
-            background-color: #f8f9fa;
+            background-color: var(--light-color);
+            border: none;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.875rem;
+            letter-spacing: 0.5px;
         }
 
-        /* Custom colors */
-        .bg-primary {
-            background-color: #0d6efd !important;
-        }
-
-        .bg-success {
-            background-color: #198754 !important;
-        }
-
-        .bg-warning {
-            background-color: #ffc107 !important;
-        }
-
-        .bg-danger {
-            background-color: #dc3545 !important;
-        }
-
-        /* Form styles */
-        .form-control:focus {
-            border-color: #0d6efd;
-            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
-        }
-
-        /* Progress bars */
-        .progress {
-            height: 0.5rem;
-        }
-
-        /* Badges */
+        /* Badges modernos */
         .badge {
-            padding: 0.35em 0.65em;
+            padding: 0.5rem 0.875rem;
+            border-radius: 20px;
+            font-weight: 500;
+            font-size: 0.75rem;
         }
 
-        /* Print styles */
-        @media print {
-            .sidebar, .navbar {
-                display: none !important;
+        /* Loading states */
+        .loading {
+            position: relative;
+            pointer-events: none;
+        }
+
+        .loading::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: inherit;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
             }
+            
+            .sidebar.show {
+                transform: translateX(0);
+            }
+            
             .main-content {
-                margin-left: 0 !important;
+                margin-left: 0;
+                padding: 80px 1rem 1rem 1rem;
             }
+        }
+
+        /* Animaciones */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        /* Utilidades */
+        .text-truncate-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .shadow-soft {
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08) !important;
+        }
+
+        .border-radius-lg {
+            border-radius: 12px !important;
         }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
 <body>
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="{% url 'root' %}">
-                <i class="fas fa-box"></i> ARCOPACK
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="notificationsDropdown" role="button" 
-                           data-bs-toggle="dropdown">
-                            <i class="fas fa-bell"></i>
-                            {% if notificaciones_no_leidas %}
-                            <span class="badge bg-danger">{{ notificaciones_no_leidas }}</span>
-                            {% endif %}
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            {% for notif in notificaciones %}
-                            <li>
-                                <a class="dropdown-item {% if not notif.leida %}fw-bold{% endif %}" 
-                                   href="{{ notif.url }}">
-                                    {{ notif.mensaje }}
-                                    <small class="text-muted d-block">{{ notif.fecha|timesince }}</small>
-                                </a>
-                            </li>
-                            {% empty %}
-                            <li><span class="dropdown-item">No hay notificaciones</span></li>
-                            {% endfor %}
-                            {% if notificaciones %}
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <a class="dropdown-item text-center" href="{% url 'notificaciones:list' %}">
-                                    Ver todas
-                                </a>
-                            </li>
-                            {% endif %}
-                        </ul>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" 
-                           data-bs-toggle="dropdown">
-                            <i class="fas fa-user"></i> {{ user.get_full_name|default:user.username }}
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li>
-                                <a class="dropdown-item" href="{% url 'users:profile' %}">
-                                    <i class="fas fa-user-cog"></i> Mi Perfil
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="{% url 'users:change-password' %}">
-                                    <i class="fas fa-key"></i> Cambiar Contraseña
-                                </a>
-                            </li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <a class="dropdown-item text-danger" href="{% url 'users:logout' %}">
-                                    <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
-                                </a>
-                            </li>
-                        </ul>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+    {% include 'layouts/navbar.html' %}
 
     <!-- Sidebar -->
-    <nav class="col-md-3 col-lg-2 d-md-block sidebar">
-        <div class="sidebar-sticky">
-            <ul class="nav flex-column">
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'root' %}">
-                        <i class="fas fa-tachometer-alt"></i> Inicio
-                    </a>
-                </li>
-                
-                <!-- Producción -->
-                <li class="nav-item">
-                    <a class="nav-link {% if request.resolver_match.app_name == 'produccion' %}active{% endif %}"
-                       href="#submenuProduccion" data-bs-toggle="collapse">
-                        <i class="fas fa-industry"></i> Producción
-                    </a>
-                    <div class="collapse {% if request.resolver_match.app_name == 'produccion' %}show{% endif %}" 
-                         id="submenuProduccion">
-                        <ul class="nav flex-column ms-3">
-                            <li class="nav-item">
-                                <a class="nav-link" href="{% url 'produccion_web:orden-produccion-list' %}">
-                                    Órdenes de Producción
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="{% url 'produccion_web:proceso-list' %}">
-                                    Procesos
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="{% url 'produccion_web:resultados' %}">
-                                    Resultados
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-                </li>
-
-                <!-- Inventario -->
-                <li class="nav-item">
-                    <a class="nav-link {% if request.resolver_match.app_name == 'inventario_web' %}active{% endif %}"
-                       href="#submenuInventario" data-bs-toggle="collapse">
-                        <i class="fas fa-boxes"></i> Inventario
-                    </a>
-                    <div class="collapse {% if request.resolver_match.app_name == 'inventario_web' %}show{% endif %}" 
-                         id="submenuInventario">
-                        <ul class="nav flex-column ms-3">
-                            <li class="nav-item">
-                                <a class="nav-link" href="{% url 'inventario_web:materia-prima-list' %}">
-                                    Materias Primas
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="{% url 'inventario_web:lote-list' %}">
-                                    Lotes
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="{% url 'inventario_web:movimiento-list' %}">
-                                    Movimientos
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-                </li>
-
-                <!-- Productos -->
-                <li class="nav-item">
-                    <a class="nav-link {% if request.resolver_match.app_name == 'productos_web' %}active{% endif %}"
-                       href="#submenuProductos" data-bs-toggle="collapse">
-                        <i class="fas fa-box-open"></i> Productos
-                    </a>
-                    <div class="collapse {% if request.resolver_match.app_name == 'productos_web' %}show{% endif %}" 
-                         id="submenuProductos">
-                        <ul class="nav flex-column ms-3">
-                            <li class="nav-item">
-                                <a class="nav-link" href="{% url 'productos_web:producto_list' %}">
-                                    Productos
-                                </a>
-                            </li>
-                            <!-- Temporarily commenting out Categorías until the view is implemented
-                            <li class="nav-item">
-                                <a class="nav-link" href="#">
-                                    Categorías
-                                </a>
-                            </li>
-                            -->
-                        </ul>
-                    </div>
-                </li>
-
-                <!-- Clientes -->
-                <li class="nav-item">
-                    <a class="nav-link {% if request.resolver_match.app_name == 'clientes_web' %}active{% endif %}"
-                       href="{% url 'clientes_web:cliente_list' %}">
-                        <i class="fas fa-users"></i> Clientes
-                    </a>
-                </li>
-
-                <!-- Personal -->
-                <li class="nav-item">
-                    <a class="nav-link {% if request.resolver_match.app_name == 'personal_web' %}active{% endif %}"
-                       href="{% url 'personal_web:colaborador_list' %}">
-                        <i class="fas fa-user-tie"></i> Personal
-                    </a>
-                </li>
-
-                <!-- Configuración -->
-                {% if user.is_staff %}
-                <li class="nav-item">
-                    <a class="nav-link {% if request.resolver_match.app_name == 'configuracion_web' %}active{% endif %}"
-                       href="#submenuConfiguracion" data-bs-toggle="collapse">
-                        <i class="fas fa-cog"></i> Configuración
-                    </a>
-                    <div class="collapse {% if request.resolver_match.app_name == 'configuracion_web' %}show{% endif %}" 
-                         id="submenuConfiguracion">
-                        <ul class="nav flex-column ms-3">
-                            <li class="nav-item">
-                                <a class="nav-link" href="{% url 'configuracion_web:unidad-medida-list' %}">
-                                    Unidades de Medida
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="{% url 'configuracion_web:categoria-mp-list' %}">
-                                    Categorías MP
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="{% url 'configuracion_web:ubicacion-list' %}">
-                                    Ubicaciones
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="{% url 'configuracion_web:proceso-list' %}">
-                                    Procesos
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="{% url 'configuracion_web:maquina-list' %}">
-                                    Máquinas
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="{% url 'admin:index' %}">
-                                    <i class="fas fa-tools"></i> Admin
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-                </li>
-                {% endif %}
-            </ul>
-        </div>
-    </nav>
+    {% include 'layouts/sidebar.html' %}
 
     <!-- Main Content -->
     <main class="main-content">
-        <!-- Mensajes -->
-        {% if messages %}
-        <div class="messages mb-4">
-            {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-            {% endfor %}
-        </div>
+        <!-- Breadcrumbs -->
+        {% include 'components/_breadcrumbs.html' %}
+
+        <!-- Page Header -->
+        {% if page_title %}
+            {% include 'components/_page_header.html' %}
         {% endif %}
 
-        <!-- Contenido Principal -->
-        {% block content %}{% endblock %}
+        <!-- Messages -->
+        {% include 'components/_messages.html' %}
+
+        <!-- Statistics -->
+        {% if statistics %}
+            {% include 'components/_statistics.html' %}
+        {% endif %}
+
+        <!-- Filters -->
+        {% if filters %}
+            {% include 'components/_filters.html' %}
+        {% endif %}
+
+        <!-- Content -->
+        <div class="page-content fade-in">
+            {% block content %}{% endblock %}
+        </div>
     </main>
+
+    <!-- Mobile Sidebar Overlay -->
+    <div class="sidebar-overlay d-md-none" onclick="toggleSidebar()"></div>
 
     <!-- Bootstrap Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -363,32 +235,122 @@
     <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
     <!-- Select2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    <!-- Custom JS -->
+    
+    <!-- Custom JavaScript -->
     <script>
-        // Activar tooltips
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl);
-        });
+        // Variables globales
+        window.ARCOPACK = {
+            urls: {
+                static: '{% get_static_prefix %}'
+            },
+            user: {
+                id: {{ user.id|default:'null' }},
+                username: '{{ user.username|escapejs }}',
+                isStaff: {{ user.is_staff|yesno:'true,false' }}
+            },
+            settings: {
+                autoRefresh: false,
+                refreshInterval: 30000
+            }
+        };
 
-        // Mantener sidebar activa
+        // Funciones globales
+        function toggleSidebar() {
+            document.querySelector('.sidebar').classList.toggle('show');
+        }
+
+        function showLoading(element) {
+            if (typeof element === 'string') {
+                element = document.querySelector(element);
+            }
+            element.classList.add('loading');
+        }
+
+        function hideLoading(element) {
+            if (typeof element === 'string') {
+                element = document.querySelector(element);
+            }
+            element.classList.remove('loading');
+        }
+
+        function showToast(message, type = 'info', duration = 5000) {
+            const toastContainer = document.getElementById('toast-container') || createToastContainer();
+            const toast = createToast(message, type);
+            toastContainer.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, duration);
+        }
+
+        function createToastContainer() {
+            const container = document.createElement('div');
+            container.id = 'toast-container';
+            container.className = 'position-fixed top-0 end-0 p-3';
+            container.style.zIndex = '9999';
+            document.body.appendChild(container);
+            return container;
+        }
+
+        function createToast(message, type) {
+            const toast = document.createElement('div');
+            toast.className = `toast align-items-center text-white bg-${type} border-0`;
+            toast.setAttribute('role', 'alert');
+            toast.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body">${message}</div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" 
+                            onclick="this.closest('.toast').remove()"></button>
+                </div>
+            `;
+            return toast;
+        }
+
+        // Inicialización cuando el DOM está listo
         document.addEventListener('DOMContentLoaded', function() {
-            var currentPath = window.location.pathname;
+            // Inicializar tooltips
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+
+            // Inicializar Select2
+            $('.select2').select2({
+                theme: 'bootstrap-5',
+                placeholder: 'Seleccionar...',
+                allowClear: true
+            });
+
+            // Auto-cerrar alertas
+            setTimeout(function() {
+                document.querySelectorAll('.alert .btn-close').forEach(function(btn) {
+                    btn.click();
+                });
+            }, 5000);
+
+            // Sidebar activa
+            const currentPath = window.location.pathname;
             document.querySelectorAll('.sidebar .nav-link').forEach(function(link) {
-                if (currentPath.startsWith(link.getAttribute('href'))) {
+                if (link.getAttribute('href') && currentPath.startsWith(link.getAttribute('href'))) {
                     link.classList.add('active');
-                    var parent = link.closest('.collapse');
-                    if (parent) {
-                        parent.classList.add('show');
-                    }
                 }
+            });
+
+            // Aplicar animaciones de entrada
+            document.querySelectorAll('.card, .page-content').forEach(function(element) {
+                element.classList.add('fade-in');
             });
         });
 
-        // Auto-cerrar mensajes
-        window.setTimeout(function() {
-            $('.alert').alert('close');
-        }, 5000);
+        // Auto-refresh si está habilitado
+        if (window.ARCOPACK.settings.autoRefresh) {
+            setInterval(function() {
+                if (document.hidden) return; // No refrescar si la pestaña no está activa
+                
+                // Lógica de auto-refresh aquí
+                console.log('Auto-refresh triggered');
+            }, window.ARCOPACK.settings.refreshInterval);
+        }
     </script>
     {% block extra_js %}{% endblock %}
 </body>

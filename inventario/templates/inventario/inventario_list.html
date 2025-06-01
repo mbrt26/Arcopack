@@ -1,0 +1,441 @@
+<!-- inventario/templates/inventario/inventario_list.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Inventario - ARCOPACK{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stock-card {
+        border-radius: 12px;
+        border: none;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease;
+    }
+    .stock-card:hover {
+        transform: translateY(-3px);
+    }
+    .stock-level {
+        height: 8px;
+        background: #e9ecef;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+    .stock-fill {
+        height: 100%;
+        transition: width 0.3s ease;
+    }
+    .stock-critico { background: linear-gradient(90deg, #dc3545, #ff6b7d); }
+    .stock-bajo { background: linear-gradient(90deg, #ffc107, #ffdd57); }
+    .stock-normal { background: linear-gradient(90deg, #28a745, #51cf66); }
+    .stock-alto { background: linear-gradient(90deg, #007bff, #339af0); }
+    
+    .material-card {
+        background: white;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+        border-left: 4px solid #007bff;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .lote-badge {
+        font-size: 11px;
+        padding: 3px 8px;
+        border-radius: 12px;
+    }
+    .filters-section {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3">Control de Inventario</h1>
+                    <p class="text-muted">Gestión de materias primas y productos terminados</p>
+                </div>
+                <div>
+                    <a href="{% url 'admin:inventario_materiaprima_add' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Nueva Materia Prima
+                    </a>
+                    <div class="btn-group ms-2">
+                        <button class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                            <i class="fas fa-download"></i> Reportes
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-file-pdf"></i> Reporte PDF</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-file-excel"></i> Exportar Excel</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-chart-bar"></i> Análisis de Stock</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resumen de Stock -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="stock-card text-center">
+                <div class="card-body">
+                    <i class="fas fa-boxes fa-2x text-primary mb-2"></i>
+                    <h4>{{ resumen.total_materiales }}</h4>
+                    <p class="text-muted mb-0">Total Materiales</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stock-card text-center">
+                <div class="card-body">
+                    <i class="fas fa-exclamation-triangle fa-2x text-danger mb-2"></i>
+                    <h4 class="text-danger">{{ resumen.stock_critico }}</h4>
+                    <p class="text-muted mb-0">Stock Crítico</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stock-card text-center">
+                <div class="card-body">
+                    <i class="fas fa-warning fa-2x text-warning mb-2"></i>
+                    <h4 class="text-warning">{{ resumen.stock_bajo }}</h4>
+                    <p class="text-muted mb-0">Stock Bajo</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stock-card text-center">
+                <div class="card-body">
+                    <i class="fas fa-dollar-sign fa-2x text-success mb-2"></i>
+                    <h4>${{ resumen.valor_total|floatformat:0 }}</h4>
+                    <p class="text-muted mb-0">Valor Total</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="filters-section">
+        <form method="get" class="row g-3">
+            <div class="col-md-2">
+                <label class="form-label">Tipo</label>
+                <select name="tipo" class="form-select">
+                    <option value="">Todos</option>
+                    <option value="materia_prima" {% if filtros.tipo == 'materia_prima' %}selected{% endif %}>Materia Prima</option>
+                    <option value="producto_terminado" {% if filtros.tipo == 'producto_terminado' %}selected{% endif %}>Producto Terminado</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Estado de Stock</label>
+                <select name="nivel_stock" class="form-select">
+                    <option value="">Todos</option>
+                    <option value="critico" {% if filtros.nivel_stock == 'critico' %}selected{% endif %}>Crítico</option>
+                    <option value="bajo" {% if filtros.nivel_stock == 'bajo' %}selected{% endif %}>Bajo</option>
+                    <option value="normal" {% if filtros.nivel_stock == 'normal' %}selected{% endif %}>Normal</option>
+                    <option value="alto" {% if filtros.nivel_stock == 'alto' %}selected{% endif %}>Alto</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Categoría</label>
+                <select name="categoria" class="form-select">
+                    <option value="">Todas</option>
+                    {% for categoria in categorias %}
+                        <option value="{{ categoria.id }}" {% if filtros.categoria == categoria.id|stringformat:"s" %}selected{% endif %}>
+                            {{ categoria.nombre }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Búsqueda</label>
+                <input type="text" name="search" class="form-control" placeholder="Buscar por código, nombre..." value="{{ filtros.search }}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">&nbsp;</label>
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">Filtrar</button>
+                    <a href="{% url 'inventario:inventario_list' %}" class="btn btn-secondary">Limpiar</a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Tabs de Contenido -->
+    <ul class="nav nav-tabs" id="inventarioTabs">
+        <li class="nav-item">
+            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#materias-primas">
+                <i class="fas fa-industry"></i> Materias Primas
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#productos-terminados">
+                <i class="fas fa-box"></i> Productos Terminados
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#movimientos">
+                <i class="fas fa-exchange-alt"></i> Movimientos Recientes
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content mt-3">
+        <!-- Materias Primas -->
+        <div class="tab-pane fade show active" id="materias-primas">
+            {% if materias_primas %}
+                <div class="row">
+                    {% for material in materias_primas %}
+                        <div class="col-xl-6 col-lg-12">
+                            <div class="material-card">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <h6 class="mb-0 me-2">{{ material.nombre }}</h6>
+                                            <span class="badge bg-secondary">{{ material.codigo }}</span>
+                                        </div>
+                                        <p class="text-muted small mb-2">{{ material.descripcion|default:"Sin descripción"|truncatechars:60 }}</p>
+                                        
+                                        <div class="row">
+                                            <div class="col-6">
+                                                <small class="text-muted">Stock Actual</small>
+                                                <div class="fw-bold">{{ material.cantidad_actual|floatformat:2 }} {{ material.unidad_medida }}</div>
+                                            </div>
+                                            <div class="col-6">
+                                                <small class="text-muted">Valor</small>
+                                                <div class="fw-bold">${{ material.valor_total|floatformat:2 }}</div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mt-2">
+                                            <div class="d-flex justify-content-between mb-1">
+                                                <small>Nivel de Stock</small>
+                                                <small>{{ material.porcentaje_stock }}%</small>
+                                            </div>
+                                            <div class="stock-level">
+                                                <div class="stock-fill stock-{{ material.nivel_stock }}" 
+                                                     style="width: {{ material.porcentaje_stock }}%"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="ms-3">
+                                        <div class="btn-group-vertical">
+                                            <a href="{% url 'inventario:materia_prima_detail' material.pk %}" 
+                                               class="btn btn-sm btn-outline-primary" title="Ver detalle">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{% url 'admin:inventario_materiaprima_change' material.pk %}" 
+                                               class="btn btn-sm btn-outline-secondary" title="Editar">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <button class="btn btn-sm btn-outline-success" 
+                                                    onclick="registrarMovimiento('{{ material.pk }}')" title="Mov. Stock">
+                                                <i class="fas fa-plus-minus"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {% if material.lotes_activos %}
+                                    <div class="mt-3 pt-2 border-top">
+                                        <small class="text-muted">Lotes Activos:</small>
+                                        {% for lote in material.lotes_activos %}
+                                            <span class="lote-badge bg-info text-white me-1">
+                                                {{ lote.numero_lote }} ({{ lote.cantidad|floatformat:1 }})
+                                            </span>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-industry fa-3x text-muted mb-3"></i>
+                    <h5>No hay materias primas</h5>
+                    <p class="text-muted">No se encontraron materias primas con los filtros aplicados.</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Productos Terminados -->
+        <div class="tab-pane fade" id="productos-terminados">
+            {% if productos_terminados %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th>Stock Actual</th>
+                                <th>Stock Mínimo</th>
+                                <th>Nivel</th>
+                                <th>Valor</th>
+                                <th>Última Producción</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for producto in productos_terminados %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ producto.codigo }}</strong><br>
+                                        <small class="text-muted">{{ producto.nombre }}</small>
+                                    </td>
+                                    <td>{{ producto.stock_actual|floatformat:2 }} {{ producto.unidad_medida }}</td>
+                                    <td>{{ producto.stock_minimo|floatformat:2 }}</td>
+                                    <td>
+                                        <div class="stock-level" style="width: 100px;">
+                                            <div class="stock-fill stock-{{ producto.nivel_stock }}" 
+                                                 style="width: {{ producto.porcentaje_stock }}%"></div>
+                                        </div>
+                                    </td>
+                                    <td>${{ producto.valor_inventario|floatformat:2 }}</td>
+                                    <td>
+                                        {% if producto.ultima_produccion %}
+                                            {{ producto.ultima_produccion|date:"d/m/Y" }}
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{% url 'productos:producto_detail' producto.pk %}" 
+                                               class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{% url 'admin:productos_productosterminado_change' producto.pk %}" 
+                                               class="btn btn-sm btn-outline-secondary">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-box fa-3x text-muted mb-3"></i>
+                    <h5>No hay productos terminados</h5>
+                    <p class="text-muted">No se encontraron productos con los filtros aplicados.</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Movimientos Recientes -->
+        <div class="tab-pane fade" id="movimientos">
+            {% if movimientos_recientes %}
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Tipo</th>
+                                <th>Material/Producto</th>
+                                <th>Cantidad</th>
+                                <th>Tipo Movimiento</th>
+                                <th>Usuario</th>
+                                <th>Observaciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for movimiento in movimientos_recientes %}
+                                <tr>
+                                    <td>{{ movimiento.fecha|date:"d/m/Y H:i" }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ movimiento.tipo_color }}">
+                                            {{ movimiento.tipo_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <strong>{{ movimiento.material_codigo }}</strong><br>
+                                        <small class="text-muted">{{ movimiento.material_nombre }}</small>
+                                    </td>
+                                    <td>
+                                        <span class="{% if movimiento.es_entrada %}text-success{% else %}text-danger{% endif %}">
+                                            {% if movimiento.es_entrada %}+{% else %}-{% endif %}{{ movimiento.cantidad|floatformat:2 }}
+                                        </span>
+                                        {{ movimiento.unidad_medida }}
+                                    </td>
+                                    <td>{{ movimiento.get_tipo_movimiento_display }}</td>
+                                    <td>{{ movimiento.usuario.get_full_name|default:movimiento.usuario.username }}</td>
+                                    <td>{{ movimiento.observaciones|default:"-"|truncatechars:50 }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-exchange-alt fa-3x text-muted mb-3"></i>
+                    <h5>No hay movimientos recientes</h5>
+                    <p class="text-muted">No se han registrado movimientos de inventario.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Registrar Movimiento -->
+<div class="modal fade" id="movimientoModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Registrar Movimiento de Inventario</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Formulario se cargará aquí via AJAX -->
+                <div id="movimiento-form-container">
+                    <div class="text-center">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Cargando...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-submit formulario cuando cambian los filtros
+    document.querySelectorAll('select[name="tipo"], select[name="nivel_stock"], select[name="categoria"]').forEach(function(select) {
+        select.addEventListener('change', function() {
+            this.form.submit();
+        });
+    });
+
+    // Función para registrar movimiento
+    window.registrarMovimiento = function(materialId) {
+        const modal = new bootstrap.Modal(document.getElementById('movimientoModal'));
+        modal.show();
+        
+        // Cargar formulario via AJAX
+        fetch(`/inventario/movimiento/nuevo/${materialId}/`)
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById('movimiento-form-container').innerHTML = html;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('movimiento-form-container').innerHTML = 
+                    '<div class="alert alert-danger">Error al cargar el formulario</div>';
+            });
+    };
+});
+</script>
+{% endblock %}

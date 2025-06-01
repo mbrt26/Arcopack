@@ -1,0 +1,53 @@
+<!-- templates/components/_breadcrumbs.html -->
+{% if breadcrumbs %}
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a href="{% url 'root' %}">
+                <i class="fas fa-home"></i> Inicio
+            </a>
+        </li>
+        {% for breadcrumb in breadcrumbs %}
+            {% if forloop.last %}
+                <li class="breadcrumb-item active" aria-current="page">
+                    {% if breadcrumb.icon %}<i class="fas fa-{{ breadcrumb.icon }} me-1"></i>{% endif %}
+                    {{ breadcrumb.title }}
+                </li>
+            {% else %}
+                <li class="breadcrumb-item">
+                    <a href="{{ breadcrumb.url }}">
+                        {% if breadcrumb.icon %}<i class="fas fa-{{ breadcrumb.icon }} me-1"></i>{% endif %}
+                        {{ breadcrumb.title }}
+                    </a>
+                </li>
+            {% endif %}
+        {% endfor %}
+    </ol>
+</nav>
+{% endif %}
+
+<style>
+.breadcrumb {
+    background-color: transparent;
+    padding: 0;
+    margin: 0;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+    content: ">";
+    color: #6c757d;
+}
+
+.breadcrumb-item a {
+    color: #0d6efd;
+    text-decoration: none;
+}
+
+.breadcrumb-item a:hover {
+    text-decoration: underline;
+}
+
+.breadcrumb-item.active {
+    color: #6c757d;
+}
+</style>

@@ -163,13 +163,15 @@
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                {{ form.usa_retal.label_tag }}
-                                {% render_field form.usa_retal class="form-check-input" %}
-                                {% if form.usa_retal.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {{ form.usa_retal.errors }}
-                                    </div>
-                                {% endif %}
+                                <label class="form-label">{{ form.usa_retal.label }}</label>
+                                <div class="form-check">
+                                    {% render_field form.usa_retal class="form-check-input" %}
+                                    {% if form.usa_retal.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.usa_retal.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -188,103 +190,84 @@
                         </div>
                     </div>
 
+                    <!-- Paros Section -->
                     <div class="card mb-4">
                         <div class="card-header">
-                            <h4>Paros</h4>
+                            <h4><i class="fas fa-pause-circle me-2"></i>Paros</h4>
                         </div>
                         <div class="card-body">
-                            {{ paro_formset.management_form }}
-                            <div id="paro-forms">
-                                {% for form in paro_formset %}
-                                <div class="paro-form mb-3 border p-3">
-                                    {% for field in form %}
-                                    <div class="mb-2">
-                                        <label class="form-label">{{ field.label }}</label>
-                                        {% render_field field class="form-control" %}
-                                    </div>
-                                    {% endfor %}
-                                </div>
-                                {% endfor %}
+                            <div class="d-flex gap-2 mb-3">
+                                <button type="button" class="btn btn-outline-warning btn-sm" onclick="abrirModalParo()">
+                                    <i class="fas fa-pause-circle me-2"></i>Registrar Paro
+                                </button>
                             </div>
-                            <button type="button" class="btn btn-secondary" id="add-paro">Agregar Paro</button>
+                            <div id="paros-registrados" class="mt-3">
+                                <!-- Aquí se mostrarán los paros registrados -->
+                            </div>
                         </div>
                     </div>
 
+                    <!-- Desperdicios Section -->
                     <div class="card mb-4">
                         <div class="card-header">
-                            <h4>Desperdicios</h4>
+                            <h4><i class="fas fa-trash me-2"></i>Desperdicios</h4>
                         </div>
                         <div class="card-body">
-                            {{ desperdicio_formset.management_form }}
-                            <div id="desperdicio-forms">
-                                {% for form in desperdicio_formset %}
-                                <div class="desperdicio-form mb-3 border p-3">
-                                    {% for field in form %}
-                                    <div class="mb-2">
-                                        <label class="form-label">{{ field.label }}</label>
-                                        {% render_field field class="form-control" %}
-                                    </div>
-                                    {% endfor %}
-                                </div>
-                                {% endfor %}
+                            <div class="d-flex gap-2 mb-3">
+                                <button type="button" class="btn btn-outline-danger btn-sm" onclick="abrirModalDesperdicio()">
+                                    <i class="fas fa-trash me-2"></i>Registrar Desperdicio
+                                </button>
                             </div>
-                            <button type="button" class="btn btn-secondary" id="add-desperdicio">Agregar Desperdicio</button>
+                            <div id="desperdicios-registrados" class="mt-3">
+                                <!-- Aquí se mostrarán los desperdicios registrados -->
+                            </div>
                         </div>
                     </div>
 
+                    <!-- Consumo de Tinta Section -->
                     <div class="card mb-4">
                         <div class="card-header">
-                            <h4>Consumo de Tinta</h4>
+                            <h4><i class="fas fa-paint-brush me-2"></i>Consumo de Tinta</h4>
                         </div>
                         <div class="card-body">
-                            {{ consumo_tinta_formset.management_form }}
-                            <div id="consumo-tinta-forms">
-                                {% for form in consumo_tinta_formset %}
-                                <div class="consumo-tinta-form mb-3 border p-3">
-                                    {% for field in form %}
-                                    <div class="mb-2">
-                                        <label class="form-label">{{ field.label }}</label>
-                                        {% render_field field class="form-control" %}
-                                    </div>
-                                    {% endfor %}
-                                </div>
-                                {% endfor %}
+                            <div class="d-flex gap-2 mb-3">
+                                <button type="button" class="btn btn-outline-primary btn-sm" onclick="abrirModalConsumoTinta()">
+                                    <i class="fas fa-paint-brush me-2"></i>Registrar Consumo de Tinta
+                                </button>
                             </div>
-                            <button type="button" class="btn btn-secondary" id="add-consumo-tinta">Agregar Consumo de Tinta</button>
+                            <div id="consumos-tinta-registrados" class="mt-3">
+                                <!-- Aquí se mostrarán los consumos de tinta registrados -->
+                            </div>
                         </div>
                     </div>
 
+                    <!-- Consumo de Sustrato Section -->
                     <div class="card mb-4">
                         <div class="card-header">
-                            <h4>Consumo de Sustrato</h4>
+                            <h4><i class="fas fa-layer-group me-2"></i>Consumo de Sustrato</h4>
                         </div>
                         <div class="card-body">
-                            {{ consumo_sustrato_formset.management_form }}
-                            <div id="consumo-sustrato-forms">
-                                {% for form in consumo_sustrato_formset %}
-                                <div class="consumo-sustrato-form mb-3 border p-3">
-                                    {% for field in form %}
-                                    <div class="mb-2">
-                                        <label class="form-label">{{ field.label }}</label>
-                                        {% render_field field class="form-control" %}
-                                    </div>
-                                    {% endfor %}
-                                </div>
-                                {% endfor %}
+                            <div class="d-flex gap-2 mb-3">
+                                <button type="button" class="btn btn-outline-info btn-sm" onclick="abrirModalConsumoSustrato()">
+                                    <i class="fas fa-layer-group me-2"></i>Registrar Consumo de Sustrato
+                                </button>
                             </div>
-                            <button type="button" class="btn btn-secondary" id="add-consumo-sustrato">Agregar Consumo de Sustrato</button>
+                            <div id="consumos-sustrato-registrados" class="mt-3">
+                                <!-- Aquí se mostrarán los consumos de sustrato registrados -->
+                            </div>
                         </div>
                     </div>
 
+                    <!-- Producción Section -->
                     <div class="card mb-4">
-                        <div class="card-header bg-success text-white">
-                            <h4><i class="fas fa-boxes me-2"></i>Cantidades Producidas</h4>
+                        <div class="card-header">
+                            <h4>Producción</h4>
                         </div>
                         <div class="card-body">
                             {{ produccion_formset.management_form }}
                             <div id="produccion-forms">
                                 {% for form in produccion_formset %}
-                                <div class="produccion-form mb-3 border p-3">
+                                <div class="produccion-form mb-3 border p-3" style="{% if form.DELETE.value %}display: none;{% endif %}">
                                     <div class="row">
                                         <div class="col-md-3">
                                             <div class="mb-2">
@@ -353,9 +336,7 @@
                                 </div>
                                 {% endfor %}
                             </div>
-                            <button type="button" class="btn btn-success" id="add-produccion">
-                                <i class="fas fa-plus me-2"></i>Agregar Lote Producido
-                            </button>
+                            <button type="button" class="btn btn-secondary" id="add-produccion">Agregar Producción</button>
                         </div>
                     </div>
 
@@ -372,75 +353,346 @@
         </div>
     </div>
 </div>
+
+<!-- Modal para Registrar Desperdicio -->
+<div class="modal fade" id="modalDesperdicio" tabindex="-1" aria-labelledby="modalDesperdicioLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalDesperdicioLabel">
+                    <i class="fas fa-trash me-2"></i>Registrar Desperdicio
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formDesperdicio">
+                    <div class="mb-3">
+                        <label for="tipoMaterial" class="form-label">Tipo de Material</label>
+                        <select class="form-control" id="tipoMaterial" required>
+                            <option value="">Seleccionar...</option>
+                            <option value="WIP">Producto en Proceso (WIP)</option>
+                            <option value="MP">Materia Prima</option>
+                            <option value="PT">Producto Terminado</option>
+                            <option value="TINTA">Tinta</option>
+                            <option value="SUSTRATO">Sustrato</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="cantidadDesperdicio" class="form-label">Cantidad (unidades/kg)</label>
+                        <input type="number" class="form-control" id="cantidadDesperdicio" step="0.01" min="0" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="motivoDesperdicio" class="form-label">Motivo del Desperdicio</label>
+                        <select class="form-control" id="motivoDesperdicio" required>
+                            <option value="">Seleccionar...</option>
+                            <option value="defecto_calidad">Defecto de Calidad</option>
+                            <option value="error_operacion">Error de Operación</option>
+                            <option value="falla_maquina">Falla de Máquina</option>
+                            <option value="material_defectuoso">Material Defectuoso</option>
+                            <option value="ajuste_color">Ajuste de Color</option>
+                            <option value="cambio_referencia">Cambio de Referencia</option>
+                            <option value="otro">Otro</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="observacionesDesperdicio" class="form-label">Observaciones</label>
+                        <textarea class="form-control" id="observacionesDesperdicio" rows="3" placeholder="Detalles adicionales sobre el desperdicio"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" onclick="registrarDesperdicio()">
+                    <i class="fas fa-save me-2"></i>Registrar Desperdicio
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Registrar Paro -->
+<div class="modal fade" id="modalParo" tabindex="-1" aria-labelledby="modalParoLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalParoLabel">
+                    <i class="fas fa-pause-circle me-2"></i>Registrar Paro
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formParo">
+                    <div class="mb-3">
+                        <label for="maquinaParo" class="form-label">Máquina</label>
+                        <select class="form-control" id="maquinaParo" required>
+                            <option value="">Seleccionar...</option>
+                            <!-- Opciones de máquinas de impresión -->
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="motivoParo" class="form-label">Motivo del Paro</label>
+                        <select class="form-control" id="motivoParo" required>
+                            <option value="">Seleccionar...</option>
+                            <option value="mantenimiento">Mantenimiento</option>
+                            <option value="falla_tecnica">Falla Técnica</option>
+                            <option value="ajuste_color">Ajuste de Color</option>
+                            <option value="cambio_anilox">Cambio de Anilox</option>
+                            <option value="sin_material">Sin Material</option>
+                            <option value="otro">Otro</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="duracionParo" class="form-label">Duración (minutos)</label>
+                        <input type="number" class="form-control" id="duracionParo" step="1" min="1" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="observacionesParo" class="form-label">Observaciones</label>
+                        <textarea class="form-control" id="observacionesParo" rows="3" placeholder="Detalles adicionales sobre el paro"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-warning" onclick="registrarParo()">
+                    <i class="fas fa-save me-2"></i>Registrar Paro
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Registrar Consumo de Tinta -->
+<div class="modal fade" id="modalConsumoTinta" tabindex="-1" aria-labelledby="modalConsumoTintaLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalConsumoTintaLabel">
+                    <i class="fas fa-paint-brush me-2"></i>Registrar Consumo de Tinta
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formConsumoTinta">
+                    <div class="mb-3">
+                        <label for="tipoTinta" class="form-label">Tipo de Tinta</label>
+                        <select class="form-control" id="tipoTinta" required>
+                            <option value="">Seleccionar...</option>
+                            <option value="negro">Negro</option>
+                            <option value="azul">Azul</option>
+                            <option value="rojo">Rojo</option>
+                            <option value="amarillo">Amarillo</option>
+                            <option value="verde">Verde</option>
+                            <option value="blanco">Blanco</option>
+                            <option value="otro">Otro</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="cantidadTinta" class="form-label">Cantidad (kg/litros)</label>
+                        <input type="number" class="form-control" id="cantidadTinta" step="0.01" min="0" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="loteProveedor" class="form-label">Lote del Proveedor</label>
+                        <input type="text" class="form-control" id="loteProveedor" placeholder="Número de lote del proveedor">
+                    </div>
+                    <div class="mb-3">
+                        <label for="observacionesTinta" class="form-label">Observaciones</label>
+                        <textarea class="form-control" id="observacionesTinta" rows="3" placeholder="Detalles adicionales sobre el consumo de tinta"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="registrarConsumoTinta()">
+                    <i class="fas fa-save me-2"></i>Registrar Consumo
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Registrar Consumo de Sustrato -->
+<div class="modal fade" id="modalConsumoSustrato" tabindex="-1" aria-labelledby="modalConsumoSustratoLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalConsumoSustratoLabel">
+                    <i class="fas fa-layer-group me-2"></i>Registrar Consumo de Sustrato
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formConsumoSustrato">
+                    <div class="mb-3">
+                        <label for="tipoSustrato" class="form-label">Tipo de Sustrato</label>
+                        <select class="form-control" id="tipoSustrato" required>
+                            <option value="">Seleccionar...</option>
+                            <option value="papel">Papel</option>
+                            <option value="carton">Cartón</option>
+                            <option value="plastico">Plástico</option>
+                            <option value="otro">Otro</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="cantidadSustrato" class="form-label">Cantidad (metros/kg)</label>
+                        <input type="number" class="form-control" id="cantidadSustrato" step="0.01" min="0" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="anchoSustrato" class="form-label">Ancho (cm)</label>
+                        <input type="number" class="form-control" id="anchoSustrato" step="0.1" min="0" placeholder="Ancho del sustrato en centímetros">
+                    </div>
+                    <div class="mb-3">
+                        <label for="observacionesSustrato" class="form-label">Observaciones</label>
+                        <textarea class="form-control" id="observacionesSustrato" rows="3" placeholder="Detalles adicionales sobre el consumo de sustrato"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-info" onclick="registrarConsumoSustrato()">
+                    <i class="fas fa-save me-2"></i>Registrar Consumo
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    // Mostrar/ocultar campo de pistas de retal según el checkbox
     document.addEventListener('DOMContentLoaded', function() {
-        const usaRetalCheckbox = document.getElementById('{{ form.usa_retal.id_for_label }}');
+        // DEBUG: Verificar qué elementos management_form están presentes
+        console.log('=== DEBUG FORMSETS ===');
+        console.log('Elementos TOTAL_FORMS encontrados:');
+        
+        // Buscar todos los elementos que contengan "TOTAL_FORMS"
+        const totalFormsElements = document.querySelectorAll('input[name*="TOTAL_FORMS"]');
+        totalFormsElements.forEach(el => {
+            console.log(`- Nombre: ${el.name}, ID: ${el.id}, Valor: ${el.value}`);
+        });
+        
+        console.log('=== FIN DEBUG ===');
+        
+        // Configuración para mostrar/ocultar pistas retal
+        const usaRetalCheckbox = document.getElementById('id_usa_retal');
         const pistasRetalContainer = document.getElementById('pistas-retal-container');
 
-        function togglePistasRetal() {
-            if (usaRetalCheckbox.checked) {
-                pistasRetalContainer.style.display = 'flex';
-            } else {
-                pistasRetalContainer.style.display = 'none';
-                document.getElementById('{{ form.pistas_retal.id_for_label }}').value = '';
+        if (usaRetalCheckbox && pistasRetalContainer) {
+            function togglePistasRetal() {
+                if (usaRetalCheckbox.checked) {
+                    pistasRetalContainer.style.display = 'block';
+                } else {
+                    pistasRetalContainer.style.display = 'none';
+                }
             }
+
+            // Ejecutar al cargar la página
+            togglePistasRetal();
+
+            // Ejecutar cuando cambie el checkbox
+            usaRetalCheckbox.addEventListener('change', togglePistasRetal);
         }
 
-        // Inicializar estado
-        togglePistasRetal();
-
-        // Escuchar cambios en el checkbox
-        usaRetalCheckbox.addEventListener('change', togglePistasRetal);
-
-        // Funcionalidad para agregar/eliminar formularios dinámicamente
-        function setupFormsetManagement(prefix, containerSelector, addButtonSelector, formClass) {
-            const container = document.querySelector(containerSelector);
-            const addButton = document.querySelector(addButtonSelector);
+        // Función para gestionar formsets dinámicos
+        function setupFormsetManagement(prefix, formsContainerId, addButtonId, formClass) {
+            const formsContainer = document.querySelector(formsContainerId);
+            const addButton = document.querySelector(addButtonId);
+            const totalFormsInput = document.querySelector(`#id_${prefix}-TOTAL_FORMS`);
             
-            if (!container || !addButton) return;
-
-            addButton.addEventListener('click', function(e) {
-                e.preventDefault();
+            console.log(`Setting up formset: ${prefix}`);
+            console.log(`Looking for: #id_${prefix}-TOTAL_FORMS`);
+            console.log(`Found container:`, formsContainer);
+            console.log(`Found button:`, addButton);
+            console.log(`Found total forms input:`, totalFormsInput);
+            
+            if (!totalFormsInput) {
+                console.error(`TOTAL_FORMS field not found: #id_${prefix}-TOTAL_FORMS`);
+                // Intentar buscar con diferentes variaciones
+                const altSelectors = [
+                    `input[name="${prefix}-TOTAL_FORMS"]`,
+                    `input[id*="${prefix}"][id*="TOTAL_FORMS"]`,
+                    `#id_${prefix.replace('_', '')}-TOTAL_FORMS`
+                ];
                 
-                const totalForms = document.querySelector(`#id_${prefix}-TOTAL_FORMS`);
-                const formCount = parseInt(totalForms.value);
-                const newForm = container.querySelector(`.${formClass}`).cloneNode(true);
-                
-                // Actualizar los nombres e IDs de los campos del nuevo formulario
-                const formRegex = new RegExp(`${prefix}-(\\d+)-`, 'g');
-                newForm.innerHTML = newForm.innerHTML.replace(formRegex, `${prefix}-${formCount}-`);
-                
-                // Limpiar los valores del nuevo formulario
-                const inputs = newForm.querySelectorAll('input, select, textarea');
-                inputs.forEach(input => {
-                    if (input.type === 'checkbox') {
-                        input.checked = false;
-                    } else {
-                        input.value = '';
+                altSelectors.forEach(selector => {
+                    const altElement = document.querySelector(selector);
+                    if (altElement) {
+                        console.log(`Found alternative: ${selector} ->`, altElement);
                     }
                 });
-                
-                // Agregar el nuevo formulario al contenedor
-                container.appendChild(newForm);
-                
-                // Actualizar el contador de formularios
-                totalForms.value = formCount + 1;
-                
-                // Agregar funcionalidad de eliminar al nuevo formulario
-                setupDeleteButton(newForm);
-            });
-        }
+                return;
+            }
+            
+            if (!formsContainer || !addButton) {
+                console.warn(`No se pudo encontrar elementos para formset ${prefix}`);
+                console.warn(`Container: ${!!formsContainer}, Button: ${!!addButton}, TotalForms: ${!!totalFormsInput}`);
+                return;
+            }
 
-        function setupDeleteButton(formElement) {
-            const deleteCheckbox = formElement.querySelector('input[name$="-DELETE"]');
-            if (deleteCheckbox) {
-                const deleteLabel = formElement.querySelector('label[for="' + deleteCheckbox.id + '"]');
-                if (deleteLabel) {
-                    deleteLabel.addEventListener('click', function() {
+            // Función para agregar una nueva forma
+            function addNewForm() {
+                const totalForms = parseInt(totalFormsInput.value);
+                const newFormIndex = totalForms;
+                
+                console.log(`Adding new form. Current total: ${totalForms}, New index: ${newFormIndex}`);
+
+                // Obtener todas las formas existentes
+                const existingForms = formsContainer.querySelectorAll(`.${formClass}`);
+                if (existingForms.length === 0) {
+                    console.warn(`No se encontró formulario base para ${formClass}`);
+                    return;
+                }
+
+                // Clonar la primera forma como plantilla
+                const templateForm = existingForms[0];
+                const newForm = templateForm.cloneNode(true);
+                
+                // Limpiar valores del nuevo formulario y actualizar nombres/IDs
+                const inputs = newForm.querySelectorAll('input, select, textarea');
+                inputs.forEach(input => {
+                    // Limpiar valores
+                    if (input.type === 'checkbox') {
+                        input.checked = false;
+                    } else if (input.type !== 'hidden' || input.name.includes('DELETE')) {
+                        input.value = '';
+                    }
+                    
+                    // Actualizar nombres e IDs para el nuevo índice
+                    if (input.name) {
+                        input.name = input.name.replace(/-\d+-/, `-${newFormIndex}-`);
+                    }
+                    if (input.id) {
+                        input.id = input.id.replace(/_\d+_/, `_${newFormIndex}_`);
+                    }
+                });
+
+                // Actualizar labels asociados
+                const labels = newForm.querySelectorAll('label');
+                labels.forEach(label => {
+                    if (label.getAttribute('for')) {
+                        label.setAttribute('for', label.getAttribute('for').replace(/_\d+_/, `_${newFormIndex}_`));
+                    }
+                });
+
+                // Mostrar el nuevo formulario
+                newForm.style.display = 'block';
+                
+                // Agregar al contenedor
+                formsContainer.appendChild(newForm);
+                
+                // Incrementar el contador total
+                totalFormsInput.value = totalForms + 1;
+                
+                console.log(`Form added successfully. New total: ${totalFormsInput.value}`);
+
+                // Configurar botón de eliminar si existe
+                setupDeleteButton(newForm);
+            }
+
+            // Configurar botón de eliminar para un formulario
+            function setupDeleteButton(formElement) {
+                const deleteCheckbox = formElement.querySelector('input[name$="-DELETE"]');
+                if (deleteCheckbox) {
+                    deleteCheckbox.addEventListener('change', function() {
                         if (deleteCheckbox.checked) {
                             formElement.style.display = 'none';
                         } else {
@@ -449,17 +701,24 @@
                     });
                 }
             }
+
+            // Configurar evento del botón agregar
+            addButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                addNewForm();
+            });
+
+            // Configurar botones de eliminar existentes
+            const existingForms = formsContainer.querySelectorAll(`.${formClass}`);
+            existingForms.forEach(setupDeleteButton);
         }
 
-        // Configurar manejo de formsets
-        setupFormsetManagement('form', '#paro-forms', '#add-paro', 'paro-form');
-        setupFormsetManagement('form', '#desperdicio-forms', '#add-desperdicio', 'desperdicio-form');
-        setupFormsetManagement('form', '#consumo-tinta-forms', '#add-consumo-tinta', 'consumo-tinta-form');
-        setupFormsetManagement('form', '#consumo-sustrato-forms', '#add-consumo-sustrato', 'consumo-sustrato-form');
-        setupFormsetManagement('form', '#produccion-forms', '#add-produccion', 'produccion-form');
-
-        // Configurar botones de eliminar existentes
-        document.querySelectorAll('.paro-form, .desperdicio-form, .consumo-tinta-form, .consumo-sustrato-form, .produccion-form').forEach(setupDeleteButton);
+        // Configurar manejo de formsets con los prefijos exactos
+        setupFormsetManagement('paro_formset', '#paro-forms', '#add-paro', 'paro-form');
+        setupFormsetManagement('desperdicio_formset', '#desperdicio-forms', '#add-desperdicio', 'desperdicio-form');
+        setupFormsetManagement('consumo_tinta_formset', '#consumo-tinta-forms', '#add-consumo-tinta', 'consumo-tinta-form');
+        setupFormsetManagement('consumo_sustrato_formset', '#consumo-sustrato-forms', '#add-consumo-sustrato', 'consumo-sustrato-form');
+        setupFormsetManagement('produccion_formset', '#produccion-forms', '#add-produccion', 'produccion-form');
 
         // Inicializar datepicker para el campo de fecha
         if (typeof flatpickr !== 'undefined') {
@@ -491,5 +750,377 @@
             });
         }
     });
+
+    // Arrays para almacenar los registros temporalmente
+    let desperdiciosRegistrados = [];
+    let parosRegistrados = [];
+    let consumosTintaRegistrados = [];
+    let consumosSustratoRegistrados = [];
+
+    // Funciones para Desperdicios
+    function abrirModalDesperdicio() {
+        const modal = new bootstrap.Modal(document.getElementById('modalDesperdicio'));
+        modal.show();
+        document.getElementById('formDesperdicio').reset();
+    }
+
+    function registrarDesperdicio() {
+        const tipoMaterial = document.getElementById('tipoMaterial').value;
+        const cantidad = document.getElementById('cantidadDesperdicio').value;
+        const motivo = document.getElementById('motivoDesperdicio').value;
+        const observaciones = document.getElementById('observacionesDesperdicio').value;
+
+        if (!tipoMaterial || !cantidad || !motivo) {
+            alert('Por favor, complete todos los campos requeridos.');
+            return;
+        }
+
+        if (parseFloat(cantidad) <= 0) {
+            alert('La cantidad debe ser mayor a 0.');
+            return;
+        }
+
+        const desperdicio = {
+            id: Date.now(),
+            tipoMaterial: tipoMaterial,
+            cantidad: parseFloat(cantidad),
+            motivo: motivo,
+            observaciones: observaciones,
+            fecha: new Date().toLocaleString()
+        };
+
+        desperdiciosRegistrados.push(desperdicio);
+        actualizarVisualizacionDesperdicios();
+        
+        const modal = bootstrap.Modal.getInstance(document.getElementById('modalDesperdicio'));
+        modal.hide();
+        mostrarMensaje('Desperdicio registrado exitosamente', 'success');
+    }
+
+    function actualizarVisualizacionDesperdicios() {
+        const container = document.getElementById('desperdicios-registrados');
+        
+        if (desperdiciosRegistrados.length === 0) {
+            container.innerHTML = '<p class="text-muted">No hay desperdicios registrados.</p>';
+            return;
+        }
+
+        let html = '<div class="table-responsive"><table class="table table-sm table-striped">';
+        html += '<thead><tr><th>Tipo</th><th>Cantidad</th><th>Motivo</th><th>Observaciones</th><th>Acciones</th></tr></thead><tbody>';
+
+        desperdiciosRegistrados.forEach(desperdicio => {
+            const motivoTexto = obtenerTextoMotivo(desperdicio.motivo);
+            html += `
+                <tr>
+                    <td><span class="badge bg-${obtenerColorTipo(desperdicio.tipoMaterial)}">${desperdicio.tipoMaterial}</span></td>
+                    <td>${desperdicio.cantidad}</td>
+                    <td>${motivoTexto}</td>
+                    <td>${desperdicio.observaciones || '-'}</td>
+                    <td>
+                        <button type="button" class="btn btn-outline-danger btn-sm" onclick="eliminarDesperdicio(${desperdicio.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+
+        html += '</tbody></table></div>';
+        container.innerHTML = html;
+    }
+
+    function eliminarDesperdicio(id) {
+        if (confirm('¿Está seguro de eliminar este desperdicio?')) {
+            desperdiciosRegistrados = desperdiciosRegistrados.filter(d => d.id !== id);
+            actualizarVisualizacionDesperdicios();
+            mostrarMensaje('Desperdicio eliminado', 'info');
+        }
+    }
+
+    // Funciones para Paros
+    function abrirModalParo() {
+        const modal = new bootstrap.Modal(document.getElementById('modalParo'));
+        modal.show();
+        document.getElementById('formParo').reset();
+    }
+
+    function registrarParo() {
+        const maquina = document.getElementById('maquinaParo').value;
+        const motivo = document.getElementById('motivoParo').value;
+        const duracion = document.getElementById('duracionParo').value;
+        const observaciones = document.getElementById('observacionesParo').value;
+
+        if (!maquina || !motivo || !duracion) {
+            alert('Por favor, complete todos los campos requeridos.');
+            return;
+        }
+
+        if (parseInt(duracion) <= 0) {
+            alert('La duración debe ser mayor a 0.');
+            return;
+        }
+
+        const paro = {
+            id: Date.now(),
+            maquina: maquina,
+            motivo: motivo,
+            duracion: parseInt(duracion),
+            observaciones: observaciones,
+            fecha: new Date().toLocaleString()
+        };
+
+        parosRegistrados.push(paro);
+        actualizarVisualizacionParos();
+
+        const modal = bootstrap.Modal.getInstance(document.getElementById('modalParo'));
+        modal.hide();
+        mostrarMensaje('Paro registrado exitosamente', 'success');
+    }
+
+    function actualizarVisualizacionParos() {
+        const container = document.getElementById('paros-registrados');
+        
+        if (parosRegistrados.length === 0) {
+            container.innerHTML = '<p class="text-muted">No hay paros registrados.</p>';
+            return;
+        }
+
+        let html = '<div class="table-responsive"><table class="table table-sm table-striped">';
+        html += '<thead><tr><th>Máquina</th><th>Motivo</th><th>Duración (min)</th><th>Observaciones</th><th>Acciones</th></tr></thead><tbody>';
+
+        parosRegistrados.forEach(paro => {
+            html += `
+                <tr>
+                    <td>${paro.maquina}</td>
+                    <td>${paro.motivo}</td>
+                    <td>${paro.duracion}</td>
+                    <td>${paro.observaciones || '-'}</td>
+                    <td>
+                        <button type="button" class="btn btn-outline-danger btn-sm" onclick="eliminarParo(${paro.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+
+        html += '</tbody></table></div>';
+        container.innerHTML = html;
+    }
+
+    function eliminarParo(id) {
+        if (confirm('¿Está seguro de eliminar este paro?')) {
+            parosRegistrados = parosRegistrados.filter(p => p.id !== id);
+            actualizarVisualizacionParos();
+            mostrarMensaje('Paro eliminado', 'info');
+        }
+    }
+
+    // Funciones para Consumo de Tinta
+    function abrirModalConsumoTinta() {
+        const modal = new bootstrap.Modal(document.getElementById('modalConsumoTinta'));
+        modal.show();
+        document.getElementById('formConsumoTinta').reset();
+    }
+
+    function registrarConsumoTinta() {
+        const tipoTinta = document.getElementById('tipoTinta').value;
+        const cantidad = document.getElementById('cantidadTinta').value;
+        const loteProveedor = document.getElementById('loteProveedor').value;
+        const observaciones = document.getElementById('observacionesTinta').value;
+
+        if (!tipoTinta || !cantidad) {
+            alert('Por favor, complete todos los campos requeridos.');
+            return;
+        }
+
+        if (parseFloat(cantidad) <= 0) {
+            alert('La cantidad debe ser mayor a 0.');
+            return;
+        }
+
+        const consumoTinta = {
+            id: Date.now(),
+            tipoTinta: tipoTinta,
+            cantidad: parseFloat(cantidad),
+            loteProveedor: loteProveedor,
+            observaciones: observaciones,
+            fecha: new Date().toLocaleString()
+        };
+
+        consumosTintaRegistrados.push(consumoTinta);
+        actualizarVisualizacionConsumosTinta();
+
+        const modal = bootstrap.Modal.getInstance(document.getElementById('modalConsumoTinta'));
+        modal.hide();
+        mostrarMensaje('Consumo de tinta registrado exitosamente', 'success');
+    }
+
+    function actualizarVisualizacionConsumosTinta() {
+        const container = document.getElementById('consumos-tinta-registrados');
+        
+        if (consumosTintaRegistrados.length === 0) {
+            container.innerHTML = '<p class="text-muted">No hay consumos de tinta registrados.</p>';
+            return;
+        }
+
+        let html = '<div class="table-responsive"><table class="table table-sm table-striped">';
+        html += '<thead><tr><th>Tipo</th><th>Cantidad</th><th>Lote</th><th>Observaciones</th><th>Acciones</th></tr></thead><tbody>';
+
+        consumosTintaRegistrados.forEach(consumo => {
+            html += `
+                <tr>
+                    <td><span class="badge bg-primary">${consumo.tipoTinta}</span></td>
+                    <td>${consumo.cantidad}</td>
+                    <td>${consumo.loteProveedor || '-'}</td>
+                    <td>${consumo.observaciones || '-'}</td>
+                    <td>
+                        <button type="button" class="btn btn-outline-danger btn-sm" onclick="eliminarConsumoTinta(${consumo.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+
+        html += '</tbody></table></div>';
+        container.innerHTML = html;
+    }
+
+    function eliminarConsumoTinta(id) {
+        if (confirm('¿Está seguro de eliminar este consumo de tinta?')) {
+            consumosTintaRegistrados = consumosTintaRegistrados.filter(c => c.id !== id);
+            actualizarVisualizacionConsumosTinta();
+            mostrarMensaje('Consumo de tinta eliminado', 'info');
+        }
+    }
+
+    // Funciones para Consumo de Sustrato
+    function abrirModalConsumoSustrato() {
+        const modal = new bootstrap.Modal(document.getElementById('modalConsumoSustrato'));
+        modal.show();
+        document.getElementById('formConsumoSustrato').reset();
+    }
+
+    function registrarConsumoSustrato() {
+        const tipoSustrato = document.getElementById('tipoSustrato').value;
+        const cantidad = document.getElementById('cantidadSustrato').value;
+        const ancho = document.getElementById('anchoSustrato').value;
+        const observaciones = document.getElementById('observacionesSustrato').value;
+
+        if (!tipoSustrato || !cantidad) {
+            alert('Por favor, complete todos los campos requeridos.');
+            return;
+        }
+
+        if (parseFloat(cantidad) <= 0) {
+            alert('La cantidad debe ser mayor a 0.');
+            return;
+        }
+
+        const consumoSustrato = {
+            id: Date.now(),
+            tipoSustrato: tipoSustrato,
+            cantidad: parseFloat(cantidad),
+            ancho: ancho ? parseFloat(ancho) : null,
+            observaciones: observaciones,
+            fecha: new Date().toLocaleString()
+        };
+
+        consumosSustratoRegistrados.push(consumoSustrato);
+        actualizarVisualizacionConsumosSustrato();
+
+        const modal = bootstrap.Modal.getInstance(document.getElementById('modalConsumoSustrato'));
+        modal.hide();
+        mostrarMensaje('Consumo de sustrato registrado exitosamente', 'success');
+    }
+
+    function actualizarVisualizacionConsumosSustrato() {
+        const container = document.getElementById('consumos-sustrato-registrados');
+        
+        if (consumosSustratoRegistrados.length === 0) {
+            container.innerHTML = '<p class="text-muted">No hay consumos de sustrato registrados.</p>';
+            return;
+        }
+
+        let html = '<div class="table-responsive"><table class="table table-sm table-striped">';
+        html += '<thead><tr><th>Tipo</th><th>Cantidad</th><th>Ancho</th><th>Observaciones</th><th>Acciones</th></tr></thead><tbody>';
+
+        consumosSustratoRegistrados.forEach(consumo => {
+            html += `
+                <tr>
+                    <td><span class="badge bg-info">${consumo.tipoSustrato}</span></td>
+                    <td>${consumo.cantidad}</td>
+                    <td>${consumo.ancho ? consumo.ancho + ' cm' : '-'}</td>
+                    <td>${consumo.observaciones || '-'}</td>
+                    <td>
+                        <button type="button" class="btn btn-outline-danger btn-sm" onclick="eliminarConsumoSustrato(${consumo.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+
+        html += '</tbody></table></div>';
+        container.innerHTML = html;
+    }
+
+    function eliminarConsumoSustrato(id) {
+        if (confirm('¿Está seguro de eliminar este consumo de sustrato?')) {
+            consumosSustratoRegistrados = consumosSustratoRegistrados.filter(c => c.id !== id);
+            actualizarVisualizacionConsumosSustrato();
+            mostrarMensaje('Consumo de sustrato eliminado', 'info');
+        }
+    }
+
+    // Funciones auxiliares
+    function obtenerTextoMotivo(motivo) {
+        const motivos = {
+            'defecto_calidad': 'Defecto de Calidad',
+            'error_operacion': 'Error de Operación',
+            'falla_maquina': 'Falla de Máquina',
+            'material_defectuoso': 'Material Defectuoso',
+            'ajuste_color': 'Ajuste de Color',
+            'cambio_referencia': 'Cambio de Referencia',
+            'otro': 'Otro'
+        };
+        return motivos[motivo] || motivo;
+    }
+
+    function obtenerColorTipo(tipo) {
+        const colores = {
+            'WIP': 'warning',
+            'MP': 'info',
+            'PT': 'success',
+            'TINTA': 'primary',
+            'SUSTRATO': 'secondary'
+        };
+        return colores[tipo] || 'secondary';
+    }
+
+    function mostrarMensaje(mensaje, tipo) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${tipo} alert-dismissible fade show position-fixed`;
+        alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        alertDiv.innerHTML = `
+            ${mensaje}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        document.body.appendChild(alertDiv);
+        
+        setTimeout(() => {
+            if (alertDiv.parentNode) {
+                alertDiv.parentNode.removeChild(alertDiv);
+            }
+        }, 3000);
+    }
+
+    // Inicializar visualizaciones vacías
+    actualizarVisualizacionDesperdicios();
+    actualizarVisualizacionParos();
+    actualizarVisualizacionConsumosTinta();
+    actualizarVisualizacionConsumosSustrato();
 </script>
 {% endblock %}

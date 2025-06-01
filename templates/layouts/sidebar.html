@@ -1,0 +1,177 @@
+<!-- SIDEBAR DEFINITIVO - VERSIÓN COMPLETA -->
+<div class="sidebar" style="position: fixed; top: 0; left: 0; width: 280px; height: 100vh; background: linear-gradient(180deg, #ffffff 0%, #f8f9fa 100%); border-right: 1px solid #dee2e6; z-index: 100; padding: 80px 0 0; overflow-y: auto;">
+    <div class="sidebar-sticky" style="padding: 0 15px;">
+        <ul class="nav flex-column" style="list-style: none; padding: 0; margin: 0;">
+            
+            <!-- Dashboard -->
+            <li class="nav-item" style="margin-bottom: 5px;">
+                <a class="nav-link" href="{% url 'root' %}" style="display: block; padding: 8px 12px; color: #495057; text-decoration: none; border-radius: 6px; transition: all 0.2s;">
+                    <i class="fas fa-tachometer-alt" style="margin-right: 8px; width: 16px; text-align: center;"></i> Dashboard
+                </a>
+            </li>
+            
+            <!-- Producción -->
+            <li class="nav-item" style="margin-top: 15px;">
+                <div class="nav-section-header" style="padding: 8px 12px; font-size: 14px; font-weight: 600; color: #495057; text-transform: uppercase; background-color: #e9ecef; border-radius: 6px; margin-bottom: 8px;">
+                    <i class="fas fa-industry" style="margin-right: 8px;"></i> Producción
+                </div>
+                <ul class="nav flex-column" style="list-style: none; padding: 0; margin: 0 0 0 15px;">
+                    <li class="nav-item" style="margin-bottom: 3px;">
+                        <a class="nav-link" href="{% url 'produccion_web:orden-produccion-list' %}" style="display: block; padding: 6px 12px; color: #495057; text-decoration: none; border-radius: 6px; font-size: 14px;">
+                            <i class="fas fa-list-ul" style="margin-right: 8px; width: 14px; text-align: center;"></i> Órdenes
+                        </a>
+                    </li>
+                    
+                    <!-- Registros de Producción por Proceso -->
+                    <li class="nav-item" style="margin-top: 8px; margin-bottom: 8px;">
+                        <div class="nav-subsection-header" style="padding: 4px 8px; font-size: 12px; font-weight: 500; color: #6c757d; text-transform: uppercase; background-color: #f8f9fa; border-radius: 4px; border-left: 3px solid #0d6efd;">
+                            <i class="fas fa-clipboard-list" style="margin-right: 6px; font-size: 10px;"></i> Registros de Producción
+                        </div>
+                        <ul class="nav flex-column" style="list-style: none; padding: 0; margin: 4px 0 0 10px;">
+                            <li class="nav-item" style="margin-bottom: 2px;">
+                                <a class="nav-link" href="{% url 'produccion_web:impresion-kanban' %}" style="display: block; padding: 4px 8px; color: #495057; text-decoration: none; border-radius: 4px; font-size: 13px;">
+                                    <i class="fas fa-print" style="margin-right: 6px; width: 12px; text-align: center; font-size: 11px;"></i> Impresión
+                                </a>
+                            </li>
+                            <li class="nav-item" style="margin-bottom: 2px;">
+                                <a class="nav-link" href="{% url 'produccion_web:refilado-kanban' %}" style="display: block; padding: 4px 8px; color: #495057; text-decoration: none; border-radius: 4px; font-size: 13px;">
+                                    <i class="fas fa-cut" style="margin-right: 6px; width: 12px; text-align: center; font-size: 11px;"></i> Refilado
+                                </a>
+                            </li>
+                            <li class="nav-item" style="margin-bottom: 2px;">
+                                <a class="nav-link" href="{% url 'produccion_web:sellado-kanban' %}" style="display: block; padding: 4px 8px; color: #495057; text-decoration: none; border-radius: 4px; font-size: 13px;">
+                                    <i class="fas fa-compress" style="margin-right: 6px; width: 12px; text-align: center; font-size: 11px;"></i> Sellado
+                                </a>
+                            </li>
+                            <li class="nav-item" style="margin-bottom: 2px;">
+                                <a class="nav-link" href="{% url 'produccion_web:doblado-kanban' %}" style="display: block; padding: 4px 8px; color: #495057; text-decoration: none; border-radius: 4px; font-size: 13px;">
+                                    <i class="fas fa-layer-group" style="margin-right: 6px; width: 12px; text-align: center; font-size: 11px;"></i> Doblado
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </li>
+
+            <!-- Inventario -->
+            <li class="nav-item" style="margin-top: 15px;">
+                <div class="nav-section-header" style="padding: 8px 12px; font-size: 14px; font-weight: 600; color: #495057; text-transform: uppercase; background-color: #e9ecef; border-radius: 6px; margin-bottom: 8px;">
+                    <i class="fas fa-boxes" style="margin-right: 8px;"></i> Inventario
+                </div>
+                <ul class="nav flex-column" style="list-style: none; padding: 0; margin: 0 0 0 15px;">
+                    <li class="nav-item" style="margin-bottom: 3px;">
+                        <a class="nav-link" href="{% url 'inventario_web:materia-prima-list' %}" style="display: block; padding: 6px 12px; color: #495057; text-decoration: none; border-radius: 6px; font-size: 14px;">
+                            <i class="fas fa-cubes" style="margin-right: 8px; width: 14px; text-align: center;"></i> Materias Primas
+                        </a>
+                    </li>
+                    <li class="nav-item" style="margin-bottom: 3px;">
+                        <a class="nav-link" href="{% url 'inventario_web:lote-list' %}" style="display: block; padding: 6px 12px; color: #495057; text-decoration: none; border-radius: 6px; font-size: 14px;">
+                            <i class="fas fa-tags" style="margin-right: 8px; width: 14px; text-align: center;"></i> Lotes
+                        </a>
+                    </li>
+                </ul>
+            </li>
+
+            <!-- Productos -->
+            <li class="nav-item" style="margin-top: 15px;">
+                <div class="nav-section-header" style="padding: 8px 12px; font-size: 14px; font-weight: 600; color: #495057; text-transform: uppercase; background-color: #e9ecef; border-radius: 6px; margin-bottom: 8px;">
+                    <i class="fas fa-box-open" style="margin-right: 8px;"></i> Productos
+                </div>
+                <ul class="nav flex-column" style="list-style: none; padding: 0; margin: 0 0 0 15px;">
+                    <li class="nav-item" style="margin-bottom: 3px;">
+                        <a class="nav-link" href="{% url 'productos_web:producto_list' %}" style="display: block; padding: 6px 12px; color: #495057; text-decoration: none; border-radius: 6px; font-size: 14px;">
+                            <i class="fas fa-cube" style="margin-right: 8px; width: 14px; text-align: center;"></i> Catálogo
+                        </a>
+                    </li>
+                </ul>
+            </li>
+
+            <!-- Comercial -->
+            <li class="nav-item" style="margin-top: 15px;">
+                <div class="nav-section-header" style="padding: 8px 12px; font-size: 14px; font-weight: 600; color: #495057; text-transform: uppercase; background-color: #e9ecef; border-radius: 6px; margin-bottom: 8px;">
+                    <i class="fas fa-users" style="margin-right: 8px;"></i> Comercial
+                </div>
+                <ul class="nav flex-column" style="list-style: none; padding: 0; margin: 0 0 0 15px;">
+                    <li class="nav-item" style="margin-bottom: 3px;">
+                        <a class="nav-link" href="{% url 'clientes_web:cliente_list' %}" style="display: block; padding: 6px 12px; color: #495057; text-decoration: none; border-radius: 6px; font-size: 14px;">
+                            <i class="fas fa-user-tie" style="margin-right: 8px; width: 14px; text-align: center;"></i> Clientes
+                        </a>
+                    </li>
+                    <li class="nav-item" style="margin-bottom: 3px;">
+                        <a class="nav-link" href="{% url 'pedidos_web:pedido_list' %}" style="display: block; padding: 6px 12px; color: #495057; text-decoration: none; border-radius: 6px; font-size: 14px;">
+                            <i class="fas fa-shopping-cart" style="margin-right: 8px; width: 14px; text-align: center;"></i> Pedidos
+                        </a>
+                    </li>
+                </ul>
+            </li>
+
+            <!-- Personal -->
+            <li class="nav-item" style="margin-top: 15px;">
+                <div class="nav-section-header" style="padding: 8px 12px; font-size: 14px; font-weight: 600; color: #495057; text-transform: uppercase; background-color: #e9ecef; border-radius: 6px; margin-bottom: 8px;">
+                    <i class="fas fa-user-friends" style="margin-right: 8px;"></i> Recursos Humanos
+                </div>
+                <ul class="nav flex-column" style="list-style: none; padding: 0; margin: 0 0 0 15px;">
+                    <li class="nav-item" style="margin-bottom: 3px;">
+                        <a class="nav-link" href="{% url 'personal_web:colaborador_list' %}" style="display: block; padding: 6px 12px; color: #495057; text-decoration: none; border-radius: 6px; font-size: 14px;">
+                            <i class="fas fa-users" style="margin-right: 8px; width: 14px; text-align: center;"></i> Personal
+                        </a>
+                    </li>
+                </ul>
+            </li>
+
+            <!-- CONFIGURACIÓN - SECCIÓN PRINCIPAL -->
+            <hr style="border: none; border-top: 1px solid #dee2e6; margin: 20px 0;">
+            <li class="nav-item">
+                <div class="nav-section-header" style="padding: 8px 12px; font-size: 14px; font-weight: 600; color: #ffffff; text-transform: uppercase; background: linear-gradient(135deg, #28a745 0%, #20c997 100%); border-radius: 6px; margin-bottom: 8px; box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);">
+                    <i class="fas fa-cog" style="margin-right: 8px;"></i> ⚙️ CONFIGURACIÓN ⚙️
+                </div>
+                <ul class="nav flex-column" style="list-style: none; padding: 0; margin: 0 0 0 15px;">
+                    <li class="nav-item" style="margin-bottom: 3px;">
+                        <a class="nav-link" href="{% url 'configuracion_web:administracion-dashboard' %}" style="display: block; padding: 8px 12px; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 14px; background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); margin-bottom: 5px; font-weight: 500;">
+                            <i class="fas fa-sliders-h" style="margin-right: 8px; width: 14px; text-align: center;"></i> 🎯 ADMINISTRACIÓN
+                        </a>
+                    </li>
+                    <li class="nav-item" style="margin-bottom: 3px;">
+                        <a class="nav-link" href="{% url 'admin:index' %}" style="display: block; padding: 8px 12px; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 14px; background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%); margin-bottom: 5px; font-weight: 500;">
+                            <i class="fas fa-tools" style="margin-right: 8px; width: 14px; text-align: center;"></i> 🔧 ADMIN DJANGO
+                        </a>
+                    </li>
+                </ul>
+            </li>
+
+            <!-- Info de Usuario -->
+            <div style="margin-top: 30px; padding: 15px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 8px; border: 1px solid #dee2e6;">
+                <div style="font-size: 12px; color: #6c757d; margin-bottom: 5px;">Usuario:</div>
+                <div style="font-weight: 600; color: #495057; margin-bottom: 8px;">{{ user.username }}</div>
+                <div style="font-size: 11px; color: #6c757d;">
+                    Staff: <span style="color: {% if user.is_staff %}#28a745{% else %}#dc3545{% endif %}; font-weight: 600;">{{ user.is_staff|yesno:"SÍ,NO" }}</span><br>
+                    Autenticado: <span style="color: {% if user.is_authenticated %}#28a745{% else %}#dc3545{% endif %}; font-weight: 600;">{{ user.is_authenticated|yesno:"SÍ,NO" }}</span>
+                </div>
+            </div>
+        </ul>
+    </div>
+</div>
+
+<!-- Ajustar el contenido principal para dar espacio al sidebar -->
+<style>
+.main-content {
+    margin-left: 280px;
+    padding: 100px 2rem 2rem 2rem;
+    min-height: 100vh;
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        transform: translateX(-100%);
+    }
+    
+    .sidebar.show {
+        transform: translateX(0);
+    }
+    
+    .main-content {
+        margin-left: 0;
+        padding: 80px 1rem 1rem 1rem;
+    }
+}
+</style>

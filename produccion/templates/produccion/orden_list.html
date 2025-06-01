@@ -1,0 +1,495 @@
+<!-- produccion/templates/produccion/orden_list.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Órdenes de Producción - ARCOPACK{% endblock %}
+
+{% block extra_css %}
+<style>
+    .kanban-board {
+        display: flex;
+        gap: 1.5rem;
+        overflow-x: auto;
+        padding: 1rem 0;
+        min-height: 600px;
+    }
+    
+    .kanban-column {
+        min-width: 320px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .kanban-header {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid #dee2e6;
+        border-radius: 12px 12px 0 0;
+        background: linear-gradient(90deg, var(--light-color) 0%, #ffffff 100%);
+    }
+    
+    .kanban-content {
+        flex: 1;
+        padding: 1rem;
+        overflow-y: auto;
+    }
+    
+    .orden-kanban-card {
+        background: white;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .orden-kanban-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        border-color: var(--primary-color);
+    }
+    
+    .orden-grid-card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        overflow: hidden;
+    }
+    
+    .orden-grid-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    
+    .progress-modern {
+        height: 8px;
+        border-radius: 10px;
+        background-color: #e9ecef;
+        overflow: hidden;
+    }
+    
+    .progress-modern .progress-bar {
+        border-radius: 10px;
+        transition: width 0.6s ease;
+    }
+    
+    .status-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .priority-indicator {
+        width: 4px;
+        height: 100%;
+        position: absolute;
+        left: 0;
+        top: 0;
+        border-radius: 4px 0 0 4px;
+    }
+    
+    .view-toggle {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+    
+    .view-toggle .btn {
+        border: none;
+        border-radius: 0;
+        padding: 0.75rem 1.5rem;
+    }
+    
+    .view-toggle .btn.active {
+        background-color: var(--primary-color);
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Page Context Variables -->
+{% with page_title="Órdenes de Producción" page_subtitle="Control y seguimiento de la producción" page_icon="industry" %}
+
+<!-- Primary Action -->
+{% with primary_action="{\"url\":\"/admin/produccion/ordenproduccion/add/\",\"text\":\"Nueva Orden\",\"icon\":\"plus\"}" %}
+
+<!-- Statistics -->
+{% with statistics=estadisticas_cards %}
+
+<!-- Filters -->
+{% with filters=filtros_config %}
+
+<div class="container-fluid">
+    <!-- View Toggle -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="view-toggle btn-group" role="group">
+            <a href="?vista=kanban{% if request.GET.items %}&{% for key, value in request.GET.items %}{% if key != 'vista' %}{{ key }}={{ value }}&{% endif %}{% endfor %}{% endif %}" 
+               class="btn {% if vista == 'kanban' %}active{% endif %}">
+                <i class="fas fa-columns me-2"></i>Kanban
+            </a>
+            <a href="?vista=lista{% if request.GET.items %}&{% for key, value in request.GET.items %}{% if key != 'vista' %}{{ key }}={{ value }}&{% endif %}{% endfor %}{% endif %}" 
+               class="btn {% if vista == 'lista' %}active{% endif %}">
+                <i class="fas fa-th-large me-2"></i>Tarjetas
+            </a>
+            <a href="?vista=tabla{% if request.GET.items %}&{% for key, value in request.GET.items %}{% if key != 'vista' %}{{ key }}={{ value }}&{% endif %}{% endfor %}{% endif %}" 
+               class="btn {% if vista == 'tabla' %}active{% endif %}">
+                <i class="fas fa-table me-2"></i>Tabla
+            </a>
+        </div>
+        
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-secondary" onclick="refreshData()">
+                <i class="fas fa-sync-alt me-1"></i>Actualizar
+            </button>
+            <div class="dropdown">
+                <button class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                    <i class="fas fa-download me-1"></i>Exportar
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="?export=excel"><i class="fas fa-file-excel me-2"></i>Excel</a></li>
+                    <li><a class="dropdown-item" href="?export=pdf"><i class="fas fa-file-pdf me-2"></i>PDF</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    {% if vista == 'kanban' %}
+        <!-- Vista Kanban -->
+        <div class="kanban-board">
+            {% for estado, info in estados_kanban.items %}
+            <div class="kanban-column">
+                <div class="kanban-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">
+                            <i class="fas fa-{{ info.icon }} me-2" style="color: {{ info.color }}"></i>
+                            {{ info.label }}
+                        </h6>
+                        <span class="badge bg-secondary">{{ info.count }}</span>
+                    </div>
+                </div>
+                <div class="kanban-content">
+                    {% for orden in info.ordenes %}
+                    <div class="orden-kanban-card position-relative" onclick="verOrden('{{ orden.pk }}')">
+                        <div class="priority-indicator bg-{{ orden.prioridad_color }}"></div>
+                        
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <strong class="d-block">{{ orden.numero_orden }}</strong>
+                                <small class="text-muted">{{ orden.producto.codigo }}</small>
+                            </div>
+                            <span class="badge bg-{{ orden.prioridad_color }}">
+                                {{ orden.get_prioridad_display }}
+                            </span>
+                        </div>
+                        
+                        <p class="mb-2 small text-truncate">{{ orden.producto.nombre }}</p>
+                        
+                        {% if orden.estado == 'EN_PROCESO' and orden.progreso_porcentaje %}
+                        <div class="mb-2">
+                            <div class="d-flex justify-content-between mb-1">
+                                <small>Progreso</small>
+                                <small>{{ orden.progreso_porcentaje }}%</small>
+                            </div>
+                            <div class="progress-modern">
+                                <div class="progress-bar bg-{{ orden.progreso_color }}" 
+                                     style="width: {{ orden.progreso_porcentaje }}%"></div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">
+                                <i class="fas fa-cubes me-1"></i>
+                                {{ orden.cantidad_producida|floatformat:0 }}/{{ orden.cantidad_producir|floatformat:0 }}
+                            </small>
+                            <small class="badge bg-light text-dark">
+                                {{ orden.dias_restantes }} días
+                            </small>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-4 text-muted">
+                        <i class="fas fa-inbox fa-2x mb-2"></i>
+                        <p class="mb-0">Sin órdenes</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+    {% elif vista == 'tabla' %}
+        <!-- Vista Tabla -->
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover" id="ordenesTable">
+                        <thead>
+                            <tr>
+                                <th>N° Orden</th>
+                                <th>Producto</th>
+                                <th>Estado</th>
+                                <th>Prioridad</th>
+                                <th>Progreso</th>
+                                <th>Fecha Inicio</th>
+                                <th>Fecha Fin</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for orden in ordenes %}
+                            <tr>
+                                <td>
+                                    <strong>{{ orden.numero_orden }}</strong>
+                                </td>
+                                <td>
+                                    <div>
+                                        <strong>{{ orden.producto.codigo }}</strong>
+                                        <br><small class="text-muted">{{ orden.producto.nombre|truncatechars:30 }}</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="status-badge bg-{{ orden.estado_color }}">
+                                        {{ orden.get_estado_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ orden.prioridad_color }}">
+                                        {{ orden.get_prioridad_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if orden.estado == 'EN_PROCESO' %}
+                                    <div class="d-flex align-items-center">
+                                        <div class="progress-modern me-2" style="width: 60px;">
+                                            <div class="progress-bar bg-{{ orden.progreso_color }}" 
+                                                 style="width: {{ orden.progreso_porcentaje }}%"></div>
+                                        </div>
+                                        <small>{{ orden.progreso_porcentaje }}%</small>
+                                    </div>
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ orden.fecha_inicio|date:"d/m/Y" }}</td>
+                                <td>{{ orden.fecha_fin_prevista|date:"d/m/Y" }}</td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{% url 'produccion:orden_detail' orden.pk %}" 
+                                           class="btn btn-outline-primary" title="Ver">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{% url 'admin:produccion_ordenproduccion_change' orden.pk %}" 
+                                           class="btn btn-outline-secondary" title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    {% else %}
+        <!-- Vista Lista/Tarjetas (por defecto) -->
+        {% if ordenes %}
+        <div class="row">
+            {% for orden in ordenes %}
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="card orden-grid-card h-100 position-relative">
+                    <div class="priority-indicator bg-{{ orden.prioridad_color }}"></div>
+                    
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <strong>{{ orden.numero_orden }}</strong>
+                        <span class="status-badge bg-{{ orden.estado_color }}">
+                            {{ orden.get_estado_display }}
+                        </span>
+                    </div>
+                    
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">{{ orden.producto.codigo }}</h6>
+                                <small class="text-muted text-truncate-2">{{ orden.producto.nombre }}</small>
+                            </div>
+                            <span class="badge bg-{{ orden.prioridad_color }} ms-2">
+                                {{ orden.get_prioridad_display }}
+                            </span>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <small class="text-muted d-block">Cantidad</small>
+                                <strong>{{ orden.cantidad_producir|floatformat:0 }}</strong>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted d-block">Producido</small>
+                                <strong>{{ orden.cantidad_producida|floatformat:0 }}</strong>
+                            </div>
+                        </div>
+
+                        {% if orden.estado == 'EN_PROCESO' %}
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-1">
+                                <small class="text-muted">Progreso</small>
+                                <small class="fw-bold">{{ orden.progreso_porcentaje }}%</small>
+                            </div>
+                            <div class="progress-modern">
+                                <div class="progress-bar bg-{{ orden.progreso_color }}" 
+                                     style="width: {{ orden.progreso_porcentaje }}%"></div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <div class="d-flex justify-content-between align-items-center text-muted">
+                            <small>
+                                <i class="fas fa-calendar me-1"></i>
+                                {{ orden.fecha_inicio|date:"d/m/Y" }}
+                            </small>
+                            <small class="badge bg-light text-dark">
+                                {{ orden.dias_restantes }} días
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <div class="card-footer bg-transparent">
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'produccion:orden_detail' orden.pk %}" 
+                               class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-eye me-1"></i>Ver
+                            </a>
+                            <a href="{% url 'admin:produccion_ordenproduccion_change' orden.pk %}" 
+                               class="btn btn-sm btn-outline-secondary">
+                                <i class="fas fa-edit me-1"></i>Editar
+                            </a>
+                            {% if orden.estado == 'PENDIENTE' %}
+                            <button class="btn btn-sm btn-success" onclick="cambiarEstado('{{ orden.pk }}', 'EN_PROCESO')">
+                                <i class="fas fa-play me-1"></i>Iniciar
+                            </button>
+                            {% elif orden.estado == 'EN_PROCESO' %}
+                            <button class="btn btn-sm btn-warning" onclick="cambiarEstado('{{ orden.pk }}', 'PAUSADO')">
+                                <i class="fas fa-pause me-1"></i>Pausar
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Paginación modernizada -->
+        {% include 'components/_pagination.html' %}
+        
+        {% else %}
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-industry fa-4x text-muted mb-3"></i>
+                <h5 class="text-muted">No hay órdenes de producción</h5>
+                <p class="text-muted mb-4">No se encontraron órdenes con los filtros aplicados.</p>
+                <a href="{% url 'admin:produccion_ordenproduccion_add' %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Crear Primera Orden
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    {% endif %}
+</div>
+
+{% endwith %}
+{% endwith %}
+{% endwith %}
+{% endwith %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Inicializar DataTable si existe
+    if (document.getElementById('ordenesTable')) {
+        $('#ordenesTable').DataTable({
+            language: {
+                url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json'
+            },
+            responsive: true,
+            pageLength: 25,
+            order: [[0, 'desc']]
+        });
+    }
+});
+
+function verOrden(ordenId) {
+    window.location.href = `/produccion/orden/${ordenId}/`;
+}
+
+function cambiarEstado(ordenId, nuevoEstado) {
+    const acciones = {
+        'EN_PROCESO': 'iniciar',
+        'PAUSADO': 'pausar',
+        'COMPLETADO': 'completar'
+    };
+    
+    const accion = acciones[nuevoEstado];
+    const mensaje = `¿Está seguro de ${accion} esta orden de producción?`;
+    
+    if (confirm(mensaje)) {
+        showLoading('body');
+        
+        fetch(`/produccion/orden/${ordenId}/${accion}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then data => {
+            hideLoading('body');
+            if (data.success) {
+                showToast(`Orden ${accion}da exitosamente`, 'success');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showToast(data.error || `Error al ${accion} la orden`, 'danger');
+            }
+        })
+        .catch(error => {
+            hideLoading('body');
+            showToast('Error de conexión', 'danger');
+            console.error('Error:', error);
+        });
+    }
+}
+
+function refreshData() {
+    showLoading('.main-content');
+    location.reload();
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}

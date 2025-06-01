@@ -9,8 +9,8 @@
 <div class="row">
     <div class="col-lg-12">
         <div class="card">
-            <div class="card-header bg-warning text-dark">
-                <i class="fas fa-archive me-2"></i>Nuevo Registro de Sellado
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-tape me-2"></i>Nuevo Registro de Sellado
             </div>
             <div class="card-body">
                 <form method="post" id="registroSelladoForm">
@@ -124,59 +124,67 @@
                         </div>
                     </div>
 
+                    <!-- Paros Section -->
                     <div class="card mb-4">
                         <div class="card-header">
-                            <h4>Paros</h4>
+                            <h4><i class="fas fa-pause-circle me-2"></i>Paros</h4>
                         </div>
                         <div class="card-body">
-                            {{ paro_formset.management_form }}
-                            <div id="paro-forms">
-                                {% for form in paro_formset %}
-                                <div class="paro-form mb-3 border p-3">
-                                    {% for field in form %}
-                                    <div class="mb-2">
-                                        <label class="form-label">{{ field.label }}</label>
-                                        {% render_field field class="form-control" %}
-                                    </div>
-                                    {% endfor %}
-                                </div>
-                                {% endfor %}
+                            <div class="d-flex gap-2 mb-3">
+                                <button type="button" class="btn btn-outline-warning btn-sm" onclick="abrirModalParo()">
+                                    <i class="fas fa-pause-circle me-2"></i>Registrar Paro
+                                </button>
                             </div>
-                            <button type="button" class="btn btn-secondary" id="add-paro">Agregar Paro</button>
+                            <div id="paros-registrados" class="mt-3">
+                                <!-- Aquí se mostrarán los paros registrados -->
+                            </div>
                         </div>
                     </div>
 
+                    <!-- Desperdicios Section -->
                     <div class="card mb-4">
                         <div class="card-header">
-                            <h4>Consumo de WIP</h4>
+                            <h4><i class="fas fa-trash me-2"></i>Desperdicios</h4>
                         </div>
                         <div class="card-body">
-                            {{ consumo_wip_formset.management_form }}
-                            <div id="consumo-wip-forms">
-                                {% for form in consumo_wip_formset %}
-                                <div class="consumo-wip-form mb-3 border p-3">
-                                    {% for field in form %}
-                                    <div class="mb-2">
-                                        <label class="form-label">{{ field.label }}</label>
-                                        {% render_field field class="form-control" %}
-                                    </div>
-                                    {% endfor %}
-                                </div>
-                                {% endfor %}
+                            <div class="d-flex gap-2 mb-3">
+                                <button type="button" class="btn btn-outline-danger btn-sm" onclick="abrirModalDesperdicio()">
+                                    <i class="fas fa-trash me-2"></i>Registrar Desperdicio
+                                </button>
                             </div>
-                            <button type="button" class="btn btn-secondary" id="add-consumo-wip">Agregar Consumo WIP</button>
+                            <div id="desperdicios-registrados" class="mt-3">
+                                <!-- Aquí se mostrarán los desperdicios registrados -->
+                            </div>
                         </div>
                     </div>
 
+                    <!-- Consumo de WIP Section -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h4><i class="fas fa-recycle me-2"></i>Consumos WIP</h4>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex gap-2 mb-3">
+                                <button type="button" class="btn btn-outline-info btn-sm" onclick="abrirModalConsumo()">
+                                    <i class="fas fa-recycle me-2"></i>Registrar Consumo
+                                </button>
+                            </div>
+                            <div id="consumos-registrados" class="mt-3">
+                                <!-- Aquí se mostrarán los consumos registrados -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Producción Section -->
                     <div class="card mb-4">
                         <div class="card-header bg-success text-white">
-                            <h4><i class="fas fa-boxes me-2"></i>Bolsas Producidas</h4>
+                            <h4><i class="fas fa-boxes me-2"></i>Cantidades Producidas</h4>
                         </div>
                         <div class="card-body">
                             {{ produccion_formset.management_form }}
                             <div id="produccion-forms">
                                 {% for form in produccion_formset %}
-                                <div class="produccion-form mb-3 border p-3">
+                                <div class="produccion-form mb-3 border p-3" style="{% if form.DELETE.value %}display: none;{% endif %}">
                                     <div class="row">
                                         <div class="col-md-2">
                                             <div class="mb-2">
@@ -264,103 +272,564 @@
         </div>
     </div>
 </div>
+
+<!-- Modal para Registrar Desperdicio -->
+<div class="modal fade" id="modalDesperdicio" tabindex="-1" aria-labelledby="modalDesperdicioLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalDesperdicioLabel">
+                    <i class="fas fa-trash me-2"></i>Registrar Desperdicio
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formDesperdicio">
+                    <div class="mb-3">
+                        <label for="tipoMaterial" class="form-label">Tipo de Material</label>
+                        <select class="form-control" id="tipoMaterial" required>
+                            <option value="">Seleccionar...</option>
+                            <option value="WIP">Producto en Proceso (WIP)</option>
+                            <option value="MP">Materia Prima</option>
+                            <option value="PT">Producto Terminado</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="cantidadDesperdicio" class="form-label">Cantidad (unidades/kg)</label>
+                        <input type="number" class="form-control" id="cantidadDesperdicio" step="0.01" min="0" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="motivoDesperdicio" class="form-label">Motivo del Desperdicio</label>
+                        <select class="form-control" id="motivoDesperdicio" required>
+                            <option value="">Seleccionar...</option>
+                            <option value="defecto_calidad">Defecto de Calidad</option>
+                            <option value="error_operacion">Error de Operación</option>
+                            <option value="falla_maquina">Falla de Máquina</option>
+                            <option value="material_defectuoso">Material Defectuoso</option>
+                            <option value="cambio_referencia">Cambio de Referencia</option>
+                            <option value="otro">Otro</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="observacionesDesperdicio" class="form-label">Observaciones</label>
+                        <textarea class="form-control" id="observacionesDesperdicio" rows="3" placeholder="Detalles adicionales sobre el desperdicio"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" onclick="registrarDesperdicio()">
+                    <i class="fas fa-save me-2"></i>Registrar Desperdicio
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Registrar Paro -->
+<div class="modal fade" id="modalParo" tabindex="-1" aria-labelledby="modalParoLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalParoLabel">
+                    <i class="fas fa-pause-circle me-2"></i>Registrar Paro
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formParo">
+                    <div class="mb-3">
+                        <label for="maquinaParo" class="form-label">Máquina</label>
+                        <select class="form-control" id="maquinaParo" required>
+                            <option value="">Seleccionar...</option>
+                            <!-- Opciones de máquinas -->
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="motivoParo" class="form-label">Motivo del Paro</label>
+                        <select class="form-control" id="motivoParo" required>
+                            <option value="">Seleccionar...</option>
+                            <option value="mantenimiento">Mantenimiento</option>
+                            <option value="falla_tecnica">Falla Técnica</option>
+                            <option value="sin_material">Sin Material</option>
+                            <option value="ajuste_maquina">Ajuste de Máquina</option>
+                            <option value="otro">Otro</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="duracionParo" class="form-label">Duración (minutos)</label>
+                        <input type="number" class="form-control" id="duracionParo" step="1" min="1" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="observacionesParo" class="form-label">Observaciones</label>
+                        <textarea class="form-control" id="observacionesParo" rows="3" placeholder="Detalles adicionales sobre el paro"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-warning" onclick="registrarParo()">
+                    <i class="fas fa-save me-2"></i>Registrar Paro
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Registrar Consumo WIP -->
+<div class="modal fade" id="modalConsumo" tabindex="-1" aria-labelledby="modalConsumoLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalConsumoLabel">
+                    <i class="fas fa-recycle me-2"></i>Registrar Consumo WIP
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formConsumo">
+                    <div class="mb-3">
+                        <label for="tipoConsumo" class="form-label">Tipo de Consumo</label>
+                        <select class="form-control" id="tipoConsumo" required>
+                            <option value="">Seleccionar...</option>
+                            <option value="material_consumo">Material de Consumo</option>
+                            <option value="retrabajo">Retrabajo</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="cantidadConsumo" class="form-label">Cantidad (unidades/kg)</label>
+                        <input type="number" class="form-control" id="cantidadConsumo" step="0.01" min="0" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="motivoConsumo" class="form-label">Motivo del Consumo</label>
+                        <select class="form-control" id="motivoConsumo" required>
+                            <option value="">Seleccionar...</option>
+                            <option value="produccion">Producción</option>
+                            <option value="ajuste_maquina">Ajuste de Máquina</option>
+                            <option value="mantenimiento">Mantenimiento</option>
+                            <option value="otro">Otro</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="observacionesConsumo" class="form-label">Observaciones</label>
+                        <textarea class="form-control" id="observacionesConsumo" rows="3" placeholder="Detalles adicionales sobre el consumo"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-info" onclick="registrarConsumo()">
+                    <i class="fas fa-save me-2"></i>Registrar Consumo
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Funcionalidad para agregar/eliminar formularios dinámicamente
-        function setupFormsetManagement(prefix, containerSelector, addButtonSelector, formClass) {
-            const container = document.querySelector(containerSelector);
-            const addButton = document.querySelector(addButtonSelector);
-            
-            if (!container || !addButton) return;
+document.addEventListener('DOMContentLoaded', function() {
+    // Función para gestionar formsets dinámicos
+    function setupFormsetManagement(prefix, formsContainerId, addButtonId, formClass) {
+        const formsContainer = document.querySelector(formsContainerId);
+        const addButton = document.querySelector(addButtonId);
+        const totalFormsInput = document.querySelector(`#id_${prefix}-TOTAL_FORMS`);
+        
+        if (!formsContainer || !addButton || !totalFormsInput) {
+            console.warn(`No se pudo encontrar elementos para formset ${prefix}`);
+            return;
+        }
 
-            addButton.addEventListener('click', function(e) {
-                e.preventDefault();
+        function addNewForm() {
+            const totalForms = parseInt(totalFormsInput.value);
+            const newFormIndex = totalForms;
+
+            const firstForm = formsContainer.querySelector(`.${formClass}`);
+            if (!firstForm) {
+                console.warn(`No se encontró formulario base para ${formClass}`);
+                return;
+            }
+
+            const newForm = firstForm.cloneNode(true);
+            
+            // Limpiar valores del nuevo formulario
+            const inputs = newForm.querySelectorAll('input, select, textarea');
+            inputs.forEach(input => {
+                if (input.type === 'checkbox') {
+                    input.checked = false;
+                } else if (input.type !== 'hidden') {
+                    input.value = '';
+                }
                 
-                const totalForms = document.querySelector(`#id_${prefix}-TOTAL_FORMS`);
-                const formCount = parseInt(totalForms.value);
-                const newForm = container.querySelector(`.${formClass}`).cloneNode(true);
-                
-                // Actualizar los nombres e IDs de los campos del nuevo formulario
-                const formRegex = new RegExp(`${prefix}-(\\d+)-`, 'g');
-                newForm.innerHTML = newForm.innerHTML.replace(formRegex, `${prefix}-${formCount}-`);
-                
-                // Limpiar los valores del nuevo formulario
-                const inputs = newForm.querySelectorAll('input, select, textarea');
-                inputs.forEach(input => {
-                    if (input.type === 'checkbox') {
-                        input.checked = false;
-                    } else {
-                        input.value = '';
-                    }
-                });
-                
-                // Agregar el nuevo formulario al contenedor
-                container.appendChild(newForm);
-                
-                // Actualizar el contador de formularios
-                totalForms.value = formCount + 1;
-                
-                // Agregar funcionalidad de eliminar al nuevo formulario
-                setupDeleteButton(newForm);
+                if (input.name) {
+                    input.name = input.name.replace(/-\d+-/, `-${newFormIndex}-`);
+                }
+                if (input.id) {
+                    input.id = input.id.replace(/_\d+_/, `_${newFormIndex}_`);
+                }
             });
+
+            const labels = newForm.querySelectorAll('label');
+            labels.forEach(label => {
+                if (label.getAttribute('for')) {
+                    label.setAttribute('for', label.getAttribute('for').replace(/_\d+_/, `_${newFormIndex}_`));
+                }
+            });
+
+            newForm.style.display = 'block';
+            formsContainer.appendChild(newForm);
+            totalFormsInput.value = totalForms + 1;
+            setupDeleteButton(newForm);
         }
 
         function setupDeleteButton(formElement) {
             const deleteCheckbox = formElement.querySelector('input[name$="-DELETE"]');
             if (deleteCheckbox) {
-                const deleteLabel = formElement.querySelector('label[for="' + deleteCheckbox.id + '"]');
-                if (deleteLabel) {
-                    deleteLabel.addEventListener('click', function() {
-                        if (deleteCheckbox.checked) {
-                            formElement.style.display = 'none';
-                        } else {
-                            formElement.style.display = 'block';
-                        }
-                    });
-                }
+                deleteCheckbox.addEventListener('change', function() {
+                    if (deleteCheckbox.checked) {
+                        formElement.style.display = 'none';
+                    } else {
+                        formElement.style.display = 'block';
+                    }
+                });
             }
         }
 
-        // Configurar manejo de formsets
-        setupFormsetManagement('form', '#paro-forms', '#add-paro', 'paro-form');
-        setupFormsetManagement('form', '#consumo-wip-forms', '#add-consumo-wip', 'consumo-wip-form');
-        setupFormsetManagement('form', '#produccion-forms', '#add-produccion', 'produccion-form');
+        addButton.addEventListener('click', addNewForm);
+        const existingForms = formsContainer.querySelectorAll(`.${formClass}`);
+        existingForms.forEach(setupDeleteButton);
+    }
 
-        // Configurar botones de eliminar existentes
-        document.querySelectorAll('.paro-form, .consumo-wip-form, .produccion-form').forEach(setupDeleteButton);
+    // Configurar manejo de formsets con los prefijos correctos
+    setupFormsetManagement('paro_formset', '#paro-forms', '#add-paro', 'paro-form');
+    setupFormsetManagement('produccion_formset', '#produccion-forms', '#add-produccion', 'produccion-form');
+});
 
-        // Inicializar datepicker para el campo de fecha
-        if (typeof flatpickr !== 'undefined') {
-            flatpickr('#{{ form.fecha.id_for_label }}', {
-                dateFormat: 'Y-m-d',
-                allowInput: true,
-                defaultDate: '{{ form.fecha.value|default:"" }}',
-                locale: 'es',
-                disableMobile: true
-            });
+// Array para almacenar los desperdicios registrados temporalmente
+let desperdiciosRegistrados = [];
 
-            // Configurar campos de hora
-            flatpickr('#{{ form.hora_inicio.id_for_label }}', {
-                enableTime: true,
-                noCalendar: true,
-                dateFormat: 'H:i',
-                time_24hr: true,
-                defaultDate: '{{ form.hora_inicio.value|default:"" }}',
-                locale: 'es'
-            });
+// Función para abrir el modal de desperdicio
+function abrirModalDesperdicio() {
+    const modal = new bootstrap.Modal(document.getElementById('modalDesperdicio'));
+    modal.show();
+    
+    // Limpiar formulario
+    document.getElementById('formDesperdicio').reset();
+}
 
-            flatpickr('#{{ form.hora_final.id_for_label }}', {
-                enableTime: true,
-                noCalendar: true,
-                dateFormat: 'H:i',
-                time_24hr: true,
-                defaultDate: '{{ form.hora_final.value|default:"" }}',
-                locale: 'es'
-            });
-        }
+// Función para registrar un desperdicio
+function registrarDesperdicio() {
+    const tipoMaterial = document.getElementById('tipoMaterial').value;
+    const cantidad = document.getElementById('cantidadDesperdicio').value;
+    const motivo = document.getElementById('motivoDesperdicio').value;
+    const observaciones = document.getElementById('observacionesDesperdicio').value;
+
+    // Validar campos requeridos
+    if (!tipoMaterial || !cantidad || !motivo) {
+        alert('Por favor, complete todos los campos requeridos.');
+        return;
+    }
+
+    if (parseFloat(cantidad) <= 0) {
+        alert('La cantidad debe ser mayor a 0.');
+        return;
+    }
+
+    // Crear objeto desperdicio
+    const desperdicio = {
+        id: Date.now(), // ID temporal único
+        tipoMaterial: tipoMaterial,
+        cantidad: parseFloat(cantidad),
+        motivo: motivo,
+        observaciones: observaciones,
+        fecha: new Date().toLocaleString()
+    };
+
+    // Agregar al array
+    desperdiciosRegistrados.push(desperdicio);
+
+    // Actualizar la visualización
+    actualizarVisualizacionDesperdicios();
+
+    // Cerrar modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById('modalDesperdicio'));
+    modal.hide();
+
+    // Mostrar mensaje de éxito
+    mostrarMensaje('Desperdicio registrado exitosamente', 'success');
+}
+
+// Función para actualizar la visualización de desperdicios
+function actualizarVisualizacionDesperdicios() {
+    const container = document.getElementById('desperdicios-registrados');
+    
+    if (desperdiciosRegistrados.length === 0) {
+        container.innerHTML = '<p class="text-muted">No hay desperdicios registrados.</p>';
+        return;
+    }
+
+    let html = '<div class="table-responsive"><table class="table table-sm table-striped">';
+    html += '<thead><tr><th>Tipo</th><th>Cantidad</th><th>Motivo</th><th>Observaciones</th><th>Acciones</th></tr></thead><tbody>';
+
+    desperdiciosRegistrados.forEach(desperdicio => {
+        const motivoTexto = obtenerTextoMotivo(desperdicio.motivo);
+        html += `
+            <tr>
+                <td><span class="badge bg-${obtenerColorTipo(desperdicio.tipoMaterial)}">${desperdicio.tipoMaterial}</span></td>
+                <td>${desperdicio.cantidad}</td>
+                <td>${motivoTexto}</td>
+                <td>${desperdicio.observaciones || '-'}</td>
+                <td>
+                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="eliminarDesperdicio(${desperdicio.id})">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
     });
+
+    html += '</tbody></table></div>';
+    container.innerHTML = html;
+}
+
+// Función para eliminar un desperdicio
+function eliminarDesperdicio(id) {
+    if (confirm('¿Está seguro de eliminar este desperdicio?')) {
+        desperdiciosRegistrados = desperdiciosRegistrados.filter(d => d.id !== id);
+        actualizarVisualizacionDesperdicios();
+        mostrarMensaje('Desperdicio eliminado', 'info');
+    }
+}
+
+// Funciones auxiliares
+function obtenerTextoMotivo(motivo) {
+    const motivos = {
+        'defecto_calidad': 'Defecto de Calidad',
+        'error_operacion': 'Error de Operación',
+        'falla_maquina': 'Falla de Máquina',
+        'material_defectuoso': 'Material Defectuoso',
+        'cambio_referencia': 'Cambio de Referencia',
+        'otro': 'Otro'
+    };
+    return motivos[motivo] || motivo;
+}
+
+function obtenerColorTipo(tipo) {
+    const colores = {
+        'WIP': 'warning',
+        'MP': 'info',
+        'PT': 'success'
+    };
+    return colores[tipo] || 'secondary';
+}
+
+function mostrarMensaje(mensaje, tipo) {
+    // Crear un toast/alert temporal
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${tipo} alert-dismissible fade show position-fixed`;
+    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alertDiv.innerHTML = `
+        ${mensaje}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(alertDiv);
+    
+    // Auto-remove after 3 seconds
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.parentNode.removeChild(alertDiv);
+        }
+    }, 3000);
+}
+
+// Funciones para Paros
+function abrirModalParo() {
+    const modal = new bootstrap.Modal(document.getElementById('modalParo'));
+    modal.show();
+    
+    // Limpiar formulario
+    document.getElementById('formParo').reset();
+}
+
+function registrarParo() {
+    const maquina = document.getElementById('maquinaParo').value;
+    const motivo = document.getElementById('motivoParo').value;
+    const duracion = document.getElementById('duracionParo').value;
+    const observaciones = document.getElementById('observacionesParo').value;
+
+    // Validar campos requeridos
+    if (!maquina || !motivo || !duracion) {
+        alert('Por favor, complete todos los campos requeridos.');
+        return;
+    }
+
+    if (parseInt(duracion) <= 0) {
+        alert('La duración debe ser mayor a 0.');
+        return;
+    }
+
+    // Crear objeto paro
+    const paro = {
+        id: Date.now(), // ID temporal único
+        maquina: maquina,
+        motivo: motivo,
+        duracion: parseInt(duracion),
+        observaciones: observaciones,
+        fecha: new Date().toLocaleString()
+    };
+
+    // Agregar al array
+    parosRegistrados.push(paro);
+
+    // Actualizar la visualización
+    actualizarVisualizacionParos();
+
+    // Cerrar modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById('modalParo'));
+    modal.hide();
+
+    // Mostrar mensaje de éxito
+    mostrarMensaje('Paro registrado exitosamente', 'success');
+}
+
+// Array para almacenar los paros registrados temporalmente
+let parosRegistrados = [];
+
+// Función para actualizar la visualización de paros
+function actualizarVisualizacionParos() {
+    const container = document.getElementById('paros-registrados');
+    
+    if (parosRegistrados.length === 0) {
+        container.innerHTML = '<p class="text-muted">No hay paros registrados.</p>';
+        return;
+    }
+
+    let html = '<div class="table-responsive"><table class="table table-sm table-striped">';
+    html += '<thead><tr><th>Máquina</th><th>Motivo</th><th>Duración (min)</th><th>Observaciones</th><th>Acciones</th></tr></thead><tbody>';
+
+    parosRegistrados.forEach(paro => {
+        html += `
+            <tr>
+                <td>${paro.maquina}</td>
+                <td>${paro.motivo}</td>
+                <td>${paro.duracion}</td>
+                <td>${paro.observaciones || '-'}</td>
+                <td>
+                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="eliminarParo(${paro.id})">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+    });
+
+    html += '</tbody></table></div>';
+    container.innerHTML = html;
+}
+
+// Función para eliminar un paro
+function eliminarParo(id) {
+    if (confirm('¿Está seguro de eliminar este paro?')) {
+        parosRegistrados = parosRegistrados.filter(p => p.id !== id);
+        actualizarVisualizacionParos();
+        mostrarMensaje('Paro eliminado', 'info');
+    }
+}
+
+// Funciones para Consumo WIP
+function abrirModalConsumo() {
+    const modal = new bootstrap.Modal(document.getElementById('modalConsumo'));
+    modal.show();
+    
+    // Limpiar formulario
+    document.getElementById('formConsumo').reset();
+}
+
+function registrarConsumo() {
+    const tipoConsumo = document.getElementById('tipoConsumo').value;
+    const cantidad = document.getElementById('cantidadConsumo').value;
+    const motivo = document.getElementById('motivoConsumo').value;
+    const observaciones = document.getElementById('observacionesConsumo').value;
+
+    // Validar campos requeridos
+    if (!tipoConsumo || !cantidad || !motivo) {
+        alert('Por favor, complete todos los campos requeridos.');
+        return;
+    }
+
+    if (parseFloat(cantidad) <= 0) {
+        alert('La cantidad debe ser mayor a 0.');
+        return;
+    }
+
+    // Crear objeto consumo
+    const consumo = {
+        id: Date.now(), // ID temporal único
+        tipoConsumo: tipoConsumo,
+        cantidad: parseFloat(cantidad),
+        motivo: motivo,
+        observaciones: observaciones,
+        fecha: new Date().toLocaleString()
+    };
+
+    // Agregar al array
+    consumosRegistrados.push(consumo);
+
+    // Actualizar la visualización
+    actualizarVisualizacionConsumos();
+
+    // Cerrar modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById('modalConsumo'));
+    modal.hide();
+
+    // Mostrar mensaje de éxito
+    mostrarMensaje('Consumo registrado exitosamente', 'success');
+}
+
+// Array para almacenar los consumos registrados temporalmente
+let consumosRegistrados = [];
+
+// Función para actualizar la visualización de consumos
+function actualizarVisualizacionConsumos() {
+    const container = document.getElementById('consumos-registrados');
+    
+    if (consumosRegistrados.length === 0) {
+        container.innerHTML = '<p class="text-muted">No hay consumos registrados.</p>';
+        return;
+    }
+
+    let html = '<div class="table-responsive"><table class="table table-sm table-striped">';
+    html += '<thead><tr><th>Tipo</th><th>Cantidad</th><th>Motivo</th><th>Observaciones</th><th>Acciones</th></tr></thead><tbody>';
+
+    consumosRegistrados.forEach(consumo => {
+        html += `
+            <tr>
+                <td>${consumo.tipoConsumo}</td>
+                <td>${consumo.cantidad}</td>
+                <td>${consumo.motivo}</td>
+                <td>${consumo.observaciones || '-'}</td>
+                <td>
+                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="eliminarConsumo(${consumo.id})">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+    });
+
+    html += '</tbody></table></div>';
+    container.innerHTML = html;
+}
+
+// Función para eliminar un consumo
+function eliminarConsumo(id) {
+    if (confirm('¿Está seguro de eliminar este consumo?')) {
+        consumosRegistrados = consumosRegistrados.filter(c => c.id !== id);
+        actualizarVisualizacionConsumos();
+        mostrarMensaje('Consumo eliminado', 'info');
+    }
+}
 </script>
 {% endblock %}

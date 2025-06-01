@@ -1,122 +1,347 @@
 {% extends "base.html" %}
+{% load widget_tweaks %}
 
-{% block title %}{% if form.instance.pk %}Editar{% else %}Nueva{% endif %} Máquina - ARCOPACK{% endblock %}
+{% block title %}{% if object %}Editar{% else %}Nueva{% endif %} Máquina - ARCOPACK{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-section {
+        background: #f8f9fc;
+        border-radius: 0.375rem;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border-left: 4px solid #5e72e4;
+    }
+    .required-field::after {
+        content: " *";
+        color: #e74a3b;
+    }
+    .help-text {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-top: 0.25rem;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="row mb-4">
-        <div class="col">
-            <h2>
-                <i class="fas fa-{% if form.instance.pk %}edit{% else %}plus{% endif %}"></i> 
-                {% if form.instance.pk %}Editar{% else %}Nueva{% endif %} Máquina
-            </h2>
-        </div>
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-industry me-2"></i>
+            {% if object %}Editar Máquina: {{ object.nombre }}{% else %}Nueva Máquina{% endif %}
+        </h1>
+        <a href="{% url 'configuracion_web:maquina-list' %}" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-arrow-left me-1"></i>Volver al Listado
+        </a>
     </div>
 
-    <form method="post">
-        {% csrf_token %}
-        <div class="row">
-            <div class="col-md-8">
-                <div class="card">
-                    <div class="card-header">
-                        <i class="fas fa-industry"></i> Información de la Máquina
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label class="form-label">Código *</label>
-                                    {{ form.codigo }}
-                                    {% if form.codigo.errors %}
-                                        <div class="invalid-feedback d-block">
-                                            {{ form.codigo.errors|join:", " }}
-                                        </div>
-                                    {% endif %}
-                                </div>
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-cog me-2"></i>Información de la Máquina
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.non_field_errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
 
-                                <div class="mb-3">
-                                    <label class="form-label">Nombre *</label>
-                                    {{ form.nombre }}
-                                    {% if form.nombre.errors %}
-                                        <div class="invalid-feedback d-block">
-                                            {{ form.nombre.errors|join:", " }}
-                                        </div>
-                                    {% endif %}
-                                </div>
-
-                                <div class="mb-3">
-                                    <label class="form-label">Ubicación</label>
-                                    {{ form.ubicacion }}
-                                    {% if form.ubicacion.errors %}
-                                        <div class="invalid-feedback d-block">
-                                            {{ form.ubicacion.errors|join:", " }}
-                                        </div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label class="form-label">Proceso</label>
-                                    {{ form.proceso }}
-                                    {% if form.proceso.errors %}
-                                        <div class="invalid-feedback d-block">
-                                            {{ form.proceso.errors|join:", " }}
-                                        </div>
-                                    {% endif %}
-                                </div>
-
-                                <div class="mb-3">
-                                    <label class="form-label">Capacidad por Hora</label>
-                                    {{ form.capacidad_hora }}
-                                    {% if form.capacidad_hora.errors %}
-                                        <div class="invalid-feedback d-block">
-                                            {{ form.capacidad_hora.errors|join:", " }}
-                                        </div>
-                                    {% endif %}
-                                    <div class="form-text">Unidades que puede procesar por hora</div>
-                                </div>
-
-                                <div class="mb-3">
-                                    <div class="form-check">
-                                        {{ form.is_active }}
-                                        <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
-                                            Activo
+                        <!-- Información Básica -->
+                        <div class="form-section">
+                            <h5 class="mb-3 text-primary">
+                                <i class="fas fa-info-circle me-2"></i>Información Básica
+                            </h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label {% if form.codigo.field.required %}required-field{% endif %}">
+                                            {{ form.codigo.label }}
                                         </label>
+                                        {% render_field form.codigo class="form-control" placeholder="Ej: IMP-001" %}
+                                        {% if form.codigo.errors %}
+                                            <div class="text-danger small mt-1">
+                                                {{ form.codigo.errors }}
+                                            </div>
+                                        {% endif %}
+                                        <div class="help-text">Código único identificador de la máquina</div>
                                     </div>
-                                    {% if form.is_active.errors %}
-                                        <div class="invalid-feedback d-block">
-                                            {{ form.is_active.errors|join:", " }}
-                                        </div>
-                                    {% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label {% if form.nombre.field.required %}required-field{% endif %}">
+                                            {{ form.nombre.label }}
+                                        </label>
+                                        {% render_field form.nombre class="form-control" placeholder="Nombre descriptivo" %}
+                                        {% if form.nombre.errors %}
+                                            <div class="text-danger small mt-1">
+                                                {{ form.nombre.errors }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label {% if form.tipo.field.required %}required-field{% endif %}">
+                                            {{ form.tipo.label }}
+                                        </label>
+                                        {% render_field form.tipo class="form-select" %}
+                                        {% if form.tipo.errors %}
+                                            <div class="text-danger small mt-1">
+                                                {{ form.tipo.errors }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">{{ form.ubicacion_planta.label }}</label>
+                                        {% render_field form.ubicacion_planta class="form-control" placeholder="Ubicación en planta" %}
+                                        {% if form.ubicacion_planta.errors %}
+                                            <div class="text-danger small mt-1">
+                                                {{ form.ubicacion_planta.errors }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Descripción</label>
-                            {{ form.descripcion }}
-                            {% if form.descripcion.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {{ form.descripcion.errors|join:", " }}
+                        <!-- Especificaciones Técnicas -->
+                        <div class="form-section">
+                            <h5 class="mb-3 text-primary">
+                                <i class="fas fa-tools me-2"></i>Especificaciones Técnicas
+                            </h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">{{ form.marca.label }}</label>
+                                        {% render_field form.marca class="form-control" placeholder="Marca del fabricante" %}
+                                        {% if form.marca.errors %}
+                                            <div class="text-danger small mt-1">
+                                                {{ form.marca.errors }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
                                 </div>
-                            {% endif %}
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">{{ form.modelo.label }}</label>
+                                        {% render_field form.modelo class="form-control" placeholder="Modelo específico" %}
+                                        {% if form.modelo.errors %}
+                                            <div class="text-danger small mt-1">
+                                                {{ form.modelo.errors }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">{{ form.numero_serie.label }}</label>
+                                        {% render_field form.numero_serie class="form-control" placeholder="Número de serie" %}
+                                        {% if form.numero_serie.errors %}
+                                            <div class="text-danger small mt-1">
+                                                {{ form.numero_serie.errors }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">{{ form.ancho_trabajo.label }}</label>
+                                        <div class="input-group">
+                                            {% render_field form.ancho_trabajo class="form-control" placeholder="0.00" %}
+                                            <span class="input-group-text">mm</span>
+                                        </div>
+                                        {% if form.ancho_trabajo.errors %}
+                                            <div class="text-danger small mt-1">
+                                                {{ form.ancho_trabajo.errors }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    </div>
+
+                        <!-- Estado y Configuración -->
+                        <div class="form-section">
+                            <h5 class="mb-3 text-primary">
+                                <i class="fas fa-toggle-on me-2"></i>Estado y Configuración
+                            </h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-check form-switch mb-3">
+                                        {% render_field form.is_active class="form-check-input" %}
+                                        <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                            {{ form.is_active.label }}
+                                        </label>
+                                        <div class="help-text">Máquina disponible para producción</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check form-switch mb-3">
+                                        {% render_field form.requiere_operario_especializado class="form-check-input" %}
+                                        <label class="form-check-label" for="{{ form.requiere_operario_especializado.id_for_label }}">
+                                            {{ form.requiere_operario_especializado.label }}
+                                        </label>
+                                        <div class="help-text">Requiere operario con capacitación específica</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Observaciones -->
+                        <div class="form-section">
+                            <h5 class="mb-3 text-primary">
+                                <i class="fas fa-comment me-2"></i>Observaciones
+                            </h5>
+                            <div class="mb-3">
+                                <label class="form-label">{{ form.observaciones.label }}</label>
+                                {% render_field form.observaciones class="form-control" rows="4" placeholder="Información adicional sobre la máquina..." %}
+                                {% if form.observaciones.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.observaciones.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Botones -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'configuracion_web:maquina-list' %}" class="btn btn-secondary">
+                                <i class="fas fa-times me-2"></i>Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>
+                                {% if object %}Actualizar{% else %}Crear{% endif %} Máquina
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
 
-        <!-- Botones de acción -->
-        <div class="row mb-4">
-            <div class="col text-end">
-                <a href="{% url 'configuracion_web:maquina-list' %}" class="btn btn-secondary">
-                    <i class="fas fa-times"></i> Cancelar
-                </a>
-                <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-save"></i> Guardar
-                </button>
+        <!-- Sidebar con información adicional -->
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-info-circle me-2"></i>Información
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <h6 class="text-primary">Tipos de Máquina</h6>
+                    <ul class="list-unstyled small">
+                        <li><strong>Impresión:</strong> Máquinas flexográficas</li>
+                        <li><strong>Laminado:</strong> Laminadoras de film</li>
+                        <li><strong>Sellado:</strong> Selladoras de bolsas</li>
+                        <li><strong>Troquel:</strong> Troquelado y corte</li>
+                        <li><strong>Conversión:</strong> Procesos adicionales</li>
+                    </ul>
+                    
+                    <hr class="my-3">
+                    
+                    <h6 class="text-primary">Campos Requeridos</h6>
+                    <p class="small text-muted">
+                        Los campos marcados con <span class="text-danger">*</span> son obligatorios para guardar la máquina.
+                    </p>
+                </div>
             </div>
+
+            {% if object %}
+            <div class="card shadow">
+                <div class="card-header">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-history me-2"></i>Información del Registro
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <p class="small mb-2">
+                        <strong>Creado:</strong><br>
+                        {{ object.created_at|date:"d/m/Y H:i" }}
+                    </p>
+                    {% if object.updated_at != object.created_at %}
+                    <p class="small mb-0">
+                        <strong>Última modificación:</strong><br>
+                        {{ object.updated_at|date:"d/m/Y H:i" }}
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
         </div>
-    </form>
+    </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-generate codigo based on tipo and nombre
+    const tipoField = document.querySelector('#{{ form.tipo.id_for_label }}');
+    const nombreField = document.querySelector('#{{ form.nombre.id_for_label }}');
+    const codigoField = document.querySelector('#{{ form.codigo.id_for_label }}');
+    
+    if (tipoField && nombreField && codigoField && !codigoField.value) {
+        function generateCodigo() {
+            const tipo = tipoField.value;
+            const nombre = nombreField.value;
+            
+            if (tipo && nombre) {
+                const tipoPrefix = {
+                    'impresion': 'IMP',
+                    'laminado': 'LAM', 
+                    'sellado': 'SEL',
+                    'troquel': 'TRO',
+                    'conversion': 'CON'
+                };
+                
+                const prefix = tipoPrefix[tipo] || 'MAQ';
+                const suffix = nombre.substring(0, 3).toUpperCase();
+                const timestamp = Date.now().toString().slice(-3);
+                
+                codigoField.value = `${prefix}-${suffix}-${timestamp}`;
+            }
+        }
+        
+        tipoField.addEventListener('change', generateCodigo);
+        nombreField.addEventListener('blur', generateCodigo);
+    }
+    
+    // Form validation feedback
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        const requiredFields = form.querySelectorAll('[required]');
+        let isValid = true;
+        
+        requiredFields.forEach(field => {
+            if (!field.value.trim()) {
+                field.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                field.classList.remove('is-invalid');
+            }
+        });
+        
+        if (!isValid) {
+            e.preventDefault();
+            alert('Por favor complete todos los campos requeridos.');
+        }
+    });
+});
+</script>
 {% endblock %}

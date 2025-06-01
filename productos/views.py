@@ -108,7 +108,7 @@ class ProductoListView(LoginRequiredMixin, ListView):
     paginate_by = 20
 
     def get_queryset(self):
-        qs = super().get_queryset().select_related('cliente', 'estado').order_by('codigo')
+        qs = super().get_queryset().select_related('linea', 'cliente', 'estado', 'tipo_material', 'tipo_materia_prima').order_by('codigo')
         self.search_form = ProductoSearchForm(self.request.GET)
         if self.search_form.is_valid():
             q = self.search_form.cleaned_data.get('q')
@@ -118,8 +118,16 @@ class ProductoListView(LoginRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        
+        # Get the original queryset before pagination for statistics
+        original_queryset = self.get_queryset()
+        
+        # Keep the paginated productos for the template
+        productos_queryset = context['productos']
+        
+        # Create a separate items list for any additional processing if needed
         items = []
-        for obj in context['productos']:
+        for obj in productos_queryset:
             items.append({
                 'id': obj.id,
                 'name': obj.nombre,
@@ -131,6 +139,8 @@ class ProductoListView(LoginRequiredMixin, ListView):
                     {'value': obj.estado.nombre if obj.estado else '-', 'type': 'badge', 'class': 'bg-success' if obj.is_active else 'bg-danger'},
                 ]
             })
+        
+        # Add additional context without overriding 'productos'
         context.update({
             'producto_headers': ['Código', 'Nombre', 'Cliente', 'Estado'],
             'producto_actions': {
@@ -139,8 +149,22 @@ class ProductoListView(LoginRequiredMixin, ListView):
                 'duplicate': 'productos_web:producto_duplicate',
                 'delete': 'productos_web:producto_delete',
             },
-            'productos': items,
+            'producto_items': items,  # Use a different name for the processed items
             'filter': self.search_form,
+            # Add some basic statistics for the template using the original queryset
+            'estadisticas': {
+                'total_productos': original_queryset.count(),
+                'activos': original_queryset.filter(is_active=True).count(),
+                'stock_bajo': 0,  # You can implement this based on your business logic
+                'agotados': 0,   # You can implement this based on your business logic
+            },
+            'categorias': [],  # Add categories for filters if needed
+            'filtros': {
+                'search': self.request.GET.get('q', ''),
+                'categoria': self.request.GET.get('categoria', ''),
+                'estado': self.request.GET.get('estado', ''),
+                'stock': self.request.GET.get('stock', ''),
+            }
         })
         return context
 

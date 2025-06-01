@@ -1,0 +1,127 @@
+<!-- templates/layouts/navbar.html -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="{% url 'root' %}">
+            <i class="fas fa-box"></i> ARCOPACK
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <!-- Búsqueda rápida -->
+                <li class="nav-item me-3">
+                    <form class="d-flex" role="search">
+                        <input class="form-control form-control-sm" type="search" placeholder="Buscar..." aria-label="Search">
+                        <button class="btn btn-outline-light btn-sm ms-1" type="submit">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </form>
+                </li>
+                
+                <!-- Notificaciones -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle position-relative" href="#" id="notificationsDropdown" role="button" 
+                       data-bs-toggle="dropdown">
+                        <i class="fas fa-bell"></i>
+                        {% if notificaciones_no_leidas %}
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                            {{ notificaciones_no_leidas }}
+                        </span>
+                        {% endif %}
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end notification-dropdown">
+                        <li><h6 class="dropdown-header">Notificaciones</h6></li>
+                        {% for notif in notificaciones %}
+                        <li>
+                            <a class="dropdown-item {% if not notif.leida %}fw-bold{% endif %}" 
+                               href="{{ notif.url }}">
+                                <div class="d-flex align-items-start">
+                                    <i class="fas fa-{{ notif.icon|default:'info-circle' }} me-2 mt-1"></i>
+                                    <div>
+                                        <div class="notification-text">{{ notif.mensaje }}</div>
+                                        <small class="text-muted">{{ notif.fecha|timesince }}</small>
+                                    </div>
+                                </div>
+                            </a>
+                        </li>
+                        {% empty %}
+                        <li><span class="dropdown-item text-center text-muted">No hay notificaciones</span></li>
+                        {% endfor %}
+                        {% if notificaciones %}
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item text-center" href="{% url 'notificaciones:list' %}">
+                                Ver todas las notificaciones
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </li>
+                
+                <!-- Usuario -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" 
+                       data-bs-toggle="dropdown">
+                        <i class="fas fa-user-circle"></i> {{ user.get_full_name|default:user.username }}
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><h6 class="dropdown-header">{{ user.email }}</h6></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item" href="{% url 'users:profile' %}">
+                                <i class="fas fa-user-cog me-2"></i> Mi Perfil
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="{% url 'users:change-password' %}">
+                                <i class="fas fa-key me-2"></i> Cambiar Contraseña
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="#">
+                                <i class="fas fa-cog me-2"></i> Preferencias
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item text-danger" href="{% url 'users:logout' %}">
+                                <i class="fas fa-sign-out-alt me-2"></i> Cerrar Sesión
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<style>
+.notification-dropdown {
+    width: 320px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.notification-text {
+    font-size: 0.875rem;
+    line-height: 1.3;
+}
+
+.dropdown-item {
+    padding: 0.75rem 1rem;
+}
+
+.dropdown-item:hover {
+    background-color: #f8f9fa;
+}
+
+.navbar-brand {
+    font-weight: 600;
+    font-size: 1.25rem;
+}
+
+.form-control-sm {
+    width: 200px;
+}
+</style>

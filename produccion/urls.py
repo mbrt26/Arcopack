@@ -32,6 +32,21 @@ from .views import (
     # Vistas CRUD para orden de producción
     OrdenProduccionCreateView,
     OrdenProduccionUpdateView,
+    # Nuevas vistas de detalle por proceso
+    RegistroImpresionDetailView,
+    RegistroRefiladoDetailView,
+    RegistroSelladoDetailView,
+    RegistroDobladoDetailView,
+    # Nuevas vistas de actualización por proceso
+    RegistroImpresionUpdateView,
+    RegistroRefiladoUpdateView,
+    RegistroSelladoUpdateView,
+    RegistroDobladoUpdateView,
+    # Vistas para gestión de paros
+    iniciar_paro_view,
+    finalizar_paro_view,
+    # Vista de resumen
+    ResumenProduccionView,
 )
 
 # Crear un router para la API de producción
@@ -60,6 +75,7 @@ urlpatterns = [
     path('ordenes/<int:pk>/anular/', anular_orden_view, name='anular_orden'),
     path('procesos/', ProcesoListView.as_view(), name='proceso-list'),
     path('resultados/', ResultadosProduccionView.as_view(), name='resultados'),
+    path('resumen/', ResumenProduccionView.as_view(), name='resumen-produccion'),
 
     # URLs para crear y actualizar órdenes de producción
     path('ordenes/nueva/', OrdenProduccionCreateView.as_view(), name='orden-produccion-create'),
@@ -67,19 +83,42 @@ urlpatterns = [
     path('ordenes/<int:pk>/editar/', OrdenProduccionUpdateView.as_view(), name='orden-produccion-update'),
     path('ordenes/<int:pk>/anular/', anular_orden_view, name='orden-produccion-anular'),
 
-    # Monta todas las URLs del router (ej: /ordenes-produccion/, /refilados/{pk}/, etc.)
-    # bajo la raíz definida en erp_config/urls.py (que es /api/v1/produccion/)
+    # URLs para listas de registros por proceso (tableros Kanban)
+    path('impresion/', ImpresionKanbanView.as_view(), name='impresion-kanban'),
+    path('refilado/', RefiladoKanbanView.as_view(), name='refilado-kanban'),
+    path('sellado/', SelladoKanbanView.as_view(), name='sellado-kanban'),
+    path('doblado/', DobladoKanbanView.as_view(), name='doblado-kanban'),
+
+    # URLs para crear nuevos registros por proceso
+    path('impresion/nuevo/', RegistroImpresionCreateView.as_view(), name='impresion-create'),
+    path('refilado/nuevo/', RegistroRefiladoCreateView.as_view(), name='refilado-create'),
+    path('sellado/nuevo/', RegistroSelladoCreateView.as_view(), name='sellado-create'),
+    path('doblado/nuevo/', RegistroDobladoCreateView.as_view(), name='doblado-create'),
+
+    # URLs para registros de impresión
+    path('registros/impresion/<int:pk>/', RegistroImpresionDetailView.as_view(), name='registro-impresion-detail'),
+    path('registros/impresion/<int:pk>/editar/', RegistroImpresionUpdateView.as_view(), name='registro-impresion-update'),
+    
+    # URLs para registros de refilado
+    path('registros/refilado/<int:pk>/', RegistroRefiladoDetailView.as_view(), name='registro-refilado-detail'),
+    path('registros/refilado/<int:pk>/editar/', RegistroRefiladoUpdateView.as_view(), name='registro-refilado-update'),
+    
+    # URLs para registros de sellado
+    path('registros/sellado/<int:pk>/', RegistroSelladoDetailView.as_view(), name='registro-sellado-detail'),
+    path('registros/sellado/<int:pk>/editar/', RegistroSelladoUpdateView.as_view(), name='registro-sellado-update'),
+    
+    # URLs para registros de doblado
+    path('registros/doblado/<int:pk>/', RegistroDobladoDetailView.as_view(), name='registro-doblado-detail'),
+    path('registros/doblado/<int:pk>/editar/', RegistroDobladoUpdateView.as_view(), name='registro-doblado-update'),
+
+    # URLs para gestión de paros
+    path('paros/<str:proceso_tipo>/<int:registro_id>/iniciar/', iniciar_paro_view, name='iniciar-paro'),
+    path('paros/<str:proceso_tipo>/<int:paro_id>/finalizar/', finalizar_paro_view, name='finalizar-paro'),
+
+    # APIs JSON
     path('lote-wip-json/', lote_wip_json_api, name='lote-wip-json-api'),
     path('lote-mp-json/', lote_mp_json_api, name='lote-mp-json-api'),
+    
+    # Monta todas las URLs del router (ej: /ordenes-produccion/, /refilados/{pk}/, etc.)
     path('', include(router.urls)),
-
-    # URLs para tableros Kanban
-    path('kanban/impresion/', ImpresionKanbanView.as_view(), name='impresion-kanban'),
-    path('kanban/impresion/nuevo/', RegistroImpresionCreateView.as_view(), name='registro-impresion-create'),
-    path('kanban/refilado/', RefiladoKanbanView.as_view(), name='refilado-kanban'),
-    path('kanban/refilado/nuevo/', RegistroRefiladoCreateView.as_view(), name='registro-refilado-create'),
-    path('kanban/sellado/', SelladoKanbanView.as_view(), name='sellado-kanban'),
-    path('kanban/sellado/nuevo/', RegistroSelladoCreateView.as_view(), name='registro-sellado-create'),
-    path('kanban/doblado/', DobladoKanbanView.as_view(), name='doblado-kanban'),
-    path('kanban/doblado/nuevo/', RegistroDobladoCreateView.as_view(), name='registro-doblado-create'),
 ]

@@ -1,0 +1,96 @@
+<!-- templates/components/_page_header.html -->
+<div class="page-header mb-4">
+    <div class="row align-items-center">
+        <div class="col">
+            <div class="d-flex align-items-center">
+                {% if page_icon %}
+                <div class="page-icon me-3">
+                    <i class="fas fa-{{ page_icon }} fa-2x text-primary"></i>
+                </div>
+                {% endif %}
+                <div>
+                    <h1 class="page-title mb-1">{{ page_title }}</h1>
+                    {% if page_subtitle %}
+                    <p class="page-subtitle text-muted mb-0">{{ page_subtitle }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-auto">
+            <div class="page-actions">
+                {% block page_actions %}
+                {% if primary_action %}
+                <a href="{{ primary_action.url }}" class="btn btn-primary">
+                    {% if primary_action.icon %}<i class="fas fa-{{ primary_action.icon }} me-1"></i>{% endif %}
+                    {{ primary_action.text }}
+                </a>
+                {% endif %}
+                {% if secondary_actions %}
+                <div class="btn-group ms-2">
+                    <button class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                        <i class="fas fa-ellipsis-v"></i> Más acciones
+                    </button>
+                    <ul class="dropdown-menu">
+                        {% for action in secondary_actions %}
+                        <li>
+                            <a class="dropdown-item" href="{{ action.url }}">
+                                {% if action.icon %}<i class="fas fa-{{ action.icon }} me-2"></i>{% endif %}
+                                {{ action.text }}
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+                {% endblock %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.page-header {
+    padding: 1.5rem 0;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.page-icon {
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f8f9fa;
+    border-radius: 12px;
+}
+
+.page-title {
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: #212529;
+    margin: 0;
+}
+
+.page-subtitle {
+    font-size: 1rem;
+    line-height: 1.4;
+}
+
+.page-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+@media (max-width: 768px) {
+    .page-header .row {
+        flex-direction: column;
+        align-items: flex-start !important;
+    }
+    
+    .page-actions {
+        margin-top: 1rem;
+        width: 100%;
+    }
+}
+</style>

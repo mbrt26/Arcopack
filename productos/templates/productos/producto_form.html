@@ -1,518 +1,596 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}{{ object.pk|yesno:"Editar,Nuevo" }} Producto{% endblock %}
+{% block title %}{% if form.instance.pk %}Editar{% else %}Nuevo{% endif %} Producto - ARCOPACK{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-section {
+        background: #fff;
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 24px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .form-section h5 {
+        color: #495057;
+        border-bottom: 2px solid #e9ecef;
+        padding-bottom: 8px;
+        margin-bottom: 20px;
+        font-weight: 600;
+    }
+    .required-field::after {
+        content: " *";
+        color: #dc3545;
+    }
+    .help-text {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-top: 4px;
+    }
+    .field-row {
+        margin-bottom: 20px;
+    }
+    .form-label {
+        font-weight: 500;
+        margin-bottom: 6px;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+    .btn-section {
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
-    <div class="row justify-content-center">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h3 class="card-title mb-0">{{ object.pk|yesno:"Editar,Nuevo" }} Producto</h3>
-                        <a href="{% url 'productos_web:producto_list' %}" class="btn btn-outline-secondary">
-                            <i class="bi bi-arrow-left"></i> Volver
-                        </a>
-                    </div>
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2>
+                        <i class="fas fa-{% if form.instance.pk %}edit{% else %}plus{% endif %}"></i> 
+                        {% if form.instance.pk %}Editar Producto{% else %}Nuevo Producto{% endif %}
+                    </h2>
+                    <p class="text-muted mb-0">
+                        {% if form.instance.pk %}
+                            Modificar: {{ form.instance.codigo }} - {{ form.instance.nombre }}
+                        {% else %}
+                            Complete la información del nuevo producto terminado
+                        {% endif %}
+                    </p>
                 </div>
-                <div class="card-body">
-                    {% include "productos/components/_form_errors.html" %}
-                    
-                    <form method="post" novalidate>
-                        {% csrf_token %}
-                        
-                        {# Información General #}
-                        <div class="card mb-4">
-                            <div class="card-header">
-                                <h5 class="card-title mb-0">Información General</h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="row mb-3">
-                                    <div class="col-md-4">
-                                        <label for="{{ form.codigo.id_for_label }}" class="form-label">Código *</label>
-                                        {{ form.codigo }}
-                                        {% if form.codigo.errors %}
-                                        <div class="invalid-feedback">{{ form.codigo.errors.0 }}</div>
-                                        {% endif %}
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label for="{{ form.nombre.id_for_label }}" class="form-label">Nombre *</label>
-                                        {{ form.nombre }}
-                                        {% if form.nombre.errors %}
-                                        <div class="invalid-feedback">{{ form.nombre.errors.0 }}</div>
-                                        {% endif %}
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label for="{{ form.unidad_medida.id_for_label }}" class="form-label">Unidad de Medida *</label>
-                                        {{ form.unidad_medida }}
-                                        {% if form.unidad_medida.errors %}
-                                        <div class="invalid-feedback">{{ form.unidad_medida.errors.0 }}</div>
-                                        {% endif %}
-                                    </div>
-                                </div>
-
-                                <div class="row mb-3">
-                                    <div class="col-md-4">
-                                        <label for="{{ form.categoria.id_for_label }}" class="form-label">Categoría *</label>
-                                        {{ form.categoria }}
-                                        {% if form.categoria.errors %}
-                                        <div class="invalid-feedback">{{ form.categoria.errors.0 }}</div>
-                                        {% endif %}
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label for="{{ form.subcategoria.id_for_label }}" class="form-label">Subcategoría</label>
-                                        {{ form.subcategoria }}
-                                        {% if form.subcategoria.errors %}
-                                        <div class="invalid-feedback">{{ form.subcategoria.errors.0 }}</div>
-                                        {% endif %}
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label for="{{ form.estado.id_for_label }}" class="form-label">Estado *</label>
-                                        {{ form.estado }}
-                                        {% if form.estado.errors %}
-                                        <div class="invalid-feedback">{{ form.estado.errors.0 }}</div>
-                                        {% endif %}
-                                    </div>
-                                </div>
-
-                                <div class="row">
-                                    <div class="col-12">
-                                        <div class="form-check">
-                                            {{ form.comercializable }}
-                                            <label class="form-check-label" for="{{ form.comercializable.id_for_label }}">
-                                                Producto Comercializable
-                                            </label>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {# Material y Dimensiones #}
-                        <div class="card mb-4">
-                            <div class="card-header">
-                                <h5 class="card-title mb-0">Material y Dimensiones</h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="row mb-3">
-                                    <div class="col-md-4">
-                                        <label for="{{ form.tipo_material.id_for_label }}" class="form-label">Tipo Material *</label>
-                                        {{ form.tipo_material }}
-                                        {% if form.tipo_material.errors %}
-                                        <div class="invalid-feedback">{{ form.tipo_material.errors.0 }}</div>
-                                        {% endif %}
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label for="{{ form.tipo_materia_prima.id_for_label }}" class="form-label">Materia Prima *</label>
-                                        {{ form.tipo_materia_prima }}
-                                        {% if form.tipo_materia_prima.errors %}
-                                        <div class="invalid-feedback">{{ form.tipo_materia_prima.errors.0 }}</div>
-                                        {% endif %}
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label for="{{ form.color.id_for_label }}" class="form-label">Color</label>
-                                        {{ form.color }}
-                                        {% if form.color.errors %}
-                                        <div class="invalid-feedback">{{ form.color.errors.0 }}</div>
-                                        {% endif %}
-                                    </div>
-                                </div>
-
-                                <div class="row mb-3">
-                                    <div class="col-md-4">
-                                        <label for="{{ form.calibre_um.id_for_label }}" class="form-label">Calibre (µm)</label>
-                                        {{ form.calibre_um }}
-                                        {% if form.calibre_um.errors %}
-                                        <div class="invalid-feedback">{{ form.calibre_um.errors.0 }}</div>
-                                        {% endif %}
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label for="{{ form.medida_en.id_for_label }}" class="form-label">Medida En</label>
-                                        {{ form.medida_en }}
-                                        {% if form.medida_en.errors %}
-                                        <div class="invalid-feedback">{{ form.medida_en.errors.0 }}</div>
-                                        {% endif %}
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label for="{{ form.factor_decimal.id_for_label }}" class="form-label">Factor Decimal</label>
-                                        {{ form.factor_decimal }}
-                                        {% if form.factor_decimal.errors %}
-                                        <div class="invalid-feedback">{{ form.factor_decimal.errors.0 }}</div>
-                                        {% endif %}
-                                    </div>
-                                </div>
-
-                                <div class="row">
-                                    <div class="col-md-4">
-                                        <label for="{{ form.largo.id_for_label }}" class="form-label">Largo</label>
-                                        {{ form.largo }}
-                                        {% if form.largo.errors %}
-                                        <div class="invalid-feedback">{{ form.largo.errors.0 }}</div>
-                                        {% endif %}
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label for="{{ form.ancho.id_for_label }}" class="form-label">Ancho</label>
-                                        {{ form.ancho }}
-                                        {% if form.ancho.errors %}
-                                        <div class="invalid-feedback">{{ form.ancho.errors.0 }}</div>
-                                        {% endif %}
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label for="{{ form.ancho_rollo.id_for_label }}" class="form-label">Ancho Rollo</label>
-                                        {{ form.ancho_rollo }}
-                                        {% if form.ancho_rollo.errors %}
-                                        <div class="invalid-feedback">{{ form.ancho_rollo.errors.0 }}</div>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {# Impresión #}
-                        <div class="card mb-4">
-                            <div class="card-header">
-                                <h5 class="card-title mb-0">Impresión</h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="row mb-3">
-                                    <div class="col-md-6">
-                                        <label for="{{ form.imp_tipo_impresion.id_for_label }}" class="form-label">Tipo de Impresión</label>
-                                        {{ form.imp_tipo_impresion }}
-                                        {% if form.imp_tipo_impresion.errors %}
-                                        <div class="invalid-feedback">{{ form.imp_tipo_impresion.errors.0 }}</div>
-                                        {% endif %}
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label for="{{ form.tipo_tinta.id_for_label }}" class="form-label">Tipo de Tinta</label>
-                                        {{ form.tipo_tinta }}
-                                        {% if form.tipo_tinta.errors %}
-                                        <div class="invalid-feedback">{{ form.tipo_tinta.errors.0 }}</div>
-                                        {% endif %}
-                                    </div>
-                                </div>
-
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <label for="{{ form.imp_rodillo.id_for_label }}" class="form-label">Rodillo</label>
-                                        {{ form.imp_rodillo }}
-                                        {% if form.imp_rodillo.errors %}
-                                        <div class="invalid-feedback">{{ form.imp_rodillo.errors.0 }}</div>
-                                        {% endif %}
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label for="{{ form.imp_repeticiones.id_for_label }}" class="form-label">Repeticiones</label>
-                                        {{ form.imp_repeticiones }}
-                                        {% if form.imp_repeticiones.errors %}
-                                        <div class="invalid-feedback">{{ form.imp_repeticiones.errors.0 }}</div>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {# Sellado #}
-                        <div class="card mb-4">
-                            <div class="card-header">
-                                <h5 class="card-title mb-0">Sellado</h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="row mb-3">
-                                    <div class="col-md-4">
-                                        <label for="{{ form.sellado_tipo.id_for_label }}" class="form-label">Tipo de Sellado</label>
-                                        {{ form.sellado_tipo }}
-                                        {% if form.sellado_tipo.errors %}
-                                        <div class="invalid-feedback">{{ form.sellado_tipo.errors.0 }}</div>
-                                        {% endif %}
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label for="{{ form.sellado_peso_millar.id_for_label }}" class="form-label">Peso Millar (kg)</label>
-                                        {{ form.sellado_peso_millar }}
-                                        {% if form.sellado_peso_millar.errors %}
-                                        <div class="invalid-feedback">{{ form.sellado_peso_millar.errors.0 }}</div>
-                                        {% endif %}
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label for="{{ form.sellado_solapa_cm.id_for_label }}" class="form-label">Solapa (cm)</label>
-                                        {{ form.sellado_solapa_cm }}
-                                        {% if form.sellado_solapa_cm.errors %}
-                                        <div class="invalid-feedback">{{ form.sellado_solapa_cm.errors.0 }}</div>
-                                        {% endif %}
-                                    </div>
-                                </div>
-
-                                <div class="row mb-3">
-                                    <div class="col-md-4">
-                                        <label for="{{ form.sellado_fuelle_fondo.id_for_label }}" class="form-label">Fuelle Fondo (cm)</label>
-                                        {{ form.sellado_fuelle_fondo }}
-                                        {% if form.sellado_fuelle_fondo.errors %}
-                                        <div class="invalid-feedback">{{ form.sellado_fuelle_fondo.errors.0 }}</div>
-                                        {% endif %}
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label for="{{ form.sellado_fuelle_lateral.id_for_label }}" class="form-label">Fuelle Lateral (cm)</label>
-                                        {{ form.sellado_fuelle_lateral }}
-                                        {% if form.sellado_fuelle_lateral.errors %}
-                                        <div class="invalid-feedback">{{ form.sellado_fuelle_lateral.errors.0 }}</div>
-                                        {% endif %}
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label for="{{ form.sellado_fuelle_superior.id_for_label }}" class="form-label">Fuelle Superior (cm)</label>
-                                        {{ form.sellado_fuelle_superior }}
-                                        {% if form.sellado_fuelle_superior.errors %}
-                                        <div class="invalid-feedback">{{ form.sellado_fuelle_superior.errors.0 }}</div>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {# Features Adicionales #}
-                        <div class="card mb-4">
-                            <div class="card-header">
-                                <h5 class="card-title mb-0">Features Adicionales</h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="row mb-3">
-                                    <div class="col-md-6">
-                                        <label for="{{ form.sellado_troquel_tipo.id_for_label }}" class="form-label">Tipo Troquel</label>
-                                        {{ form.sellado_troquel_tipo }}
-                                        {% if form.sellado_troquel_tipo.errors %}
-                                        <div class="invalid-feedback">{{ form.sellado_troquel_tipo.errors.0 }}</div>
-                                        {% endif %}
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label for="{{ form.sellado_troquel_medida.id_for_label }}" class="form-label">Medida Troquel (cm)</label>
-                                        {{ form.sellado_troquel_medida }}
-                                        {% if form.sellado_troquel_medida.errors %}
-                                        <div class="invalid-feedback">{{ form.sellado_troquel_medida.errors.0 }}</div>
-                                        {% endif %}
-                                    </div>
-                                </div>
-
-                                <div class="row mb-3">
-                                    <div class="col-md-6">
-                                        <label for="{{ form.sellado_zipper_tipo.id_for_label }}" class="form-label">Tipo Zipper</label>
-                                        {{ form.sellado_zipper_tipo }}
-                                        {% if form.sellado_zipper_tipo.errors %}
-                                        <div class="invalid-feedback">{{ form.sellado_zipper_tipo.errors.0 }}</div>
-                                        {% endif %}
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label for="{{ form.sellado_zipper_medida.id_for_label }}" class="form-label">Medida Zipper (cm)</label>
-                                        {{ form.sellado_zipper_medida }}
-                                        {% if form.sellado_zipper_medida.errors %}
-                                        <div class="invalid-feedback">{{ form.sellado_zipper_medida.errors.0 }}</div>
-                                        {% endif %}
-                                    </div>
-                                </div>
-
-                                <div class="row mb-3">
-                                    <div class="col-md-6">
-                                        <label for="{{ form.sellado_valvula_tipo.id_for_label }}" class="form-label">Tipo Válvula</label>
-                                        {{ form.sellado_valvula_tipo }}
-                                        {% if form.sellado_valvula_tipo.errors %}
-                                        <div class="invalid-feedback">{{ form.sellado_valvula_tipo.errors.0 }}</div>
-                                        {% endif %}
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label for="{{ form.sellado_valvula_medida.id_for_label }}" class="form-label">Medida Válvula (cm)</label>
-                                        {{ form.sellado_valvula_medida }}
-                                        {% if form.sellado_valvula_medida.errors %}
-                                        <div class="invalid-feedback">{{ form.sellado_valvula_medida.errors.0 }}</div>
-                                        {% endif %}
-                                    </div>
-                                </div>
-
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="form-check">
-                                            {{ form.sellado_ultrasonido }}
-                                            <label class="form-check-label" for="{{ form.sellado_ultrasonido.id_for_label }}">
-                                                Ultrasonido
-                                            </label>
-                                        </div>
-                                        {% if form.sellado_ultrasonido.value %}
-                                        <div class="mt-2">
-                                            <label for="{{ form.sellado_ultrasonido_pos.id_for_label }}" class="form-label">Posición Ultrasonido</label>
-                                            {{ form.sellado_ultrasonido_pos }}
-                                            {% if form.sellado_ultrasonido_pos.errors %}
-                                            <div class="invalid-feedback">{{ form.sellado_ultrasonido_pos.errors.0 }}</div>
-                                            {% endif %}
-                                        </div>
-                                        {% endif %}
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="form-check">
-                                            {{ form.sellado_precorte }}
-                                            <label class="form-check-label" for="{{ form.sellado_precorte.id_for_label }}">
-                                                Precorte
-                                            </label>
-                                        </div>
-                                        {% if form.sellado_precorte.value %}
-                                        <div class="mt-2">
-                                            <label for="{{ form.sellado_precorte_medida.id_for_label }}" class="form-label">Medida Precorte (cm)</label>
-                                            {{ form.sellado_precorte_medida }}
-                                            {% if form.sellado_precorte_medida.errors %}
-                                            <div class="invalid-feedback">{{ form.sellado_precorte_medida.errors.0 }}</div>
-                                            {% endif %}
-                                        </div>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {# Otros Detalles #}
-                        <div class="card mb-4">
-                            <div class="card-header">
-                                <h5 class="card-title mb-0">Otros Detalles</h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="row mb-3">
-                                    <div class="col-md-4">
-                                        <label for="{{ form.lamina.id_for_label }}" class="form-label">Lámina</label>
-                                        {{ form.lamina }}
-                                        {% if form.lamina.errors %}
-                                        <div class="invalid-feedback">{{ form.lamina.errors.0 }}</div>
-                                        {% endif %}
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label for="{{ form.tratamiento.id_for_label }}" class="form-label">Tratamiento</label>
-                                        {{ form.tratamiento }}
-                                        {% if form.tratamiento.errors %}
-                                        <div class="invalid-feedback">{{ form.tratamiento.errors.0 }}</div>
-                                        {% endif %}
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label for="{{ form.pistas.id_for_label }}" class="form-label">Pistas</label>
-                                        {{ form.pistas }}
-                                        {% if form.pistas.errors %}
-                                        <div class="invalid-feedback">{{ form.pistas.errors.0 }}</div>
-                                        {% endif %}
-                                    </div>
-                                </div>
-
-                                <div class="row">
-                                    <div class="col-md-4">
-                                        <label for="{{ form.programa_lamina.id_for_label }}" class="form-label">Programa Lámina</label>
-                                        {{ form.programa_lamina }}
-                                        {% if form.programa_lamina.errors %}
-                                        <div class="invalid-feedback">{{ form.programa_lamina.errors.0 }}</div>
-                                        {% endif %}
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label for="{{ form.cantidad_xml.id_for_label }}" class="form-label">XML Cantidad</label>
-                                        {{ form.cantidad_xml }}
-                                        {% if form.cantidad_xml.errors %}
-                                        <div class="invalid-feedback">{{ form.cantidad_xml.errors.0 }}</div>
-                                        {% endif %}
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="form-check mt-4">
-                                            {{ form.extrusion_doble }}
-                                            <label class="form-check-label" for="{{ form.extrusion_doble.id_for_label }}">
-                                                Extrusión Doble
-                                            </label>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {# Información Contable #}
-                        <div class="card mb-4">
-                            <div class="card-header">
-                                <h5 class="card-title mb-0">Información Contable</h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <label for="{{ form.cuenta_contable.id_for_label }}" class="form-label">Cuenta Contable</label>
-                                        {{ form.cuenta_contable }}
-                                        {% if form.cuenta_contable.errors %}
-                                        <div class="invalid-feedback">{{ form.cuenta_contable.errors.0 }}</div>
-                                        {% endif %}
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label for="{{ form.servicio.id_for_label }}" class="form-label">Servicio</label>
-                                        {{ form.servicio }}
-                                        {% if form.servicio.errors %}
-                                        <div class="invalid-feedback">{{ form.servicio.errors.0 }}</div>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-save"></i> Guardar
-                            </button>
-                        </div>
-                    </form>
+                <div>
+                    <a href="{% url 'productos_web:producto_list' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Volver
+                    </a>
                 </div>
             </div>
         </div>
     </div>
+
+    <form method="post" enctype="multipart/form-data" id="productoForm">
+        {% csrf_token %}
+        
+        <!-- Información Principal -->
+        <div class="form-section">
+            <h5><i class="fas fa-info-circle text-primary"></i> Información Principal</h5>
+            
+            <div class="row field-row">
+                <div class="col-md-4">
+                    <label class="form-label required-field">{{ form.codigo.label }}</label>
+                    {{ form.codigo }}
+                    {% if form.codigo.errors %}
+                        <div class="text-danger small">{{ form.codigo.errors.0 }}</div>
+                    {% endif %}
+                    <div class="help-text">Código único identificador del producto</div>
+                </div>
+                <div class="col-md-8">
+                    <label class="form-label required-field">{{ form.nombre.label }}</label>
+                    {{ form.nombre }}
+                    {% if form.nombre.errors %}
+                        <div class="text-danger small">{{ form.nombre.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="row field-row">
+                <div class="col-md-3">
+                    <label class="form-label">{{ form.cliente.label }}</label>
+                    {{ form.cliente }}
+                    {% if form.cliente.errors %}
+                        <div class="text-danger small">{{ form.cliente.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">{{ form.linea.label }}</label>
+                    {{ form.linea }}
+                    {% if form.linea.errors %}
+                        <div class="text-danger small">{{ form.linea.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">{{ form.sublinea.label }}</label>
+                    {{ form.sublinea }}
+                    {% if form.sublinea.errors %}
+                        <div class="text-danger small">{{ form.sublinea.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">{{ form.estado.label }}</label>
+                    {{ form.estado }}
+                    {% if form.estado.errors %}
+                        <div class="text-danger small">{{ form.estado.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="row field-row">
+                <div class="col-md-4">
+                    <label class="form-label">{{ form.unidad_medida.label }}</label>
+                    {{ form.unidad_medida }}
+                    {% if form.unidad_medida.errors %}
+                        <div class="text-danger small">{{ form.unidad_medida.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                <div class="col-md-4">
+                    <div class="form-check form-switch mt-4">
+                        {{ form.is_active }}
+                        <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                            {{ form.is_active.label }}
+                        </label>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">{{ form.archivo_adjunto.label }}</label>
+                    {{ form.archivo_adjunto }}
+                    {% if form.archivo_adjunto.errors %}
+                        <div class="text-danger small">{{ form.archivo_adjunto.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Material Base y Dimensiones -->
+        <div class="form-section">
+            <h5><i class="fas fa-ruler-combined text-info"></i> Material Base y Dimensiones</h5>
+            
+            <div class="row field-row">
+                <div class="col-md-4">
+                    <label class="form-label">{{ form.tipo_materia_prima.label }}</label>
+                    {{ form.tipo_materia_prima }}
+                    {% if form.tipo_materia_prima.errors %}
+                        <div class="text-danger small">{{ form.tipo_materia_prima.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">{{ form.tipo_material.label }}</label>
+                    {{ form.tipo_material }}
+                    {% if form.tipo_material.errors %}
+                        <div class="text-danger small">{{ form.tipo_material.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">{{ form.calibre_um.label }}</label>
+                    {{ form.calibre_um }}
+                    {% if form.calibre_um.errors %}
+                        <div class="text-danger small">{{ form.calibre_um.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="row field-row">
+                <div class="col-md-3">
+                    <label class="form-label">{{ form.color.label }}</label>
+                    {{ form.color }}
+                    {% if form.color.errors %}
+                        <div class="text-danger small">{{ form.color.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">{{ form.medida_en.label }}</label>
+                    {{ form.medida_en }}
+                    {% if form.medida_en.errors %}
+                        <div class="text-danger small">{{ form.medida_en.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">{{ form.largo.label }}</label>
+                    {{ form.largo }}
+                    {% if form.largo.errors %}
+                        <div class="text-danger small">{{ form.largo.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">{{ form.ancho.label }}</label>
+                    {{ form.ancho }}
+                    {% if form.ancho.errors %}
+                        <div class="text-danger small">{{ form.ancho.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="row field-row">
+                <div class="col-md-3">
+                    <label class="form-label">{{ form.ancho_rollo.label }}</label>
+                    {{ form.ancho_rollo }}
+                    {% if form.ancho_rollo.errors %}
+                        <div class="text-danger small">{{ form.ancho_rollo.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">{{ form.metros_lineales.label }}</label>
+                    {{ form.metros_lineales }}
+                    {% if form.metros_lineales.errors %}
+                        <div class="text-danger small">{{ form.metros_lineales.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">{{ form.largo_material.label }}</label>
+                    {{ form.largo_material }}
+                    {% if form.largo_material.errors %}
+                        <div class="text-danger small">{{ form.largo_material.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">{{ form.factor_decimal.label }}</label>
+                    {{ form.factor_decimal }}
+                    {% if form.factor_decimal.errors %}
+                        <div class="text-danger small">{{ form.factor_decimal.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Especificaciones Adicionales -->
+        <div class="form-section">
+            <h5><i class="fas fa-cogs text-warning"></i> Especificaciones Adicionales</h5>
+            
+            <div class="row field-row">
+                <div class="col-md-6">
+                    <label class="form-label">{{ form.tratamiento.label }}</label>
+                    {{ form.tratamiento }}
+                    {% if form.tratamiento.errors %}
+                        <div class="text-danger small">{{ form.tratamiento.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">{{ form.cantidad_xml.label }}</label>
+                    {{ form.cantidad_xml }}
+                    {% if form.cantidad_xml.errors %}
+                        <div class="text-danger small">{{ form.cantidad_xml.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Doblado -->
+        <div class="form-section">
+            <h5><i class="fas fa-fold text-secondary"></i> Doblado</h5>
+            
+            <div class="row field-row">
+                <div class="col-md-4">
+                    <label class="form-label">Medida de Doblado (cm)</label>
+                    {{ form.dob_medida_cm }}
+                    {% if form.dob_medida_cm.errors %}
+                        <div class="text-danger small">{{ form.dob_medida_cm.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Impresión -->
+        <div class="form-section">
+            <h5><i class="fas fa-print text-success"></i> Impresión</h5>
+            
+            <div class="row field-row">
+                <div class="col-md-3">
+                    <label class="form-label">{{ form.imp_tipo_impresion.label }}</label>
+                    {{ form.imp_tipo_impresion }}
+                    {% if form.imp_tipo_impresion.errors %}
+                        <div class="text-danger small">{{ form.imp_tipo_impresion.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Repeticiones</label>
+                    {{ form.imp_repeticiones }}
+                    {% if form.imp_repeticiones.errors %}
+                        <div class="text-danger small">{{ form.imp_repeticiones.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">{{ form.tipo_tinta.label }}</label>
+                    {{ form.tipo_tinta }}
+                    {% if form.tipo_tinta.errors %}
+                        <div class="text-danger small">{{ form.tipo_tinta.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Pistas</label>
+                    {{ form.pistas }}
+                    {% if form.pistas.errors %}
+                        <div class="text-danger small">{{ form.pistas.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sellado: General y Fuelles -->
+        <div class="form-section">
+            <h5><i class="fas fa-compress text-danger"></i> Sellado: General y Fuelles</h5>
+            
+            <div class="row field-row">
+                <div class="col-md-4">
+                    <label class="form-label">{{ form.sellado_tipo.label }}</label>
+                    {{ form.sellado_tipo }}
+                    {% if form.sellado_tipo.errors %}
+                        <div class="text-danger small">{{ form.sellado_tipo.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Peso por Millar</label>
+                    {{ form.sellado_peso_millar }}
+                    {% if form.sellado_peso_millar.errors %}
+                        <div class="text-danger small">{{ form.sellado_peso_millar.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Solapa (cm)</label>
+                    {{ form.sellado_solapa_cm }}
+                    {% if form.sellado_solapa_cm.errors %}
+                        <div class="text-danger small">{{ form.sellado_solapa_cm.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="row field-row">
+                <div class="col-md-4">
+                    <label class="form-label">Fuelle de Fondo</label>
+                    {{ form.sellado_fuelle_fondo }}
+                    {% if form.sellado_fuelle_fondo.errors %}
+                        <div class="text-danger small">{{ form.sellado_fuelle_fondo.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Fuelle Lateral</label>
+                    {{ form.sellado_fuelle_lateral }}
+                    {% if form.sellado_fuelle_lateral.errors %}
+                        <div class="text-danger small">{{ form.sellado_fuelle_lateral.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Fuelle Superior</label>
+                    {{ form.sellado_fuelle_superior }}
+                    {% if form.sellado_fuelle_superior.errors %}
+                        <div class="text-danger small">{{ form.sellado_fuelle_superior.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sellado: Features Adicionales -->
+        <div class="form-section">
+            <h5><i class="fas fa-tools text-dark"></i> Sellado: Features Adicionales</h5>
+            
+            <div class="row field-row">
+                <div class="col-md-4">
+                    <label class="form-label">{{ form.sellado_troquel_tipo.label }}</label>
+                    {{ form.sellado_troquel_tipo }}
+                    {% if form.sellado_troquel_tipo.errors %}
+                        <div class="text-danger small">{{ form.sellado_troquel_tipo.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Medida del Troquel</label>
+                    {{ form.sellado_troquel_medida }}
+                    {% if form.sellado_troquel_medida.errors %}
+                        <div class="text-danger small">{{ form.sellado_troquel_medida.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">{{ form.sellado_zipper_tipo.label }}</label>
+                    {{ form.sellado_zipper_tipo }}
+                    {% if form.sellado_zipper_tipo.errors %}
+                        <div class="text-danger small">{{ form.sellado_zipper_tipo.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="row field-row">
+                <div class="col-md-4">
+                    <label class="form-label">Medida del Zipper</label>
+                    {{ form.sellado_zipper_medida }}
+                    {% if form.sellado_zipper_medida.errors %}
+                        <div class="text-danger small">{{ form.sellado_zipper_medida.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">{{ form.sellado_valvula_tipo.label }}</label>
+                    {{ form.sellado_valvula_tipo }}
+                    {% if form.sellado_valvula_tipo.errors %}
+                        <div class="text-danger small">{{ form.sellado_valvula_tipo.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Medida de la Válvula</label>
+                    {{ form.sellado_valvula_medida }}
+                    {% if form.sellado_valvula_medida.errors %}
+                        <div class="text-danger small">{{ form.sellado_valvula_medida.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="row field-row">
+                <div class="col-md-3">
+                    <div class="form-check form-switch">
+                        {{ form.sellado_ultrasonido }}
+                        <label class="form-check-label" for="{{ form.sellado_ultrasonido.id_for_label }}">
+                            Ultrasonido
+                        </label>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Posición Ultrasonido</label>
+                    {{ form.sellado_ultrasonido_pos }}
+                    {% if form.sellado_ultrasonido_pos.errors %}
+                        <div class="text-danger small">{{ form.sellado_ultrasonido_pos.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                <div class="col-md-3">
+                    <div class="form-check form-switch">
+                        {{ form.sellado_precorte }}
+                        <label class="form-check-label" for="{{ form.sellado_precorte.id_for_label }}">
+                            Precorte
+                        </label>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Medida del Precorte</label>
+                    {{ form.sellado_precorte_medida }}
+                    {% if form.sellado_precorte_medida.errors %}
+                        <div class="text-danger small">{{ form.sellado_precorte_medida.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Otros / Contabilidad -->
+        <div class="form-section">
+            <h5><i class="fas fa-calculator text-info"></i> Otros / Contabilidad</h5>
+            
+            <div class="row field-row">
+                <div class="col-md-6">
+                    <label class="form-label">{{ form.cuenta_contable.label }}</label>
+                    {{ form.cuenta_contable }}
+                    {% if form.cuenta_contable.errors %}
+                        <div class="text-danger small">{{ form.cuenta_contable.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">{{ form.servicio.label }}</label>
+                    {{ form.servicio }}
+                    {% if form.servicio.errors %}
+                        <div class="text-danger small">{{ form.servicio.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Botones de Acción -->
+        <div class="btn-section">
+            <div class="row">
+                <div class="col-md-8 mx-auto">
+                    <div class="d-flex justify-content-center gap-3">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-save"></i> 
+                            {% if form.instance.pk %}Actualizar Producto{% else %}Crear Producto{% endif %}
+                        </button>
+                        
+                        {% if form.instance.pk %}
+                            <a href="{% url 'productos_web:producto_detail' form.instance.pk %}" class="btn btn-outline-info btn-lg">
+                                <i class="fas fa-eye"></i> Ver Producto
+                            </a>
+                        {% endif %}
+                        
+                        <a href="{% url 'productos_web:producto_list' %}" class="btn btn-secondary btn-lg">
+                            <i class="fas fa-times"></i> Cancelar
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
 </div>
+{% endblock %}
 
 {% block extra_js %}
 <script>
-    // Dynamic subcategories based on category selection
-    const categorySelect = document.getElementById('{{ form.categoria.id_for_label }}');
-    const subcategorySelect = document.getElementById('{{ form.subcategoria.id_for_label }}');
+document.addEventListener('DOMContentLoaded', function() {
+    // Validación del formulario
+    document.getElementById('productoForm').addEventListener('submit', function(e) {
+        const codigo = document.getElementById('id_codigo').value.trim();
+        const nombre = document.getElementById('id_nombre').value.trim();
 
-    if (categorySelect && subcategorySelect) {
-        categorySelect.addEventListener('change', function() {
-            const categoryId = this.value;
-            if (categoryId) {
-                fetch(`/api/subcategorias-por-categoria/${categoryId}/`)
-                    .then(response => response.json())
-                    .then(data => {
-                        subcategorySelect.innerHTML = '<option value="">---------</option>';
-                        data.forEach(subcategoria => {
-                            const option = new Option(subcategoria.nombre, subcategoria.id);
-                            subcategorySelect.add(option);
-                        });
-                    });
-            } else {
-                subcategorySelect.innerHTML = '<option value="">---------</option>';
+        if (!codigo || !nombre) {
+            e.preventDefault();
+            alert('Por favor complete los campos obligatorios: Código y Nombre del Producto');
+            
+            // Enfocar el primer campo vacío
+            if (!codigo) {
+                document.getElementById('id_codigo').focus();
+            } else if (!nombre) {
+                document.getElementById('id_nombre').focus();
             }
-        });
-    }
-
-    // Toggle fields based on checkbox values
-    function toggleField(checkboxId, fieldId) {
-        const checkbox = document.getElementById(checkboxId);
-        const field = document.getElementById(fieldId);
-        const fieldContainer = field.closest('.mt-2');
-
-        if (checkbox && field && fieldContainer) {
-            checkbox.addEventListener('change', function() {
-                fieldContainer.style.display = this.checked ? 'block' : 'none';
-                if (!this.checked) {
-                    field.value = '';
-                }
-            });
-            // Initial state
-            fieldContainer.style.display = checkbox.checked ? 'block' : 'none';
-        }
-    }
-
-    // Set up toggles for ultrasonido and precorte
-    toggleField('{{ form.sellado_ultrasonido.id_for_label }}', '{{ form.sellado_ultrasonido_pos.id_for_label }}');
-    toggleField('{{ form.sellado_precorte.id_for_label }}', '{{ form.sellado_precorte_medida.id_for_label }}');
-
-    // Initialize all select2 fields
-    document.querySelectorAll('select').forEach(select => {
-        if (select.classList.contains('select2')) {
-            $(select).select2({
-                theme: 'bootstrap-5',
-                width: '100%'
-            });
         }
     });
+
+    // Validaciones condicionales
+    function validarCamposCondicionales() {
+        // Validar Zipper
+        const zipperTipo = document.getElementById('id_sellado_zipper_tipo');
+        const zipperMedida = document.getElementById('id_sellado_zipper_medida');
+        
+        if (zipperTipo && zipperMedida) {
+            zipperTipo.addEventListener('change', function() {
+                if (this.value) {
+                    zipperMedida.required = true;
+                    zipperMedida.parentNode.querySelector('label').classList.add('required-field');
+                } else {
+                    zipperMedida.required = false;
+                    zipperMedida.parentNode.querySelector('label').classList.remove('required-field');
+                }
+            });
+        }
+
+        // Validar Válvula
+        const valvulaTipo = document.getElementById('id_sellado_valvula_tipo');
+        const valvulaMedida = document.getElementById('id_sellado_valvula_medida');
+        
+        if (valvulaTipo && valvulaMedida) {
+            valvulaTipo.addEventListener('change', function() {
+                if (this.value) {
+                    valvulaMedida.required = true;
+                    valvulaMedida.parentNode.querySelector('label').classList.add('required-field');
+                } else {
+                    valvulaMedida.required = false;
+                    valvulaMedida.parentNode.querySelector('label').classList.remove('required-field');
+                }
+            });
+        }
+
+        // Validar Troquel
+        const troquelTipo = document.getElementById('id_sellado_troquel_tipo');
+        const troquelMedida = document.getElementById('id_sellado_troquel_medida');
+        
+        if (troquelTipo && troquelMedida) {
+            troquelTipo.addEventListener('change', function() {
+                if (this.value) {
+                    troquelMedida.required = true;
+                    troquelMedida.parentNode.querySelector('label').classList.add('required-field');
+                } else {
+                    troquelMedida.required = false;
+                    troquelMedida.parentNode.querySelector('label').classList.remove('required-field');
+                }
+            });
+        }
+    }
+
+    // Inicializar validaciones
+    validarCamposCondicionales();
+
+    // Auto-scroll a errores
+    const firstError = document.querySelector('.text-danger');
+    if (firstError) {
+        firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+});
 </script>
-{% endblock %}
 {% endblock %}

@@ -1,0 +1,123 @@
+<!-- templates/components/_statistics.html -->
+{% if statistics %}
+<div class="statistics-section mb-4">
+    <div class="row">
+        {% for stat in statistics %}
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-{{ stat.icon }} fa-2x"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value">{{ stat.value }}</div>
+                    <div class="stat-label">{{ stat.label }}</div>
+                    {% if stat.change %}
+                    <div class="stat-change {{ stat.change_type }}">
+                        <i class="fas fa-{{ stat.change_icon|default:'arrow-up' }} me-1"></i>
+                        {{ stat.change }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<style>
+.stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+    height: 100%;
+    display: flex;
+    align-items: center;
+}
+
+.stat-card:hover {
+    transform: translateY(-3px);
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    flex-shrink: 0;
+}
+
+.stat-content {
+    flex: 1;
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #212529;
+    line-height: 1;
+    margin-bottom: 0.25rem;
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    color: #6c757d;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.stat-change {
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+}
+
+.stat-change.positive {
+    color: #198754;
+}
+
+.stat-change.negative {
+    color: #dc3545;
+}
+
+.stat-change.neutral {
+    color: #6c757d;
+}
+
+/* Colores predefinidos para iconos */
+.stat-card:nth-child(4n+1) .stat-icon {
+    background-color: #e3f2fd;
+    color: #1976d2;
+}
+
+.stat-card:nth-child(4n+2) .stat-icon {
+    background-color: #e8f5e8;
+    color: #388e3c;
+}
+
+.stat-card:nth-child(4n+3) .stat-icon {
+    background-color: #fff3e0;
+    color: #f57c00;
+}
+
+.stat-card:nth-child(4n+4) .stat-icon {
+    background-color: #ffebee;
+    color: #d32f2f;
+}
+
+@media (max-width: 768px) {
+    .stat-card {
+        margin-bottom: 1rem;
+    }
+    
+    .stat-value {
+        font-size: 1.5rem;
+    }
+}
+</style>

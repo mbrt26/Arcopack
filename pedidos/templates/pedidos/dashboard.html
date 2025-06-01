@@ -363,9 +363,9 @@
 
 {% block extra_js %}
 <script>
-// Definir los datos desde Django como objetos JSON para evitar problemas de interpolación
-var dashboardData = {
-    estados: {
+document.addEventListener('DOMContentLoaded', function() {
+    // Datos para gráficos desde Django
+    const estadosData = {
         labels: [
             {% for estado_key, estado_data in estados.items %}
                 "{{ estado_data.nombre|escapejs }}",
@@ -375,32 +375,10 @@ var dashboardData = {
             {% for estado_key, estado_data in estados.items %}
                 {{ estado_data.count|default:0 }},
             {% endfor %}
-        ],
-        colors: [
-            '#6c757d', // Borrador
-            '#007bff', // Confirmado
-            '#ffc107', // En Producción
-            '#28a745', // Producido
-            '#20c997', // Pendiente Facturar
-            '#17a2b8', // Facturado
-            '#198754', // Entregado
-            '#dc3545'  // Cancelado
         ]
-    },
-    prioridades: {
-        labels: [
-            {% for prioridad_key, prioridad_data in prioridades.items %}
-                "{{ prioridad_data.nombre|escapejs }}",
-            {% endfor %}
-        ],
-        values: [
-            {% for prioridad_key, prioridad_data in prioridades.items %}
-                {{ prioridad_data.count|default:0 }},
-            {% endfor %}
-        ],
-        colors: ['#28a745', '#17a2b8', '#ffc107', '#dc3545']
-    },
-    meses: {
+    };
+
+    const mesesData = {
         labels: [
             {% for mes in pedidos_por_mes %}
                 "{{ mes.mes|escapejs }}",
@@ -416,84 +394,54 @@ var dashboardData = {
                 {{ mes.valor|default:0 }},
             {% endfor %}
         ]
-    }
-};
+    };
 
-// Esperar a que el DOM esté completamente cargado
-document.addEventListener('DOMContentLoaded', function() {
-    // Inicializar gráfico de estados
-    var ctxEstados = document.getElementById('estadosChart');
-    if (ctxEstados) {
-        new Chart(ctxEstados.getContext('2d'), {
+    // Gráfico de estados (solo si Chart.js está disponible)
+    const estadosChart = document.getElementById('estadosChart');
+    if (estadosChart && typeof Chart !== 'undefined') {
+        new Chart(estadosChart.getContext('2d'), {
             type: 'doughnut',
             data: {
-                labels: dashboardData.estados.labels,
+                labels: estadosData.labels,
                 datasets: [{
-                    data: dashboardData.estados.values,
-                    backgroundColor: dashboardData.estados.colors,
-                    borderWidth: 1
+                    data: estadosData.values,
+                    backgroundColor: [
+                        '#6c757d', '#007bff', '#ffc107', '#28a745',
+                        '#fd7e14', '#20c997', '#198754', '#dc3545'
+                    ]
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: {
-                        position: 'right'
-                    }
+                    legend: { position: 'right' }
                 }
             }
         });
     }
-    
-    // Inicializar gráfico de prioridades
-    var ctxPrioridades = document.getElementById('prioridadesChart');
-    if (ctxPrioridades) {
-        new Chart(ctxPrioridades.getContext('2d'), {
-            type: 'pie',
-            data: {
-                labels: dashboardData.prioridades.labels,
-                datasets: [{
-                    data: dashboardData.prioridades.values,
-                    backgroundColor: dashboardData.prioridades.colors,
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'right'
-                    }
-                }
-            }
-        });
-    }
-    
-    // Inicializar gráfico de tendencia mensual
-    var ctxTendencia = document.getElementById('tendenciaChart');
-    if (ctxTendencia) {
-        new Chart(ctxTendencia.getContext('2d'), {
+
+    // Gráfico de tendencia mensual (solo si Chart.js está disponible)
+    const tendenciaChart = document.getElementById('tendenciaChart');
+    if (tendenciaChart && typeof Chart !== 'undefined') {
+        new Chart(tendenciaChart.getContext('2d'), {
             type: 'line',
             data: {
-                labels: dashboardData.meses.labels,
+                labels: mesesData.labels,
                 datasets: [
                     {
                         label: 'Cantidad de Pedidos',
-                        data: dashboardData.meses.counts,
+                        data: mesesData.counts,
                         borderColor: '#007bff',
                         backgroundColor: 'rgba(0, 123, 255, 0.1)',
-                        borderWidth: 2,
                         fill: true,
                         yAxisID: 'y'
                     },
                     {
-                        label: 'Valor Total (€)',
-                        data: dashboardData.meses.valores,
+                        label: 'Valor Total',
+                        data: mesesData.valores,
                         borderColor: '#28a745',
                         backgroundColor: 'rgba(40, 167, 69, 0.1)',
-                        borderWidth: 2,
                         fill: true,
                         yAxisID: 'y1'
                     }
@@ -507,35 +455,25 @@ document.addEventListener('DOMContentLoaded', function() {
                         type: 'linear',
                         display: true,
                         position: 'left',
-                        title: {
-                            display: true,
-                            text: 'Cantidad de Pedidos'
-                        }
+                        title: { display: true, text: 'Cantidad' }
                     },
                     y1: {
                         type: 'linear',
                         display: true,
                         position: 'right',
-                        title: {
-                            display: true,
-                            text: 'Valor Total (€)'
-                        },
-                        grid: {
-                            drawOnChartArea: false
-                        }
+                        title: { display: true, text: 'Valor ($)' },
+                        grid: { drawOnChartArea: false }
                     }
                 },
                 plugins: {
-                    legend: {
-                        position: 'bottom'
-                    }
+                    legend: { position: 'bottom' }
                 }
             }
         });
     }
-    
-    // Auto-refresh cada 5 minutos
-    setInterval(function() {
+
+    // Auto-refresh cada 5 minutos (opcional)
+    setTimeout(function() {
         window.location.reload();
     }, 300000);
 });

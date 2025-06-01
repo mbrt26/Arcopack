@@ -1,0 +1,364 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-print me-2"></i>
+                        Registro de Impresión - {{ registro.orden_produccion.op_numero }}
+                    </h4>
+                    <div class="btn-group">
+                        <a href="{% url 'produccion_web:registro-impresion-update' registro.pk %}" 
+                           class="btn btn-warning btn-sm">
+                            <i class="fas fa-edit me-1"></i>Editar
+                        </a>
+                        <a href="{% url 'produccion_web:impresion-kanban' %}" 
+                           class="btn btn-secondary btn-sm">
+                            <i class="fas fa-arrow-left me-1"></i>Volver al Kanban
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Información General -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Información General</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6"><strong>Cliente:</strong></div>
+                        <div class="col-6">{{ registro.orden_produccion.cliente.nombre }}</div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-6"><strong>Producto:</strong></div>
+                        <div class="col-6">{{ registro.orden_produccion.producto.nombre }}</div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-6"><strong>Máquina:</strong></div>
+                        <div class="col-6">{{ registro.maquina.nombre }}</div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-6"><strong>Operario:</strong></div>
+                        <div class="col-6">{{ registro.operario_principal.get_full_name }}</div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-6"><strong>Fecha:</strong></div>
+                        <div class="col-6">{{ registro.fecha|date:"d/m/Y" }}</div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-6"><strong>Turno:</strong></div>
+                        <div class="col-6">{{ registro.get_turno_display }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-clock me-2"></i>Tiempos y Eficiencia</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6"><strong>Hora Inicio:</strong></div>
+                        <div class="col-6">{{ registro.hora_inicio|time:"H:i" }}</div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-6"><strong>Hora Final:</strong></div>
+                        <div class="col-6">{{ registro.hora_final|time:"H:i"|default:"En proceso" }}</div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-6"><strong>Tiempo Total:</strong></div>
+                        <div class="col-6">{{ tiempo_total_minutos|floatformat:0 }} min</div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-6"><strong>Tiempo Paros:</strong></div>
+                        <div class="col-6">{{ tiempo_paro_minutos|floatformat:0 }} min</div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-6"><strong>Tiempo Productivo:</strong></div>
+                        <div class="col-6">{{ tiempo_productivo_minutos|floatformat:0 }} min</div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-6"><strong>Eficiencia Tiempo:</strong></div>
+                        <div class="col-6">
+                            <span class="badge {% if eficiencia_tiempo >= 80 %}bg-success{% elif eficiencia_tiempo >= 60 %}bg-warning{% else %}bg-danger{% endif %}">
+                                {{ eficiencia_tiempo }}%
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resumen de Producción -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Resumen de Producción</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <div class="d-flex flex-column">
+                                <span class="h3 text-primary">{{ total_producido_kg|floatformat:2 }}</span>
+                                <span class="text-muted">kg Producidos</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="d-flex flex-column">
+                                <span class="h3 text-info">{{ total_consumo_sustrato|floatformat:2 }}</span>
+                                <span class="text-muted">kg Sustrato Consumido</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="d-flex flex-column">
+                                <span class="h3 text-warning">{{ total_consumo_tinta|floatformat:2 }}</span>
+                                <span class="text-muted">kg Tinta Consumida</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="d-flex flex-column">
+                                <span class="h3 text-danger">{{ total_desperdicio|floatformat:2 }}</span>
+                                <span class="text-muted">kg Desperdicio</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lotes Producidos -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-boxes me-2"></i>Lotes Producto Terminado</h5>
+                </div>
+                <div class="card-body">
+                    {% if lotes_pt %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Lote</th>
+                                        <th>Cantidad (kg)</th>
+                                        <th>Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for lote in lotes_pt %}
+                                    <tr>
+                                        <td>{{ lote.numero_lote }}</td>
+                                        <td>{{ lote.cantidad_actual|floatformat:2 }}</td>
+                                        <td>
+                                            <span class="badge bg-success">Terminado</span>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted mb-0">No hay lotes de producto terminado registrados.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-cogs me-2"></i>Lotes en Proceso (WIP)</h5>
+                </div>
+                <div class="card-body">
+                    {% if lotes_wip %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Lote</th>
+                                        <th>Cantidad (kg)</th>
+                                        <th>Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for lote in lotes_wip %}
+                                    <tr>
+                                        <td>{{ lote.numero_lote }}</td>
+                                        <td>{{ lote.cantidad_actual|floatformat:2 }}</td>
+                                        <td>
+                                            <span class="badge bg-warning">En Proceso</span>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted mb-0">No hay lotes en proceso registrados.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Paros -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-stop-circle me-2"></i>Paros Registrados</h5>
+                    {% if not registro.hora_final %}
+                    <a href="{% url 'produccion_web:iniciar-paro' 'impresion' registro.pk %}" 
+                       class="btn btn-warning btn-sm">
+                        <i class="fas fa-plus me-1"></i>Iniciar Paro
+                    </a>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    {% if registro.paros_impresion.all %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Causa</th>
+                                        <th>Inicio</th>
+                                        <th>Final</th>
+                                        <th>Duración</th>
+                                        <th>Observaciones</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for paro in registro.paros_impresion.all %}
+                                    <tr>
+                                        <td>{{ paro.causa_paro.descripcion }}</td>
+                                        <td>{{ paro.hora_inicio_paro|time:"H:i" }}</td>
+                                        <td>
+                                            {% if paro.hora_final_paro %}
+                                                {{ paro.hora_final_paro|time:"H:i" }}
+                                            {% else %}
+                                                <span class="badge bg-danger">Activo</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if paro.hora_final_paro %}
+                                                <!-- Calcular duración aquí -->
+                                                <span class="text-muted">{{ paro.duracion_minutos|default:"--" }} min</span>
+                                            {% else %}
+                                                <span class="text-warning">En curso</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ paro.observaciones|default:"--" }}</td>
+                                        <td>
+                                            {% if not paro.hora_final_paro and not registro.hora_final %}
+                                                <a href="{% url 'produccion_web:finalizar-paro' 'impresion' paro.pk %}" 
+                                                   class="btn btn-success btn-xs">
+                                                    <i class="fas fa-stop"></i> Finalizar
+                                                </a>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted mb-0">No hay paros registrados para este proceso.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Consumos -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-tint me-2"></i>Consumos de Tinta</h5>
+                </div>
+                <div class="card-body">
+                    {% if registro.consumos_tinta.all %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Lote Tinta</th>
+                                        <th>Cantidad (kg)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for consumo in registro.consumos_tinta.all %}
+                                    <tr>
+                                        <td>{{ consumo.lote_tinta.numero_lote }}</td>
+                                        <td>{{ consumo.cantidad_kg|floatformat:2 }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted mb-0">No hay consumos de tinta registrados.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-layer-group me-2"></i>Consumos de Sustrato</h5>
+                </div>
+                <div class="card-body">
+                    {% if registro.consumos_sustrato.all %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Lote Sustrato</th>
+                                        <th>Cantidad (kg)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for consumo in registro.consumos_sustrato.all %}
+                                    <tr>
+                                        <td>{{ consumo.lote_sustrato.numero_lote }}</td>
+                                        <td>{{ consumo.cantidad_kg_consumida|floatformat:2 }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted mb-0">No hay consumos de sustrato registrados.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
