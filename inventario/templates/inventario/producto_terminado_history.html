@@ -1,0 +1,246 @@
+{% extends 'base.html' %}
+
+{% block title %}Historial de Movimientos - Lote PT: {{ lote.lote_id }}{% endblock %}
+
+{% block styles %}
+<style>
+    .timeline {
+        position: relative;
+        padding: 1rem 0;
+    }
+    .timeline::before {
+        content: '';
+        position: absolute;
+        width: 2px;
+        background-color: #dee2e6;
+        top: 0;
+        bottom: 0;
+        left: 20px;
+    }
+    .timeline-item {
+        position: relative;
+        margin-bottom: 1.5rem;
+        padding-left: 3rem;
+    }
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        left: 13px;
+        top: 10px;
+        background-color: #fff;
+        border: 2px solid #6c757d;
+    }
+    .timeline-item.entrada::before {
+        border-color: #28a745;
+    }
+    .timeline-item.salida::before {
+        border-color: #dc3545;
+    }
+    .timeline-item.ajuste::before {
+        border-color: #ffc107;
+    }
+    .timeline-item.transferencia::before {
+        border-color: #17a2b8;
+    }
+    .timeline-item.qa::before {
+        border-color: #6610f2;
+    }
+    .timeline-date {
+        font-size: 0.85rem;
+        color: #6c757d;
+        margin-bottom: 0.25rem;
+    }
+    .timeline-title {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+    .timeline-content {
+        background-color: #f8f9fa;
+        padding: 1rem;
+        border-radius: 0.25rem;
+    }
+    .timeline-badge {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        border-radius: 0.25rem;
+    }
+    .badge-entrada {
+        background-color: #d4edda;
+        color: #155724;
+    }
+    .badge-salida {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+    .badge-ajuste {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+    .badge-transferencia {
+        background-color: #d1ecf1;
+        color: #0c5460;
+    }
+    .badge-qa {
+        background-color: #e2d9f3;
+        color: #5a23c8;
+    }
+    .lote-info {
+        background-color: #f8f9fa;
+        padding: 1rem;
+        border-radius: 0.25rem;
+        margin-bottom: 1.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">{{ titulo }}</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="{% url 'root' %}">Inicio</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'inventario_web:pt-list' %}">Inventario PT</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'inventario_web:pt-detail' lote.id %}">Detalle Lote</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Historial</li>
+            </ol>
+        </nav>
+    </div>
+    
+    <div class="row">
+        <div class="col-lg-4">
+            <!-- Información del Lote -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Información del Lote</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="fw-bold">ID Lote:</div>
+                        <div>{{ lote.lote_id }}</div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="fw-bold">Producto:</div>
+                        <div>{{ lote.producto_terminado.codigo }}</div>
+                        <div class="text-muted small">{{ lote.producto_terminado.nombre }}</div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="fw-bold">Orden Producción:</div>
+                        <div>{{ lote.orden_produccion.codigo|default:"N/A" }}</div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="fw-bold">Estado Actual:</div>
+                        <div>
+                            {% if lote.estado == 'DISPONIBLE' %}
+                            <span class="badge bg-success">Disponible</span>
+                            {% elif lote.estado == 'CONSUMIDO' %}
+                            <span class="badge bg-danger">Consumido</span>
+                            {% elif lote.estado == 'CUARENTENA' %}
+                            <span class="badge bg-warning">Cuarentena</span>
+                            {% elif lote.estado == 'DESPACHADO' %}
+                            <span class="badge bg-primary">Despachado</span>
+                            {% else %}
+                            <span class="badge bg-secondary">{{ lote.estado }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div>
+                        <div class="fw-bold">Ubicación Actual:</div>
+                        <div>{{ lote.ubicacion.nombre }}</div>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <a href="{% url 'inventario_web:pt-detail' lote.id %}" class="btn btn-outline-primary btn-sm w-100">
+                            <i class="fas fa-arrow-left me-2"></i> Volver al Detalle
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-8">
+            <!-- Timeline de Movimientos -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Historial de Movimientos</h5>
+                </div>
+                <div class="card-body">
+                    {% if movimientos %}
+                    <div class="timeline">
+                        {% for mov in movimientos %}
+                        {% if mov.tipo_movimiento in 'PRODUCCION,AJUSTE_POSITIVO,TRANSFERENCIA_ENTRADA,QA_RELEASE' %}
+                        <div class="timeline-item entrada">
+                        {% elif mov.tipo_movimiento in 'CONSUMO,AJUSTE_NEGATIVO,TRANSFERENCIA_SALIDA,QA_HOLD,DESECHO_SCRAP' %}
+                        <div class="timeline-item salida">
+                        {% else %}
+                        <div class="timeline-item">
+                        {% endif %}
+                            <div class="timeline-date">{{ mov.fecha_movimiento|date:"d/m/Y H:i" }}</div>
+                            <div class="timeline-title">
+                                {{ mov.get_tipo_movimiento_display }}
+                                {% if mov.tipo_movimiento in 'PRODUCCION,AJUSTE_POSITIVO,TRANSFERENCIA_ENTRADA,QA_RELEASE' %}
+                                <span class="timeline-badge badge-entrada">Entrada</span>
+                                {% elif mov.tipo_movimiento in 'CONSUMO,AJUSTE_NEGATIVO,TRANSFERENCIA_SALIDA,QA_HOLD,DESECHO_SCRAP' %}
+                                <span class="timeline-badge badge-salida">Salida</span>
+                                {% elif mov.tipo_movimiento in 'AJUSTE_POSITIVO,AJUSTE_NEGATIVO' %}
+                                <span class="timeline-badge badge-ajuste">Ajuste</span>
+                                {% elif mov.tipo_movimiento in 'TRANSFERENCIA_ENTRADA,TRANSFERENCIA_SALIDA' %}
+                                <span class="timeline-badge badge-transferencia">Transferencia</span>
+                                {% elif mov.tipo_movimiento in 'QA_RELEASE,QA_HOLD' %}
+                                <span class="timeline-badge badge-qa">Calidad</span>
+                                {% endif %}
+                            </div>
+                            <div class="timeline-content">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="fw-bold">Cantidad:</div>
+                                        <div>{{ mov.cantidad|floatformat:2 }} {{ mov.unidad_medida.codigo }}</div>
+                                    </div>
+                                    {% if mov.ubicacion_origen %}
+                                    <div class="col-md-4">
+                                        <div class="fw-bold">Origen:</div>
+                                        <div>{{ mov.ubicacion_origen.nombre }}</div>
+                                    </div>
+                                    {% endif %}
+                                    {% if mov.ubicacion_destino %}
+                                    <div class="col-md-4">
+                                        <div class="fw-bold">Destino:</div>
+                                        <div>{{ mov.ubicacion_destino.nombre }}</div>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                {% if mov.documento_referencia %}
+                                <div class="mt-2">
+                                    <div class="fw-bold">Documento Ref:</div>
+                                    <div>{{ mov.documento_referencia }}</div>
+                                </div>
+                                {% endif %}
+                                {% if mov.observaciones %}
+                                <div class="mt-2">
+                                    <div class="fw-bold">Observaciones:</div>
+                                    <div>{{ mov.observaciones }}</div>
+                                </div>
+                                {% endif %}
+                                <div class="mt-2 text-muted small">
+                                    Usuario: {{ mov.usuario.get_full_name|default:mov.usuario.username }}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        No hay movimientos registrados para este lote.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

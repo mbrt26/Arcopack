@@ -57,10 +57,11 @@ class KanbanBaseView(TemplateView):
         
         return context
 
+
 class ImpresionKanbanView(KanbanBaseView):
     """Vista Kanban para proceso de Impresión."""
     template_name = 'produccion/kanban/impresion_kanban.html'
-    proceso_nombre = 'Impresion'
+    proceso_nombre = 'Impresión'
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -86,11 +87,12 @@ class ImpresionKanbanView(KanbanBaseView):
         """Determina el estado específico para el proceso de impresión."""
         if orden.etapa_actual == 'IMPR':
             return 'en_proceso'
-        elif orden.etapa_actual in ['LIBR', 'PROG']:
+        elif orden.etapa_actual == 'PROG':
             return 'pendiente'
         elif orden.etapa_actual in ['REFI', 'SELL', 'DOBL', 'TERM']:
             return 'completado'
         return 'pendiente'
+
 
 class RefiladoKanbanView(KanbanBaseView):
     """Vista Kanban para proceso de Refilado."""
@@ -104,28 +106,121 @@ class RefiladoKanbanView(KanbanBaseView):
         context['create_url'] = reverse('produccion_web:refilado-create')
         context['create_button_text'] = 'Nuevo Registro de Refilado'
         
-        # Lógica específica para refilado
+        # Obtener todas las órdenes relevantes para refilado
         from ..models import Refilado
         
-        registros_activos = Refilado.objects.filter(
+        # Obtener órdenes que están en etapas relevantes para refilado
+        ordenes_query = OrdenProduccion.objects.filter(
             is_active=True,
-            hora_final__isnull=True  # Registros en proceso
+            etapa_actual__in=['PROG', 'IMPR', 'REFI']  # Etapas relevantes para refilado
         ).select_related(
-            'orden_produccion', 'maquina', 'operario_principal'
-        )
+            'cliente', 'producto'  # Corregido: 'producto' en lugar de 'producto_terminado'
+        ).prefetch_related(
+            'registros_refilado',  # Corregido: usar 'registros_refilado' en lugar de 'refilados'
+            'registros_refilado__paros_refilado'  # También corregir esta referencia
+        ).order_by('fecha_compromiso_entrega')
         
-        context['registros_activos'] = registros_activos
+        # Categorizar órdenes por estado
+        ordenes_pendientes = []
+        ordenes_proceso = []
+        ordenes_pausadas = []
+        ordenes_terminadas = []
+        
+        for orden in ordenes_query:
+            # Obtener el registro de refilado activo más reciente
+            registro_actual = orden.registros_refilado.filter(
+                is_active=True
+            ).order_by('-fecha', '-hora_inicio').first()
+            
+            # Determinar estado de la orden
+            if orden.etapa_actual == 'REFI':
+                if registro_actual:
+                    # Verificar si hay paros activos
+                    paro_actual = registro_actual.paros_refilado.filter(
+                        hora_final_paro__isnull=True
+                    ).first()
+                    
+                    if paro_actual:
+                        orden.paro_actual = paro_actual
+                        orden.registro_actual = registro_actual
+                        ordenes_pausadas.append(orden)
+                    elif registro_actual.hora_final is None:
+                        # En proceso (iniciado pero no terminado)
+                        orden.registro_actual = registro_actual
+                        ordenes_proceso.append(orden)
+                    else:
+                        # Terminado
+                        orden.registro_actual = registro_actual
+                        ordenes_terminadas.append(orden)
+                else:
+                    # Orden en etapa REFI pero sin registro de refilado - va a pendientes
+                    # Agregar información de lotes WIP disponibles
+                    from inventario.models import LoteProductoEnProceso
+                    lotes_wip = LoteProductoEnProceso.objects.filter(
+                        orden_produccion=orden,
+                        cantidad_actual__gt=0,
+                        estado='DISPONIBLE'
+                    ).order_by('creado_en')  # Corregido: usar 'creado_en' en lugar de 'fecha_creacion'
+                    orden.lotes_wip_disponibles = lotes_wip
+                    ordenes_pendientes.append(orden)
+            elif orden.etapa_actual in ['PROG', 'IMPR']:
+                # Pendiente de iniciar refilado
+                # Agregar información de lotes WIP disponibles
+                from inventario.models import LoteProductoEnProceso
+                lotes_wip = LoteProductoEnProceso.objects.filter(
+                    orden_produccion=orden,
+                    cantidad_actual__gt=0,
+                    estado='DISPONIBLE'
+                ).order_by('creado_en')  # Corregido: usar 'creado_en' en lugar de 'fecha_creacion'
+                orden.lotes_wip_disponibles = lotes_wip
+                ordenes_pendientes.append(orden)
+        
+        # Calcular totales de producción para órdenes terminadas
+        for orden in ordenes_terminadas:
+            if hasattr(orden, 'registro_actual') and orden.registro_actual:
+                # Calcular producción total del registro
+                from inventario.models import LoteProductoEnProceso, LoteProductoTerminado
+                from django.contrib.contenttypes.models import ContentType
+                
+                ct = ContentType.objects.get_for_model(Refilado)
+                
+                # Sumar producción de lotes WIP y PT generados por este registro
+                lotes_wip = LoteProductoEnProceso.objects.filter(
+                    proceso_origen_content_type=ct,
+                    proceso_origen_object_id=orden.registro_actual.id
+                )
+                lotes_pt = LoteProductoTerminado.objects.filter(
+                    proceso_final_content_type=ct,
+                    proceso_final_object_id=orden.registro_actual.id
+                )
+                
+                total_wip = sum(lote.cantidad_producida_primaria for lote in lotes_wip)
+                total_pt = sum(lote.cantidad_producida for lote in lotes_pt)
+                orden.produccion_total = total_wip + total_pt
+        
+        # Actualizar contexto con las variables correctas que espera el template
+        context.update({
+            'ordenes_pendientes': ordenes_pendientes,
+            'ordenes_proceso': ordenes_proceso,
+            'ordenes_pausadas': ordenes_pausadas,
+            'ordenes_terminadas': ordenes_terminadas,
+            # También mantener las variables originales para compatibilidad
+            'ordenes_en_proceso': ordenes_proceso,
+            'ordenes_completadas': ordenes_terminadas,
+        })
+        
         return context
     
     def get_orden_estado(self, orden):
         """Determina el estado específico para el proceso de refilado."""
         if orden.etapa_actual == 'REFI':
             return 'en_proceso'
-        elif orden.etapa_actual == 'IMPR':
+        elif orden.etapa_actual in ['PROG', 'IMPR']:
             return 'pendiente'
         elif orden.etapa_actual in ['SELL', 'DOBL', 'TERM']:
             return 'completado'
         return 'pendiente'
+
 
 class SelladoKanbanView(KanbanBaseView):
     """Vista Kanban para proceso de Sellado."""
@@ -161,6 +256,7 @@ class SelladoKanbanView(KanbanBaseView):
         elif orden.etapa_actual in ['DOBL', 'TERM']:
             return 'completado'
         return 'pendiente'
+
 
 class DobladoKanbanView(KanbanBaseView):
     """Vista Kanban para proceso de Doblado."""

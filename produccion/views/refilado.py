@@ -5,6 +5,9 @@ Incluye vistas HTML, ViewSets y acciones específicas para el proceso de refilad
 """
 
 from django.db import transaction
+from django.views.generic import ListView
+from django.urls import reverse_lazy
+from django.contrib.contenttypes.models import ContentType
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -37,10 +40,11 @@ class RegistroRefiladoCreateView(BaseProduccionCreateView):
     model = Refilado
     form_class = RegistroRefiladoForm
     template_name = 'produccion/registro_refilado_form.html'
-    success_url = '/produccion/refilado/'
+    success_url = reverse_lazy('produccion_web:registro-refilado-list')
     
     def get_formsets(self, context):
         """Define los formsets específicos para refilado."""
+        # Pasar datos POST cuando se está procesando el formulario
         data = self.request.POST if self.request.method == 'POST' else None
         return {
             'paro_formset': ParoRefiladoFormset(data, instance=self.object, prefix='paro_formset'),
@@ -53,6 +57,10 @@ class RegistroRefiladoCreateView(BaseProduccionCreateView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        # Agregar causas de paro al contexto
+        from configuracion.models import CausaParo
+        context['causas_paro'] = CausaParo.objects.all().order_by('codigo')
+        
         context.update({
             'page_title': 'Nuevo Registro de Refilado',
             'form_action': 'Crear',
@@ -66,10 +74,11 @@ class RegistroRefiladoUpdateView(BaseProduccionUpdateView):
     model = Refilado
     form_class = RegistroRefiladoForm
     template_name = 'produccion/registro_refilado_form.html'
-    success_url = '/produccion/refilado/'
+    success_url = reverse_lazy('produccion_web:registro-refilado-list')
     
     def get_formsets(self, context):
         """Define los formsets específicos para refilado."""
+        # Pasar datos POST cuando se está procesando el formulario
         data = self.request.POST if self.request.method == 'POST' else None
         return {
             'paro_formset': ParoRefiladoFormset(data, instance=self.object, prefix='paro_formset'),
@@ -82,6 +91,10 @@ class RegistroRefiladoUpdateView(BaseProduccionUpdateView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        # Agregar causas de paro al contexto
+        from configuracion.models import CausaParo
+        context['causas_paro'] = CausaParo.objects.all().order_by('codigo')
+        
         context.update({
             'page_title': f'Editar Registro de Refilado - {self.object.orden_produccion.op_numero}',
             'form_action': 'Actualizar',
@@ -90,61 +103,93 @@ class RegistroRefiladoUpdateView(BaseProduccionUpdateView):
         return context
 
 
+class RegistroRefiladoListView(ListView):
+    """Vista para listar todos los registros de refilado."""
+    model = Refilado
+    template_name = 'produccion/registro_refilado_list.html'
+    context_object_name = 'registros'
+    
+    def get_queryset(self):
+        """Obtener todos los registros activos ordenados por fecha y hora."""
+        return Refilado.objects.filter(is_active=True).select_related(
+            'orden_produccion', 'maquina', 'operario_principal'
+        ).order_by('-fecha', '-hora_inicio')
+
+
 class RegistroRefiladoDetailView(BaseProduccionDetailView):
     """Vista para mostrar detalles de un registro de refilado."""
     template_name = 'produccion/registro_refilado_detail.html'
     
     def get_queryset(self):
-        return Refilado.objects.select_related(
-            'orden_produccion', 'maquina', 'operario_principal'
-        ).prefetch_related(
-            'paros_refilado', 'consumos_wip_refilado', 'consumos_mp_refilado',
-            'produccion_refilado'
+        return Refilado.objects.filter(is_active=True).select_related(
+            'orden_produccion', 'orden_produccion__cliente', 'orden_produccion__producto',
+            'maquina', 'operario_principal'
         )
     
     def get_lotes_producidos(self, registro):
         """Obtiene información de lotes producidos en refilado."""
+        from django.contrib.contenttypes.models import ContentType
+        from inventario.models import LoteProductoEnProceso, LoteProductoTerminado
+        
+        ct = ContentType.objects.get_for_model(registro.__class__)
+        
         lotes_wip = LoteProductoEnProceso.objects.filter(
-            registro_origen_refilado=registro
-        ).select_related('ubicacion', 'producto')
+            proceso_origen_content_type=ct,
+            proceso_origen_object_id=registro.id
+        ).select_related('ubicacion', 'producto_terminado')
         
         lotes_pt = LoteProductoTerminado.objects.filter(
-            registro_origen_refilado=registro
-        ).select_related('ubicacion', 'producto')
+            proceso_final_content_type=ct,
+            proceso_final_object_id=registro.id
+        ).select_related('ubicacion', 'producto_terminado')
+        
+        lotes_data = [
+            {
+                'tipo': 'WIP',
+                'lote_id': lote.lote_id,
+                'cantidad_producida': lote.cantidad_producida_primaria
+            } for lote in lotes_wip
+        ] + [
+            {
+                'tipo': 'PT',
+                'lote_id': lote.lote_id,
+                'cantidad_producida': lote.cantidad_producida
+            } for lote in lotes_pt
+        ]
         
         return {
             'lotes_wip': lotes_wip,
             'lotes_pt': lotes_pt,
+            'lotes_data': lotes_data,
             'total_lotes': lotes_wip.count() + lotes_pt.count()
         }
     
     def calculate_totales(self, registro, lotes_data):
         """Calcula totales específicos para refilado."""
-        # Calcular total de WIP consumido
-        total_wip_kg = sum(
-            consumo.cantidad_kg for consumo in registro.consumos_wip_refilado.all()
+        # Calcular totales de producción
+        total_kg_producidos = sum(
+            lote.cantidad_producida_primaria if hasattr(lote, 'cantidad_producida_primaria') 
+            else lote.cantidad_producida
+            for lote_type in ['lotes_wip', 'lotes_pt']
+            for lote in lotes_data.get(lote_type, [])
         )
         
-        # Calcular total de MP consumida
-        total_mp_kg = sum(
-            consumo.cantidad_kg for consumo in registro.consumos_mp_refilado.all()
+        # Calcular totales de consumo - CORREGIDO: usar nombres correctos de las relaciones
+        total_kg_consumidos = sum(
+            consumo.cantidad_kg_consumida 
+            for consumo in registro.consumos_wip.all()
+        ) + sum(
+            consumo.cantidad_consumida 
+            for consumo in registro.consumos_mp.all()
         )
         
-        # Calcular total producido
-        total_producido_kg = sum(
-            produccion.kg_producidos for produccion in registro.produccion_refilado.all()
-        )
-        
-        # Calcular eficiencia de material
-        total_entrada = total_wip_kg + total_mp_kg
-        eficiencia_material = (total_producido_kg / total_entrada * 100) if total_entrada > 0 else 0
+        # Calcular rendimiento
+        rendimiento = (total_kg_producidos / total_kg_consumidos * 100) if total_kg_consumidos > 0 else 0
         
         return {
-            'total_wip_kg': total_wip_kg,
-            'total_mp_kg': total_mp_kg,
-            'total_entrada_kg': total_entrada,
-            'total_producido_kg': total_producido_kg,
-            'eficiencia_material': round(eficiencia_material, 2),
+            'total_kg_producidos': total_kg_producidos,
+            'total_kg_consumidos': total_kg_consumidos,
+            'rendimiento': round(rendimiento, 2),
         }
     
     def get_proceso_name(self):
@@ -161,7 +206,7 @@ class RefiladoViewSet(BaseProduccionViewSet):
         'orden_produccion', 'maquina', 'operario_principal'
     )
     serializer_class = RefiladoSerializer
-
+    
     @action(detail=True, methods=['post'], url_path='consumir-wip')
     def consumir_wip(self, request, pk=None):
         """Acción para consumir WIP (rollo) en el proceso de refilado."""

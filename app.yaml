@@ -1,7 +1,6 @@
 runtime: python39
-# Corregido: Se eliminó 'python manage.py collectstatic --noinput &&' del entrypoint.
-# Cloud Build ejecutará collectstatic automáticamente durante la fase de compilación.
-entrypoint: gunicorn -b :$PORT erp_config.wsgi
+
+entrypoint: gunicorn -b :$PORT erp_config.wsgi:application
 
 instance_class: F2
 
@@ -18,27 +17,28 @@ env_variables:
   DATABASE_ENGINE: 'django.db.backends.postgresql'
   DATABASE_NAME: 'arcopackdb'
   DATABASE_USER: 'arcopackuser'
-  DATABASE_PASSWORD: 'ArcopakDB2025!' # Considera usar Secret Manager para esto
-  DATABASE_HOST: '/cloudsql/arcopack:southamerica-east1:arcopack-db'
-  DATABASE_PORT: '' # Generalmente se deja vacío para sockets de Cloud SQL
-  DJANGO_SECRET_KEY: 'django-insecure-tfm4v3$tr4fk(ww-d+e^)2b*a1t4f1zj%*u54+3=1$3d@g9(q' # Considera usar Secret Manager para esto
+  # Usar Secret Manager para credenciales sensibles en producción
+  DATABASE_PASSWORD: 'ArcopakDB2025!'
+  DATABASE_HOST: '/cloudsql/appsindunnova:southamerica-east1:arcopack-db'
+  DATABASE_PORT: ''
+  DJANGO_SECRET_KEY: 'django-production-secret-key-change-this-in-production'
   PYTHONUNBUFFERED: '1'
+  GOOGLE_CLOUD_PROJECT: 'appsindunnova'
 
 beta_settings:
-  cloud_sql_instances: arcopack:southamerica-east1:arcopack-db
+  cloud_sql_instances: appsindunnova:southamerica-east1:arcopack-db
 
 handlers:
   - url: /static
-    static_dir: staticfiles/ # Asegúrate que esto coincida con tu STATIC_ROOT en settings.py
+    static_dir: staticfiles/
+    expiration: 1d
 
-  # Cualquier otra ruta que no sea /static será manejada por tu aplicación Django
+  - url: /media
+    static_dir: media/
+    expiration: 1d
+
   - url: /.*
     script: auto
 
 network:
-  session_affinity: true # Útil si usas sesiones en memoria, pero con sesiones en BD podría no ser estrictamente necesario
-
-resources: # Estas configuraciones son más relevantes para App Engine Flexible, pero no dañan en Standard
-  cpu: 2
-  memory_gb: 2
-  disk_size_gb: 10
+  session_affinity: true

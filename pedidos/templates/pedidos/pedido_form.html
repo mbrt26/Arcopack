@@ -227,20 +227,28 @@
                                         {{ hidden }}
                                     {% endfor %}
                                     
-                                    <div class="row align-items-center">
-                                        <div class="col-md-1">
-                                            <strong class="numero-linea">#{{ forloop.counter }}</strong>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <label class="form-label">Producto *</label>
-                                            {{ form.producto }}
-                                            {% if form.producto.errors %}
-                                                <div class="invalid-feedback d-block">
-                                                    {{ form.producto.errors.0 }}
-                                                </div>
-                                            {% endif %}
-                                        </div>
-                                        <div class="col-md-2">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <strong class="numero-linea">#{{ forloop.counter }}</strong>
+                                        {% if lineas_formset.can_delete %}
+                                            <button type="button" class="btn-remove-linea" title="Eliminar línea">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                            {{ form.DELETE }}
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">Producto *</label>
+                                        {{ form.producto }}
+                                        {% if form.producto.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {{ form.producto.errors.0 }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="row g-2 mb-3">
+                                        <div class="col-6">
                                             <label class="form-label">Cantidad *</label>
                                             {{ form.cantidad }}
                                             {% if form.cantidad.errors %}
@@ -249,7 +257,7 @@
                                                 </div>
                                             {% endif %}
                                         </div>
-                                        <div class="col-md-2">
+                                        <div class="col-6">
                                             <label class="form-label">Precio Unit.</label>
                                             {{ form.precio_unitario }}
                                             {% if form.precio_unitario.errors %}
@@ -258,17 +266,21 @@
                                                 </div>
                                             {% endif %}
                                         </div>
-                                        <div class="col-md-2">
+                                    </div>
+                                    
+                                    <div class="row g-2 mb-3">
+                                        <div class="col-6">
+                                            <label class="form-label">Desc. (%)</label>
+                                            {{ form.descuento_porcentaje }}
+                                            {% if form.descuento_porcentaje.errors %}
+                                                <div class="invalid-feedback d-block">
+                                                    {{ form.descuento_porcentaje.errors.0 }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-6">
                                             <label class="form-label">Subtotal</label>
                                             <input type="text" class="form-control subtotal-display" readonly value="$0.00">
-                                        </div>
-                                        <div class="col-md-1">
-                                            {% if lineas_formset.can_delete %}
-                                                <button type="button" class="btn-remove-linea" title="Eliminar línea">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                                {{ form.DELETE }}
-                                            {% endif %}
                                         </div>
                                     </div>
                                     
@@ -330,7 +342,7 @@
                         </button>
                         
                         {% if object and object.estado == 'CONFIRMADO' %}
-                            <a href="{% url 'pedidos_web:crear-orden-produccion' object.pk %}" class="btn btn-success">
+                            <a href="{% url 'pedidos_web:crear_orden_produccion' object.pk %}" class="btn btn-success">
                                 <i class="fas fa-cogs"></i> Crear Orden de Producción
                             </a>
                         {% endif %}
@@ -362,48 +374,71 @@
 </div>
 
 <!-- Template para nueva línea -->
-<div id="linea-template" class="linea-pedido d-none" data-form-index="__prefix__">
-    <div class="row align-items-center">
-        <div class="col-md-1">
+<div id="linea-template" class="d-none">
+    <div class="linea-pedido" data-form-index="__prefix__">
+        <!-- Campos ocultos -->
+        <input type="hidden" name="form-__prefix__-id" id="id_form-__prefix__-id">
+        <input type="hidden" name="form-__prefix__-DELETE" id="id_form-__prefix__-DELETE">
+        <input type="hidden" name="form-__prefix__-orden_linea" id="id_form-__prefix__-orden_linea" value="1">
+        
+        <div class="d-flex justify-content-between align-items-center mb-3">
             <strong class="numero-linea">#</strong>
-        </div>
-        <div class="col-md-4">
-            <label class="form-label">Producto *</label>
-            <!-- El contenido se completará via JavaScript -->
-        </div>
-        <div class="col-md-2">
-            <label class="form-label">Cantidad *</label>
-            <!-- El contenido se completará via JavaScript -->
-        </div>
-        <div class="col-md-2">
-            <label class="form-label">Precio Unit.</label>
-            <!-- El contenido se completará via JavaScript -->
-        </div>
-        <div class="col-md-2">
-            <label class="form-label">Subtotal</label>
-            <input type="text" class="form-control subtotal-display" readonly value="0.00">
-        </div>
-        <div class="col-md-1">
             <button type="button" class="btn-remove-linea" title="Eliminar línea">
                 <i class="fas fa-trash"></i>
             </button>
         </div>
-    </div>
-
-    <div class="row mt-2">
-        <div class="col-12">
-            <label class="form-label">Especificaciones Técnicas</label>
-            <!-- El contenido se completará via JavaScript -->
+        
+        <div class="mb-3">
+            <label class="form-label">Producto *</label>
+            <select name="form-__prefix__-producto" id="id_form-__prefix__-producto" class="form-select form-select-sm" required>
+                <option value="">---------</option>
+                <!-- Opciones se agregarán dinámicamente desde productosData -->
+            </select>
         </div>
-    </div>
-
-    <div class="producto-info" style="display: none;">
-        <div class="row">
-            <div class="col-md-6">
-                <small><strong>Unidad:</strong> <span class="unidad-medida">-</span></small>
+        
+        <div class="row g-2 mb-3">
+            <div class="col-6">
+                <label class="form-label">Cantidad *</label>
+                <input type="number" name="form-__prefix__-cantidad" id="id_form-__prefix__-cantidad" 
+                       class="form-control form-control-sm" min="0.01" step="0.001" placeholder="0.000" required>
             </div>
-            <div class="col-md-6">
-                <small><strong>Precio Base:</strong> $<span class="precio-base">-</span></small>
+            <div class="col-6">
+                <label class="form-label">Precio Unit.</label>
+                <input type="number" name="form-__prefix__-precio_unitario" id="id_form-__prefix__-precio_unitario"
+                       class="form-control form-control-sm" min="0" step="0.0001" placeholder="0.0000" required>
+            </div>
+        </div>
+        
+        <div class="row g-2 mb-3">
+            <div class="col-6">
+                <label class="form-label">Desc. (%)</label>
+                <input type="number" name="form-__prefix__-descuento_porcentaje" id="id_form-__prefix__-descuento_porcentaje"
+                       class="form-control form-control-sm" min="0" max="100" step="0.01" placeholder="0.00" value="0.00">
+            </div>
+            <div class="col-6">
+                <label class="form-label">Subtotal</label>
+                <input type="text" class="form-control subtotal-display" readonly value="$0.00">
+            </div>
+        </div>
+        </div>
+
+        <div class="row mt-2">
+            <div class="col-12">
+                <label class="form-label">Especificaciones Técnicas</label>
+                <textarea name="form-__prefix__-especificaciones_tecnicas" id="id_form-__prefix__-especificaciones_tecnicas"
+                          class="form-control form-control-sm" rows="2" 
+                          placeholder="Especificaciones técnicas específicas para esta línea..."></textarea>
+            </div>
+        </div>
+
+        <div class="producto-info" style="display: none;">
+            <div class="row">
+                <div class="col-md-6">
+                    <small><strong>Unidad:</strong> <span class="unidad-medida">-</span></small>
+                </div>
+                <div class="col-md-6">
+                    <small><strong>Precio Base:</strong> $<span class="precio-base">-</span></small>
+                </div>
             </div>
         </div>
     </div>
@@ -413,16 +448,62 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    let formIndex = {{ lineas_formset.total_form_count|default:0 }};
+    // Inicializar formIndex basado en formularios realmente existentes y visibles
+    const lineasExistentesVisibles = document.querySelectorAll('.linea-pedido:not(.d-none):not(#linea-template .linea-pedido)');
+    let formIndex = lineasExistentesVisibles.length;
+    
+    // Actualizar el TOTAL_FORMS para que coincida con las líneas realmente visibles
+    const totalFormsInput = document.getElementById('id_form-TOTAL_FORMS');
+    if (totalFormsInput) {
+        totalFormsInput.value = formIndex;
+    }
+    
+    // Pasar datos de productos a JavaScript desde Django
+    window.productosData = {{ productos_json|safe }};
+    
+    // Función para crear opciones de productos para un select
+    function crearOpcionesProductos(selectElement) {
+        // Limpiar opciones existentes
+        selectElement.innerHTML = '<option value="">---------</option>';
+        
+        // Agregar productos desde los datos
+        if (window.productosData) {
+            window.productosData.forEach(producto => {
+                const option = document.createElement('option');
+                option.value = producto.id;
+                option.textContent = `${producto.codigo} - ${producto.nombre}`;
+                selectElement.appendChild(option);
+            });
+        }
+    }
     
     // Función para actualizar numeración de líneas
     function actualizarNumeracion() {
-        document.querySelectorAll('.linea-pedido:not([style*="display: none"])').forEach((linea, index) => {
+        const lineasVisibles = document.querySelectorAll('.linea-pedido:not([style*="display: none"]):not(.d-none):not(#linea-template .linea-pedido)');
+        lineasVisibles.forEach((linea, index) => {
             const numeroLinea = linea.querySelector('.numero-linea');
             if (numeroLinea) {
                 numeroLinea.textContent = '#' + (index + 1);
             }
+            
+            // Actualizar orden_linea
+            const ordenInput = linea.querySelector('input[name$="-orden_linea"]');
+            if (ordenInput) {
+                ordenInput.value = index + 1;
+            }
         });
+        
+        // Actualizar contador en la interfaz
+        const contador = document.getElementById('contador-lineas');
+        if (contador) {
+            contador.textContent = lineasVisibles.length;
+        }
+        
+        // Actualizar TOTAL_FORMS para que coincida exactamente con líneas visibles
+        const totalFormsInput = document.getElementById('id_form-TOTAL_FORMS');
+        if (totalFormsInput) {
+            totalFormsInput.value = lineasVisibles.length;
+        }
     }
 
     // Función para calcular subtotales y total
@@ -431,33 +512,46 @@ document.addEventListener('DOMContentLoaded', function() {
         let totalLineas = 0;
         let totalItems = 0;
 
-        document.querySelectorAll('.linea-pedido:not([style*="display: none"])').forEach(linea => {
+        const lineasVisibles = document.querySelectorAll('.linea-pedido:not([style*="display: none"]):not(.d-none):not(#linea-template .linea-pedido)');
+        lineasVisibles.forEach(linea => {
+            const deleteInput = linea.querySelector('input[name$="-DELETE"]');
+            if (deleteInput && deleteInput.checked) return; // Skip deleted forms
+            
             const cantidadInput = linea.querySelector('input[name$="-cantidad"]');
             const precioInput = linea.querySelector('input[name$="-precio_unitario"]');
+            const descuentoInput = linea.querySelector('input[name$="-descuento_porcentaje"]');
             const subtotalDisplay = linea.querySelector('.subtotal-display');
 
             if (cantidadInput && precioInput && subtotalDisplay) {
                 const cantidad = parseFloat(cantidadInput.value) || 0;
                 const precio = parseFloat(precioInput.value) || 0;
-                const subtotal = cantidad * precio;
+                const descuento = parseFloat(descuentoInput?.value) || 0;
+                
+                // Calcular subtotal bruto
+                const subtotalBruto = cantidad * precio;
+                
+                // Aplicar descuento si existe
+                const valorDescuento = (subtotalBruto * descuento) / 100;
+                const subtotalNeto = subtotalBruto - valorDescuento;
 
-                subtotalDisplay.value = '$' + subtotal.toFixed(2);
-                totalGeneral += subtotal;
-                totalItems += cantidad;
-                totalLineas++;
+                subtotalDisplay.value = '$' + subtotalNeto.toFixed(2);
+                
+                if (cantidad > 0 && precio > 0) {
+                    totalGeneral += subtotalNeto;
+                    totalItems += cantidad;
+                    totalLineas++;
+                }
             }
         });
 
         // Actualizar displays del total
         const totalElement = document.getElementById('total-pedido');
-        const contadorElement = document.getElementById('contador-lineas');
         const contadorTotalElement = document.getElementById('contador-lineas-total');
         const itemsElement = document.getElementById('total-items');
         
         if (totalElement) totalElement.textContent = '$' + totalGeneral.toFixed(2);
-        if (contadorElement) contadorElement.textContent = totalLineas;
         if (contadorTotalElement) contadorTotalElement.textContent = totalLineas;
-        if (itemsElement) itemsElement.textContent = totalItems.toFixed(2);
+        if (itemsElement) itemsElement.textContent = totalItems.toFixed(3);
     }
 
     // Función para agregar nueva línea
@@ -465,42 +559,118 @@ document.addEventListener('DOMContentLoaded', function() {
         const container = document.getElementById('lineas-container');
         const template = document.getElementById('linea-template');
         
-        if (!container || !template) return;
+        if (!container || !template) {
+            console.error('Container or template not found');
+            return;
+        }
         
-        const newLinea = template.cloneNode(true);
+        // Clonar el template
+        const templateContent = template.querySelector('.linea-pedido');
+        if (!templateContent) {
+            console.error('Template content not found');
+            return;
+        }
+        
+        const newLinea = templateContent.cloneNode(true);
         newLinea.classList.remove('d-none');
-        newLinea.id = '';
         newLinea.style.display = 'block';
         
         // Actualizar índices del formulario
         newLinea.dataset.formIndex = formIndex;
-        newLinea.innerHTML = newLinea.innerHTML.replace(/__prefix__/g, formIndex);
+        
+        // Reemplazar __prefix__ con el índice actual
+        const elements = newLinea.querySelectorAll('[name*="__prefix__"], [id*="__prefix__"], [for*="__prefix__"]');
+        elements.forEach(element => {
+            ['name', 'id', 'for'].forEach(attr => {
+                if (element.hasAttribute(attr)) {
+                    const value = element.getAttribute(attr);
+                    element.setAttribute(attr, value.replace(/__prefix__/g, formIndex));
+                }
+            });
+        });
+        
+        // Poblar el select de productos
+        const productoSelect = newLinea.querySelector('select[name$="-producto"]');
+        if (productoSelect) {
+            crearOpcionesProductos(productoSelect);
+        }
+        
+        // Asegurarse de que orden_linea tenga un valor correcto
+        const ordenLineaInput = newLinea.querySelector('input[name$="-orden_linea"]');
+        if (ordenLineaInput) {
+            // Contar cuántas líneas visibles hay actualmente y asignar el siguiente número
+            const lineasVisibles = document.querySelectorAll('.linea-pedido:not([style*="display: none"]):not(.d-none):not(#linea-template .linea-pedido)');
+            ordenLineaInput.value = lineasVisibles.length + 1;
+        }
         
         container.appendChild(newLinea);
         
         // Incrementar contador de formularios
         formIndex++;
-        document.getElementById('id_form-TOTAL_FORMS').value = formIndex;
         
         actualizarNumeracion();
         agregarEventListeners(newLinea);
         calcularTotales();
+        
+        console.log(`Nueva línea agregada. Total formularios: ${formIndex}`);
     }
 
     // Función para eliminar línea
     function eliminarLinea(button) {
         const linea = button.closest('.linea-pedido');
-        const deleteInput = linea.querySelector('input[name$="-DELETE"]');
+        if (!linea) return;
         
-        if (deleteInput) {
+        const deleteInput = linea.querySelector('input[name$="-DELETE"]');
+        const idInput = linea.querySelector('input[name$="-id"]');
+        
+        // Si es un formulario existente (tiene ID), marcarlo para eliminación
+        if (deleteInput && idInput && idInput.value) {
             deleteInput.checked = true;
             linea.style.display = 'none';
+            console.log('Línea marcada para eliminación');
         } else {
+            // Si es un formulario nuevo, removerlo del DOM completamente
             linea.remove();
+            console.log('Línea removida del DOM');
         }
         
         actualizarNumeracion();
         calcularTotales();
+    }
+
+    // Función para manejar cambio de producto
+    function manejarCambioProducto(selectElement) {
+        const productoId = selectElement.value;
+        const linea = selectElement.closest('.linea-pedido');
+        
+        if (productoId && window.productosData && linea) {
+            const producto = window.productosData.find(p => p.id == productoId);
+            if (producto) {
+                const precioInput = linea.querySelector('input[name$="-precio_unitario"]');
+                if (precioInput && !precioInput.value) {
+                    // Solo asignar precio si no hay valor previo
+                    precioInput.value = producto.precio_venta || 0;
+                    calcularTotales();
+                }
+                
+                // Mostrar información del producto
+                const productoInfo = linea.querySelector('.producto-info');
+                if (productoInfo) {
+                    const unidadSpan = productoInfo.querySelector('.unidad-medida');
+                    const precioSpan = productoInfo.querySelector('.precio-base');
+                    
+                    if (unidadSpan) unidadSpan.textContent = producto.unidad_medida || '-';
+                    if (precioSpan) precioSpan.textContent = producto.precio_venta || '-';
+                    
+                    productoInfo.style.display = 'block';
+                } else {
+                    // Ocultar información del producto si se deselecciona
+                    if (productoInfo) {
+                        productoInfo.style.display = 'none';
+                    }
+                }
+            }
+        }
     }
 
     // Función para agregar event listeners a una línea
@@ -508,7 +678,8 @@ document.addEventListener('DOMContentLoaded', function() {
         // Botón eliminar
         const btnEliminar = linea.querySelector('.btn-remove-linea');
         if (btnEliminar) {
-            btnEliminar.addEventListener('click', function() {
+            btnEliminar.addEventListener('click', function(e) {
+                e.preventDefault();
                 eliminarLinea(this);
             });
         }
@@ -516,30 +687,26 @@ document.addEventListener('DOMContentLoaded', function() {
         // Inputs de cálculo
         const cantidadInput = linea.querySelector('input[name$="-cantidad"]');
         const precioInput = linea.querySelector('input[name$="-precio_unitario"]');
+        const descuentoInput = linea.querySelector('input[name$="-descuento_porcentaje"]');
         
         if (cantidadInput) {
             cantidadInput.addEventListener('input', calcularTotales);
+            cantidadInput.addEventListener('change', calcularTotales);
         }
         if (precioInput) {
             precioInput.addEventListener('input', calcularTotales);
+            precioInput.addEventListener('change', calcularTotales);
+        }
+        if (descuentoInput) {
+            descuentoInput.addEventListener('input', calcularTotales);
+            descuentoInput.addEventListener('change', calcularTotales);
         }
 
         // Selector de producto
         const productoSelect = linea.querySelector('select[name$="-producto"]');
         if (productoSelect) {
             productoSelect.addEventListener('change', function() {
-                const productoId = this.value;
-                if (productoId && window.productosData) {
-                    const producto = window.productosData.find(p => p.id == productoId);
-                    if (producto) {
-                        const precioInput = linea.querySelector('input[name$="-precio_unitario"]');
-                        if (precioInput && !precioInput.value) {
-                            // Solo asignar precio si no hay valor previo
-                            precioInput.value = producto.precio_venta || 0;
-                            calcularTotales();
-                        }
-                    }
-                }
+                manejarCambioProducto(this);
             });
         }
     }
@@ -547,45 +714,66 @@ document.addEventListener('DOMContentLoaded', function() {
     // Event listener para agregar línea
     const btnAgregar = document.getElementById('agregar-linea');
     if (btnAgregar) {
-        btnAgregar.addEventListener('click', agregarLinea);
+        btnAgregar.addEventListener('click', function(e) {
+            e.preventDefault();
+            agregarLinea();
+        });
     }
 
     // Agregar event listeners a líneas existentes
-    document.querySelectorAll('.linea-pedido').forEach(agregarEventListeners);
+    document.querySelectorAll('.linea-pedido:not(.d-none):not(#linea-template .linea-pedido)').forEach(agregarEventListeners);
 
     // Calcular totales iniciales
     calcularTotales();
     actualizarNumeracion();
 
-    // Validación del formulario
+    // Validación del formulario mejorada
     document.getElementById('pedido-form').addEventListener('submit', function(e) {
-        const lineasVisibles = document.querySelectorAll('.linea-pedido:not([style*="display: none"])');
+        // Solo considerar líneas visibles y no marcadas para eliminación
+        const lineasVisibles = document.querySelectorAll('.linea-pedido:not([style*="display: none"]):not(.d-none):not(#linea-template .linea-pedido)');
+        let lineasValidas = 0;
         
-        if (lineasVisibles.length === 0) {
-            e.preventDefault();
-            alert('Debe agregar al menos una línea al pedido.');
-            return;
-        }
-
-        // Validar que todas las líneas tengan producto y cantidad
-        let valido = true;
         lineasVisibles.forEach(linea => {
+            const deleteInput = linea.querySelector('input[name$="-DELETE"]');
+            if (deleteInput && deleteInput.checked) return; // Skip deleted forms
+            
             const producto = linea.querySelector('select[name$="-producto"]');
             const cantidad = linea.querySelector('input[name$="-cantidad"]');
             
-            if (!producto || !producto.value || !cantidad || parseFloat(cantidad.value) <= 0) {
-                valido = false;
+            if (producto && producto.value && cantidad && parseFloat(cantidad.value) > 0) {
+                lineasValidas++;
             }
         });
-
-        if (!valido) {
+        
+        if (lineasValidas === 0) {
             e.preventDefault();
-            alert('Todas las líneas deben tener producto y cantidad válida.');
+            alert('Debe agregar al menos una línea válida al pedido.');
+            return;
         }
+
+        // Antes de enviar, asegurar que TOTAL_FORMS coincida exactamente con líneas válidas
+        const totalFormsInput = document.getElementById('id_form-TOTAL_FORMS');
+        if (totalFormsInput) {
+            // Contar formularios que realmente se van a enviar (no marcados para eliminación)
+            let formulariosActivos = 0;
+            lineasVisibles.forEach(linea => {
+                const deleteInput = linea.querySelector('input[name$="-DELETE"]');
+                if (!deleteInput || !deleteInput.checked) {
+                    formulariosActivos++;
+                }
+            });
+            totalFormsInput.value = Math.max(formulariosActivos, lineasValidas);
+        }
+
+        console.log(`Enviando formulario con ${lineasValidas} líneas válidas`);
     });
 
-    // Pasar datos de productos a JavaScript desde Django
-    window.productosData = {{ productos_json|safe }};
+    // Solo agregar una línea automáticamente si es un pedido nuevo Y no hay líneas existentes
+    {% if es_nuevo %}
+    if (lineasExistentesVisibles.length === 0) {
+        agregarLinea();
+    }
+    {% endif %}
 });
 </script>
 {% endblock %}

@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}{% if object %}Editar{% else %}Nueva{% endif %} Lámina - ARCOPACK{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-label {
+        font-weight: 500;
+        color: #4a5568;
+    }
+    .form-text {
+        font-size: 0.875rem;
+        color: #6c757d;
+    }
+    .required-field::after {
+        content: "*";
+        color: #dc3545;
+        margin-left: 4px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-file-alt me-2"></i>{% if object %}Editar{% else %}Nueva{% endif %} Lámina
+        </h1>
+    </div>
+
+    <!-- Form -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-body">
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+
+                        <!-- Información Básica -->
+                        <div class="form-section mb-4">
+                            <h5 class="mb-3 text-primary">
+                                <i class="fas fa-info-circle me-2"></i>Información Básica
+                            </h5>
+                            
+                            <!-- Código -->
+                            <div class="mb-3">
+                                <label for="{{ form.codigo.id_for_label }}" class="form-label required-field">Código</label>
+                                {% render_field form.codigo class="form-control" placeholder="Ingrese el código" %}
+                                {% if form.codigo.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.codigo.errors|join:", " }}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Nombre -->
+                            <div class="mb-3">
+                                <label for="{{ form.nombre.id_for_label }}" class="form-label required-field">Nombre</label>
+                                {% render_field form.nombre class="form-control" placeholder="Ingrese el nombre" %}
+                                {% if form.nombre.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.nombre.errors|join:", " }}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Descripción -->
+                            <div class="mb-3">
+                                <label for="{{ form.descripcion.id_for_label }}" class="form-label">Descripción</label>
+                                {% render_field form.descripcion class="form-control" placeholder="Ingrese una descripción detallada" rows="3" %}
+                                {% if form.descripcion.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.descripcion.errors|join:", " }}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Estado -->
+                            <div class="form-check form-switch mb-3">
+                                {% render_field form.is_active class="form-check-input" %}
+                                <label class="form-check-label" for="{{ form.is_active.id_for_label }}">Activo</label>
+                                {% if form.is_active.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.is_active.errors|join:", " }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Botones -->
+                        <div class="text-end">
+                            <a href="{% url 'configuracion_web:lamina-list' %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Guardar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Info Card -->
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-info-circle me-2"></i>Información
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <p class="mb-2">Complete la información de la lámina. Los campos marcados con (*) son obligatorios.</p>
+                    
+                    <h6 class="text-primary mt-3">Recomendaciones:</h6>
+                    <ul class="list-unstyled small">
+                        <li><i class="fas fa-check text-success me-2"></i>Use códigos únicos y descriptivos</li>
+                        <li><i class="fas fa-check text-success me-2"></i>Proporcione nombres claros y concisos</li>
+                        <li><i class="fas fa-check text-success me-2"></i>Incluya detalles relevantes en la descripción</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

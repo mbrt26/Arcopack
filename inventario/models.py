@@ -45,6 +45,31 @@ class MateriaPrima(models.Model):
 
     def __str__(self): return f"{self.codigo} - {self.nombre}"
     class Meta: verbose_name = "Materia Prima"; verbose_name_plural = "Materias Primas"; ordering = ['codigo']
+    
+    @property
+    def stock_actual(self):
+        """Calcula el stock actual sumando el stock de todos los lotes disponibles."""
+        from django.db.models import Sum
+        # Importamos LoteMateriaPrima aquí para evitar importaciones circulares
+        from .models import LoteMateriaPrima
+        
+        resultado = LoteMateriaPrima.objects.filter(
+            materia_prima=self,
+            estado='DISPONIBLE'  # Filtramos por estado DISPONIBLE en lugar de is_active
+        ).aggregate(total=Sum('cantidad_actual'))
+        
+        return resultado['total'] or Decimal('0.0')
+    
+    def get_porcentaje_stock(self):
+        """Calcula el porcentaje de stock actual en relación al stock máximo."""
+        if self.stock_maximo <= 0:
+            return 0
+            
+        stock = self.stock_actual
+        porcentaje = (stock / self.stock_maximo) * 100
+        
+        # Limitamos el porcentaje a un máximo de 100%
+        return min(round(porcentaje), 100)
 
 class Tinta(models.Model):
     """Catálogo de Tintas específicas."""

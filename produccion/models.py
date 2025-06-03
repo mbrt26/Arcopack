@@ -375,7 +375,8 @@ class ConsumoWipRefilado(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self): return f"Consumo WIP {self.cantidad_kg_consumida} Kg Lote {self.lote_consumido_id} en Refilado {self.registro_refilado_id}"
-    class Meta: verbose_name = "Consumo WIP (Refilado)"; verbose_name_plural = "Consumos WIP (Refilado)"; unique_together = ('registro_refilado', 'lote_consumido')
+    class Meta: verbose_name = "Consumo WIP (Refilado)"; verbose_name_plural = "Consumos WIP (Refilado)"
+
 
 class ConsumoMpRefilado(models.Model):
     registro_refilado = models.ForeignKey(Refilado, on_delete=models.CASCADE, related_name='consumos_mp')
@@ -484,7 +485,8 @@ class ConsumoWipSellado(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self): return f"Consumo WIP {self.cantidad_kg_consumida} Kg Lote {self.lote_consumido_id} en Sellado {self.registro_sellado_id}"
-    class Meta: verbose_name = "Consumo WIP (Sellado)"; verbose_name_plural = "Consumos WIP (Sellado)"; unique_together = ('registro_sellado', 'lote_consumido')
+    class Meta: verbose_name = "Consumo WIP (Sellado)"; verbose_name_plural = "Consumos WIP (Sellado)"
+
 
 class ConsumoMpSellado(models.Model):
     registro_sellado = models.ForeignKey(Sellado, on_delete=models.CASCADE, related_name='consumos_mp')
@@ -578,7 +580,26 @@ class ConsumoWipDoblado(models.Model):
 
     def clean(self): # ... (Validación de stock) ...
         super().clean()
-        if self.lote_consumido and hasattr(self.lote_consumido, 'cantidad_actual') and self.cantidad_kg_consumida > self.lote_consumido.cantidad_actual: raise ValidationError(...)
+        
+        # Skip validation for empty inline forms or when lote_consumido_id is None
+        if not self.lote_consumido_id or not self.cantidad_kg_consumida:
+            return
+            
+        try:
+            # Safely access the lote_consumido relationship
+            lote = self.lote_consumido
+            if hasattr(lote, 'cantidad_actual') and lote.cantidad_actual is not None:
+                if self.cantidad_kg_consumida > lote.cantidad_actual:
+                    raise ValidationError({
+                        'cantidad_kg_consumida': f'La cantidad excede el stock disponible. Disponible: {lote.cantidad_actual}, Solicitado: {self.cantidad_kg_consumida}'
+                    })
+        except ObjectDoesNotExist:
+            # If the related object doesn't exist, skip validation
+            # This can happen during form processing before the relationship is established
+            pass
+        except AttributeError:
+            # Handle case where lote_consumido is None
+            pass
 
     def save(self, *args, **kwargs): # ... (Lógica de consumo) ...
         user = kwargs.pop('user', None); is_new = self.pk is None
@@ -592,7 +613,8 @@ class ConsumoWipDoblado(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self): return f"Consumo WIP {self.cantidad_kg_consumida} Kg Lote {self.lote_consumido_id} en Doblado {self.registro_doblado_id}"
-    class Meta: verbose_name = "Consumo WIP (Doblado)"; verbose_name_plural = "Consumos WIP (Doblado)"; unique_together = ('registro_doblado', 'lote_consumido')
+    class Meta: verbose_name = "Consumo WIP (Doblado)"; verbose_name_plural = "Consumos WIP (Doblado)"
+
 
 class ConsumoMpDoblado(models.Model):
     registro_doblado = models.ForeignKey(Doblado, on_delete=models.CASCADE, related_name='consumos_mp')

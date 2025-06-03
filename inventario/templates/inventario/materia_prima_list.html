@@ -92,10 +92,17 @@
                             <td>
                                 {% with porcentaje=mp.get_porcentaje_stock %}
                                 <div class="progress" style="height: 20px;">
-                                    <div class="progress-bar {% if porcentaje < 25 %}bg-danger{% elif porcentaje < 75 %}bg-warning{% else %}bg-success{% endif %}" 
-                                         role="progressbar" 
-                                         style="width: {{ porcentaje }}%">
-                                        {{ mp.stock_actual }} {{ mp.unidad_medida.codigo }}
+                                    <div class="progress-bar {% if porcentaje < 25 %}bg-danger{% elif porcentaje < 75 %}bg-warning{% else %}bg-success{% endif %}"
+                                         role="progressbar"
+                                         style="width: {{ porcentaje }}%"
+                                         aria-valuenow="{{ porcentaje }}"
+                                         aria-valuemin="0"
+                                         aria-valuemax="100"
+                                         data-bs-toggle="tooltip"
+                                         data-bs-title="{{ mp.stock_actual|floatformat:2 }} de {{ mp.stock_maximo|floatformat:2 }} {{ mp.unidad_medida.codigo }} ({{ porcentaje }}%)">
+                                        <span {% if porcentaje < 30 %}class="text-dark"{% endif %}>
+                                            {{ mp.stock_actual|floatformat:2 }} {{ mp.unidad_medida.codigo }}
+                                        </span>
                                     </div>
                                 </div>
                                 {% endwith %}
@@ -109,17 +116,17 @@
                             </td>
                             <td>
                                 <div class="btn-group">
-                                    <button type="button" class="btn btn-sm btn-info" title="Ver Detalle" 
-                                            onclick="alert('Vista de detalle aún no implementada')">
+                                    <a href="{% url 'inventario_web:materia-prima-detail' mp.id %}" 
+                                       class="btn btn-sm btn-info" title="Ver Detalle" data-bs-toggle="tooltip">
                                         <i class="fas fa-eye"></i>
-                                    </button>
-                                    {% if mp.estado == 'ACTIVO' %}
+                                    </a>
                                     <a href="{% url 'inventario_web:materia-prima-edit' mp.id %}" 
-                                       class="btn btn-sm btn-warning" title="Editar">
+                                       class="btn btn-sm btn-warning" title="Editar" data-bs-toggle="tooltip">
                                         <i class="fas fa-edit"></i>
                                     </a>
+                                    {% if mp.estado == 'ACTIVO' %}
                                     <a href="{% url 'inventario_web:lote-create' %}?materia_prima={{ mp.id }}" 
-                                       class="btn btn-sm btn-success" title="Nuevo Lote">
+                                       class="btn btn-sm btn-success" title="Nuevo Lote" data-bs-toggle="tooltip">
                                         <i class="fas fa-plus"></i>
                                     </a>
                                     {% endif %}

@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if object %}
+        Editar Estado de Producto - ARCOPACK
+    {% else %}
+        Nuevo Estado de Producto - ARCOPACK
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h2>
+                <i class="fas fa-toggle-on"></i>
+                {% if object %}
+                    Editar Estado de Producto
+                {% else %}
+                    Nuevo Estado de Producto
+                {% endif %}
+            </h2>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                
+                <div class="mb-3">
+                    <label for="id_nombre" class="form-label">Nombre Estado</label>
+                    <input type="text" name="nombre" id="id_nombre" 
+                           class="form-control {% if form.nombre.errors %}is-invalid{% endif %}"
+                           value="{{ form.nombre.value|default:'' }}" required>
+                    {% if form.nombre.errors %}
+                        <div class="invalid-feedback">
+                            {% for error in form.nombre.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    <div class="form-text">Nombre del estado (ej: Activo, Obsoleto).</div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="id_descripcion" class="form-label">Descripción</label>
+                    <textarea name="descripcion" id="id_descripcion" 
+                              class="form-control {% if form.descripcion.errors %}is-invalid{% endif %}"
+                              rows="3">{{ form.descripcion.value|default:'' }}</textarea>
+                    {% if form.descripcion.errors %}
+                        <div class="invalid-feedback">
+                            {% for error in form.descripcion.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    <div class="form-text">Descripción opcional del estado.</div>
+                </div>
+
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Guardar
+                    </button>
+                    <a href="{% url 'configuracion_web:estado-producto-list' %}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> Cancelar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

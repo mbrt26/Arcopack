@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Tipos de Desperdicio - ARCOPACK{% endblock %}
+
+{% block extra_css %}
+<style>
+    .status-badge {
+        padding: 0.375rem 0.75rem;
+        border-radius: 0.375rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+    .status-activo { background-color: #d1fae5; color: #065f46; }
+    .status-inactivo { background-color: #fee2e2; color: #991b1b; }
+    .search-box {
+        background: #f8f9fc;
+        border: 1px solid #e3e6f0;
+        border-radius: 0.375rem;
+    }
+    .table-hover tbody tr:hover {
+        background-color: rgba(94, 114, 228, 0.05);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-trash-alt me-2"></i>Gestión de Tipos de Desperdicio
+        </h1>
+        <div class="d-sm-flex">
+            <a href="{% url 'configuracion_web:administracion-dashboard' %}" class="btn btn-outline-secondary btn-sm me-2">
+                <i class="fas fa-arrow-left me-1"></i>Volver a Administración
+            </a>
+            <a href="{% url 'configuracion_web:tipo-desperdicio-create' %}" class="btn btn-primary btn-sm">
+                <i class="fas fa-plus me-1"></i>Nuevo Tipo de Desperdicio
+            </a>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-6">
+                    <label for="search" class="form-label">Buscar</label>
+                    <input type="text" class="form-control" id="search" name="search" 
+                           value="{{ request.GET.search|default:'' }}"
+                           placeholder="Buscar por código o descripción...">
+                </div>
+                <div class="col-md-4">
+                    <label for="activo" class="form-label">Estado</label>
+                    <select class="form-select" id="activo" name="activo">
+                        <option value="">Todos</option>
+                        <option value="true" {% if request.GET.activo == 'true' %}selected{% endif %}>Activos</option>
+                        <option value="false" {% if request.GET.activo == 'false' %}selected{% endif %}>Inactivos</option>
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search me-1"></i>Filtrar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Results -->
+    <div class="card shadow">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">
+                <i class="fas fa-list me-2"></i>Tipos de Desperdicio Registrados
+                <span class="badge bg-primary ms-2">{{ tipos_desperdicio|length }}</span>
+            </h6>
+        </div>
+        <div class="card-body">
+            {% if tipos_desperdicio %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Código</th>
+                                <th>Descripción</th>
+                                <th class="text-center">Recuperable</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for tipo in tipos_desperdicio %}
+                            <tr>
+                                <td>{{ tipo.codigo }}</td>
+                                <td>{{ tipo.descripcion|default:"-" }}</td>
+                                <td class="text-center">
+                                    {% if tipo.es_recuperable %}
+                                    <span class="badge bg-success">Sí</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">No</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="status-badge {% if tipo.is_active %}status-activo{% else %}status-inactivo{% endif %}">
+                                        {% if tipo.is_active %}Activo{% else %}Inactivo{% endif %}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="{% url 'configuracion_web:tipo-desperdicio-update' tipo.pk %}" 
+                                           class="btn btn-sm btn-outline-primary" title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-4">
+                    <h5 class="text-muted">No se encontraron tipos de desperdicio</h5>
+                    <p class="text-muted">
+                        {% if request.GET.search or request.GET.activo %}
+                            No hay tipos de desperdicio que coincidan con los filtros aplicados.
+                        {% else %}
+                            Comience agregando su primer tipo de desperdicio.
+                        {% endif %}
+                    </p>
+                    <a href="{% url 'configuracion_web:tipo-desperdicio-create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i>Agregar Primer Tipo de Desperdicio
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-submit form on filter change
+    const filterSelects = document.querySelectorAll('#activo');
+    filterSelects.forEach(select => {
+        select.addEventListener('change', function() {
+            this.form.submit();
+        });
+    });
+});
+</script>
+{% endblock %}

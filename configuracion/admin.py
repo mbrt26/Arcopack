@@ -71,8 +71,8 @@ class CausaParoAdmin(admin.ModelAdmin):
 
 @admin.register(TipoDesperdicio)
 class TipoDesperdicioAdmin(admin.ModelAdmin):
-    list_display = ('codigo', 'descripcion', 'es_recuperable')
-    list_filter = ('es_recuperable',)
+    list_display = ('codigo', 'descripcion', 'es_recuperable', 'is_active')
+    list_filter = ('es_recuperable', 'is_active')
     search_fields = ('codigo', 'descripcion')
 
 @admin.register(Proveedor)

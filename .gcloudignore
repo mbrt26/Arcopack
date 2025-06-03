@@ -1,27 +1,53 @@
-.gcloudignore
+# Git files
 .git
 .gitignore
+
+# Python cache
 __pycache__/
 *.pyc
-.pytest_cache
 *.pyo
 *.pyd
 .Python
-env/
-venv/
-pip-log.txt
-pip-delete-this-directory.txt
-.tox/
+*.so
 .coverage
 .coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.log
+
+# Virtual environment
+venv/
+env/
+ENV/
+
+# Development files
 .env
-.venv
-db.sqlite3
-media/
+.env.local
+*.log
 .DS_Store
-staticfiles/
+
+# Database files
+db.sqlite3
+*.sqlite3
+db_backup.json
+
+# Media files (opcional - descomenta si no quieres subir archivos de media)
+# media/
+
+# Testing
+.pytest_cache/
+htmlcov/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Node modules (si tienes frontend)
+node_modules/
+npm-debug.log
+
+# Documentation
+docs/
+README.md
+
+# Cloud SQL Proxy
+cloud_sql_proxy

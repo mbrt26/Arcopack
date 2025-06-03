@@ -1,0 +1,335 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Inventario de Productos Terminados (PT){% endblock %}
+
+{% block extra_css %}
+<style>
+    .search-box {
+        position: relative;
+    }
+    
+    .search-box i {
+        position: absolute;
+        left: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6c757d;
+    }
+    
+    .search-input {
+        padding-left: 35px;
+    }
+    
+    .filter-btn {
+        height: 38px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .filter-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s;
+    }
+    
+    .lote-status {
+        font-size: 0.8rem;
+        padding: 0.35rem 0.75rem;
+        border-radius: 50px;
+        font-weight: 500;
+    }
+    
+    .status-available {
+        background-color: #d4edda;
+        color: #155724;
+    }
+    
+    .status-consumed {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+    
+    .status-quarantine {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+    
+    .status-dispatched {
+        background-color: #cce5ff;
+        color: #004085;
+    }
+    
+    .lote-detail-item {
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+    }
+    
+    .lote-detail-item i {
+        margin-right: 0.5rem;
+        width: 20px;
+        color: #6c757d;
+    }
+    
+    .table-responsive {
+        overflow-x: auto;
+    }
+    
+    .table th {
+        white-space: nowrap;
+    }
+    
+    .table td {
+        vertical-align: middle;
+    }
+    
+    .lote-card {
+        border-radius: 10px;
+        overflow: hidden;
+        transition: all 0.3s;
+        height: 100%;
+    }
+    
+    .lote-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    }
+    
+    .lote-header {
+        padding: 15px;
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #dee2e6;
+    }
+    
+    .lote-body {
+        padding: 15px;
+    }
+    
+    .lote-footer {
+        padding: 10px 15px;
+        background-color: #f8f9fa;
+        border-top: 1px solid #dee2e6;
+    }
+    
+    .badge-pill {
+        border-radius: 50rem;
+        padding: 0.35em 0.65em;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">Inventario de Productos Terminados (PT)</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="{% url 'root' %}">Inicio</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Inventario PT</li>
+            </ol>
+        </nav>
+    </div>
+    
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label">Buscar</label>
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" name="q" class="form-control search-input" 
+                               placeholder="ID de lote, producto..." value="{{ request.GET.q }}">
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Estado</label>
+                    <select name="estado" class="form-select">
+                        <option value="">Todos los estados</option>
+                        <option value="DISPONIBLE" {% if request.GET.estado == 'DISPONIBLE' %}selected{% endif %}>
+                            Disponible
+                        </option>
+                        <option value="DESPACHADO" {% if request.GET.estado == 'DESPACHADO' %}selected{% endif %}>
+                            Despachado
+                        </option>
+                        <option value="CUARENTENA" {% if request.GET.estado == 'CUARENTENA' %}selected{% endif %}>
+                            Cuarentena
+                        </option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Producto</label>
+                    <select name="producto" class="form-select">
+                        <option value="">Todos los productos</option>
+                        {% for producto in productos %}
+                        <option value="{{ producto.id }}" 
+                                {% if request.GET.producto == producto.id|stringformat:'s' %}selected{% endif %}>
+                            {{ producto.codigo }} - {{ producto.nombre }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Ubicación</label>
+                    <select name="ubicacion" class="form-select">
+                        <option value="">Todas las ubicaciones</option>
+                        {% for ubicacion in ubicaciones %}
+                        <option value="{{ ubicacion.id }}" 
+                                {% if request.GET.ubicacion == ubicacion.id|stringformat:'s' %}selected{% endif %}>
+                            {{ ubicacion.nombre }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100 filter-btn">
+                        <i class="fas fa-filter me-1"></i> Filtrar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    {% if pt_lotes %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID Lote/Paleta</th>
+                                    <th>Producto</th>
+                                    <th>Orden de Producción</th>
+                                    <th>Cantidad</th>
+                                    <th>Ubicación</th>
+                                    <th>Estado</th>
+                                    <th>Fecha Creación</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for lote in pt_lotes %}
+                                <tr>
+                                    <td><strong>{{ lote.lote_id }}</strong></td>
+                                    <td>
+                                        <div>{{ lote.producto_terminado.codigo }}</div>
+                                        <small class="text-muted">{{ lote.producto_terminado.nombre }}</small>
+                                    </td>
+                                    <td>{{ lote.orden_produccion.codigo }}</td>
+                                    <td>
+                                        <strong>{{ lote.cantidad_actual|floatformat:2 }}</strong> 
+                                        / {{ lote.cantidad_inicial|floatformat:2 }} {{ lote.unidad_medida_lote.codigo }}
+                                    </td>
+                                    <td>{{ lote.ubicacion.nombre }}</td>
+                                    <td>
+                                        {% if lote.estado == 'DISPONIBLE' %}
+                                        <span class="lote-status status-available">Disponible</span>
+                                        {% elif lote.estado == 'DESPACHADO' %}
+                                        <span class="lote-status status-dispatched">Despachado</span>
+                                        {% elif lote.estado == 'CUARENTENA' %}
+                                        <span class="lote-status status-quarantine">Cuarentena</span>
+                                        {% else %}
+                                        <span class="lote-status">{{ lote.estado }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ lote.fecha_creacion|date:"d/m/Y H:i" }}</td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{% url 'inventario_web:pt-detail' lote.id %}" class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip" title="Ver Detalle">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{% url 'inventario_web:pt-history' lote.id %}" class="btn btn-sm btn-outline-secondary" data-bs-toggle="tooltip" title="Ver Historial">
+                                                <i class="fas fa-history"></i>
+                                            </a>
+                                            {% if lote.estado == 'DISPONIBLE' %}
+                                            <a href="{% url 'inventario_web:pt-transferir' lote.id %}" class="btn btn-sm btn-outline-warning" data-bs-toggle="tooltip" title="Transferir">
+                                                <i class="fas fa-exchange-alt"></i>
+                                            </a>
+                                            <a href="{% url 'inventario_web:pt-consumir' lote.id %}" class="btn btn-sm btn-outline-danger" data-bs-toggle="tooltip" title="Consumir">
+                                                <i class="fas fa-minus-circle"></i>
+                                            </a>
+                                            <a href="{% url 'inventario_web:pt-ajustar' lote.id %}" class="btn btn-sm btn-outline-info" data-bs-toggle="tooltip" title="Ajustar Stock">
+                                                <i class="fas fa-balance-scale"></i>
+                                            </a>
+                                            <a href="{% url 'inventario_web:pt-despachar' lote.id %}" class="btn btn-sm btn-outline-success" data-bs-toggle="tooltip" title="Despachar">
+                                                <i class="fas fa-truck"></i>
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    {% if pt_lotes.has_other_pages %}
+                    <nav aria-label="Page navigation" class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            {% if pt_lotes.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ pt_lotes.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Previous">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+                            {% else %}
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#" aria-label="Previous">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+                            {% endif %}
+                            
+                            {% for i in pt_lotes.paginator.page_range %}
+                                {% if pt_lotes.number == i %}
+                                <li class="page-item active"><a class="page-link" href="#">{{ i }}</a></li>
+                                {% elif i > pt_lotes.number|add:'-3' and i < pt_lotes.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ i }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ i }}</a>
+                                </li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if pt_lotes.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ pt_lotes.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Next">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                            {% else %}
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#" aria-label="Next">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                    
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-boxes fa-4x mb-3 text-muted"></i>
+                        <h4>No se encontraron lotes de productos terminados</h4>
+                        <p class="text-muted">Intenta cambiar los filtros de búsqueda o crea un nuevo lote.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Inicializar tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+</script>
+{% endblock %}

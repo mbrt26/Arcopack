@@ -1,0 +1,206 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Gestión de Despachos{% endblock %}
+
+{% block extra_css %}
+<style>
+    .search-box {
+        position: relative;
+    }
+    
+    .search-box i {
+        position: absolute;
+        left: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6c757d;
+    }
+    
+    .search-input {
+        padding-left: 35px;
+    }
+    
+    .filter-btn {
+        height: 38px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .filter-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s;
+    }
+    
+    .badge-pill {
+        border-radius: 50rem;
+        padding: 0.35em 0.65em;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">Gestión de Despachos</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="{% url 'root' %}">Inicio</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'inventario_web:pt-list' %}">Inventario PT</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Despachos</li>
+            </ol>
+        </nav>
+    </div>
+    
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label">Buscar</label>
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" name="q" class="form-control search-input" 
+                               placeholder="Cliente, lote, guía..." value="{{ q }}">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Fecha Desde</label>
+                    <input type="date" name="fecha_desde" class="form-control" value="{{ fecha_desde }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Fecha Hasta</label>
+                    <input type="date" name="fecha_hasta" class="form-control" value="{{ fecha_hasta }}">
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100 filter-btn">
+                        <i class="fas fa-filter me-1"></i> Filtrar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    {% if despachos %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Lote</th>
+                                    <th>Cantidad</th>
+                                    <th>Unidad</th>
+                                    <th>Ubicación Origen</th>
+                                    <th>Cliente/Detalles</th>
+                                    <th>Usuario</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for despacho in despachos %}
+                                <tr>
+                                    <td>{{ despacho.timestamp|date:"d/m/Y H:i" }}</td>
+                                    <td>
+                                        {% if despacho.lote_content_type.model == 'loteproductoterminado' %}
+                                            <a href="{% url 'inventario_web:pt-detail' despacho.lote_object_id %}">
+                                                {{ despacho.lote_object_id }}
+                                            </a>
+                                        {% else %}
+                                            {{ despacho.lote_object_id }}
+                                        {% endif %}
+                                    </td>
+                                    <td><strong>{{ despacho.cantidad|floatformat:2 }}</strong></td>
+                                    <td>{{ despacho.unidad_medida.codigo }}</td>
+                                    <td>{{ despacho.ubicacion_origen.nombre }}</td>
+                                    <td>
+                                        <div class="text-wrap" style="max-width: 300px;">
+                                            {{ despacho.observaciones }}
+                                        </div>
+                                    </td>
+                                    <td>{{ despacho.usuario.username }}</td>
+                                    <td>
+                                        <div class="btn-group">
+                                            {% if despacho.lote_content_type.model == 'loteproductoterminado' %}
+                                                <a href="{% url 'inventario_web:pt-detail' despacho.lote_object_id %}" class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip" title="Ver Lote">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <a href="{% url 'inventario_web:pt-history' despacho.lote_object_id %}" class="btn btn-sm btn-outline-secondary" data-bs-toggle="tooltip" title="Ver Historial">
+                                                    <i class="fas fa-history"></i>
+                                                </a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    {% if despachos.has_other_pages %}
+                    <nav aria-label="Page navigation" class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            {% if despachos.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ despachos.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Previous">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+                            {% else %}
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#" aria-label="Previous">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+                            {% endif %}
+                            
+                            {% for i in despachos.paginator.page_range %}
+                                {% if despachos.number == i %}
+                                <li class="page-item active"><a class="page-link" href="#">{{ i }}</a></li>
+                                {% elif i > despachos.number|add:'-3' and i < despachos.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ i }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ i }}</a>
+                                </li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if despachos.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ despachos.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Next">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                            {% else %}
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#" aria-label="Next">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                    
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i> No se encontraron despachos con los criterios de búsqueda especificados.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(function () {
+        $('[data-bs-toggle="tooltip"]').tooltip();
+    });
+</script>
+{% endblock %}

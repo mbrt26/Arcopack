@@ -99,29 +99,90 @@ class BaseProduccionCreateView(LoginRequiredMixin, CreateView):
         context = self.get_context_data()
         formsets = self.get_formsets(context)
         
-        # Validar todos los formsets
-        all_valid = all(formset.is_valid() for formset in formsets.values())
+        # Registrar información para depuración
+        logger.info(f"Procesando formulario para {self.get_proceso_name()} con {len(formsets)} formsets")
         
-        if all_valid:
-            with transaction.atomic():
+        # Si no hay formsets, solo validar el formulario principal
+        if not formsets:
+            try:
                 self.object = form.save()
+                messages.success(
+                    self.request, 
+                    f'Registro de {self.get_proceso_name()} creado exitosamente.'
+                )
+                return HttpResponseRedirect(self.get_success_url())
+            except Exception as e:
+                logger.exception(f"Error al guardar el formulario: {str(e)}")
+                messages.error(
+                    self.request,
+                    f'Error al guardar el registro: {str(e)}'
+                )
+                return self.form_invalid(form)
+        
+        # Validar formsets solo si existen
+        formset_errors = []
+        for formset_name, formset in formsets.items():
+            logger.info(f"Formset {formset_name}: {formset.__class__.__name__}, is_valid={formset.is_valid()}")
+            if not formset.is_valid():
+                logger.error(f"Errores en formset {formset_name}: {formset.errors}")
+                formset_errors.append(formset_name)
+                # Agregar errores específicos de cada formset
+                for error in formset.non_form_errors():
+                    messages.error(self.request, f"Error en {formset_name}: {error}")
+                # Agregar errores de formularios individuales dentro del formset
+                if formset.errors:  # Verificar que errors no sea None
+                    for form_error in formset.errors:
+                        if form_error:  # Verificar que el error del formulario no sea None o vacío
+                            for field, field_errors in form_error.items():
+                                if field_errors:
+                                    messages.error(self.request, f"Error en {formset_name} - {field}: {', '.join(field_errors)}")
+        
+        # Si hay errores en formsets, mostrar mensaje general y devolver formulario inválido
+        if formset_errors:
+            messages.error(
+                self.request, 
+                f'Por favor corrija los errores en: {", ".join(formset_errors)}'
+            )
+            return self.form_invalid(form)
+        
+        # Si todo está válido, proceder con el guardado
+        try:
+            with transaction.atomic():
+                # Guardar el formulario principal primero
+                self.object = form.save()
+                logger.info(f"Objeto principal guardado: {self.object}")
                 
                 # Guardar todos los formsets
                 for formset_name, formset in formsets.items():
-                    formset.instance = self.object
-                    formset.save()
-                    
-                    # Lógica especial para formsets de producción
-                    if 'produccion' in formset_name:
-                        setattr(formset, f'registro_{self.get_proceso_name()}', self.object)
+                    # Para formsets inline normales
+                    if hasattr(formset, 'instance'):
+                        formset.instance = self.object
                         formset.save()
+                        logger.info(f"Formset inline {formset_name} guardado")
+                    # Lógica especial para formsets de producción
+                    elif 'produccion' in formset_name:
+                        # Estos formsets tienen un método save personalizado que espera el registro
+                        # como un atributo específico según el tipo de proceso
+                        proceso_name = self.get_proceso_name()
+                        attr_name = f'registro_{proceso_name}'
+                        setattr(formset, attr_name, self.object)
+                        logger.info(f"Configurando {attr_name}={self.object} para formset {formset_name}")
+                        # También configurar 'instance' para compatibilidad
+                        formset.instance = self.object
+                        formset.save()
+                        logger.info(f"Formset de producción {formset_name} guardado")
             
             messages.success(
                 self.request, 
                 f'Registro de {self.get_proceso_name()} creado exitosamente.'
             )
             return HttpResponseRedirect(self.get_success_url())
-        else:
+        except Exception as e:
+            logger.exception(f"Error al guardar el formulario: {str(e)}")
+            messages.error(
+                self.request,
+                f'Error al guardar el registro: {str(e)}'
+            )
             return self.form_invalid(form)
 
     def get_formsets(self, context):
@@ -224,9 +285,16 @@ class BaseProduccionDetailView(LoginRequiredMixin, TemplateView):
         tiempo_paro_minutos = 0
         
         if registro.hora_inicio and registro.hora_final:
-            from datetime import datetime
-            inicio = datetime.combine(registro.fecha, registro.hora_inicio)
-            final = datetime.combine(registro.fecha, registro.hora_final)
+            from datetime import datetime, time
+            
+            # Verificar si hora_inicio y hora_final son datetime o time
+            if isinstance(registro.hora_inicio, datetime):
+                inicio = registro.hora_inicio
+                final = registro.hora_final
+            else:  # Son objetos time
+                inicio = datetime.combine(registro.fecha, registro.hora_inicio)
+                final = datetime.combine(registro.fecha, registro.hora_final)
+                
             tiempo_total_minutos = (final - inicio).total_seconds() / 60
             
             # Calcular tiempo de paros según el tipo de proceso
@@ -235,8 +303,12 @@ class BaseProduccionDetailView(LoginRequiredMixin, TemplateView):
                 paros = getattr(registro, paros_attr).all()
                 for paro in paros:
                     if paro.hora_inicio_paro and paro.hora_final_paro:
-                        inicio_paro = datetime.combine(registro.fecha, paro.hora_inicio_paro)
-                        final_paro = datetime.combine(registro.fecha, paro.hora_final_paro)
+                        if isinstance(paro.hora_inicio_paro, datetime):
+                            inicio_paro = paro.hora_inicio_paro
+                            final_paro = paro.hora_final_paro
+                        else:  # Son objetos time
+                            inicio_paro = datetime.combine(registro.fecha, paro.hora_inicio_paro)
+                            final_paro = datetime.combine(registro.fecha, paro.hora_final_paro)
                         tiempo_paro_minutos += (final_paro - inicio_paro).total_seconds() / 60
         
         tiempo_productivo_minutos = tiempo_total_minutos - tiempo_paro_minutos

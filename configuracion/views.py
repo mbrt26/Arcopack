@@ -1,10 +1,11 @@
 from django.shortcuts import render
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, TemplateView
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.urls import reverse_lazy
 from django.contrib import messages
-from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.db.models import Q
-from django.core.paginator import Paginator
+
+from .base_views import BaseListView, BaseCreateView, BaseUpdateView, BaseDeleteView
 from .models import (
     UnidadMedida, CategoriaMateriaPrima, Ubicacion, 
     Proceso, Maquina, RodilloAnilox, CausaParo, TipoDesperdicio,
@@ -40,101 +41,53 @@ class AdministracionDashboardView(LoginRequiredMixin, PermissionRequiredMixin, T
         
         return context
 
-# ===== VISTAS EXISTENTES MEJORADAS =====
-class UnidadMedidaListView(LoginRequiredMixin, ListView):
+# ===== UNIDADES DE MEDIDA =====
+class UnidadMedidaListView(BaseListView):
     model = UnidadMedida
     template_name = 'configuracion/unidadmedida_list.html'
     context_object_name = 'unidades'
-    paginate_by = 20
-    
-    def get_queryset(self):
-        queryset = UnidadMedida.objects.all()
-        search = self.request.GET.get('search')
-        if search:
-            queryset = queryset.filter(
-                Q(codigo__icontains=search) | Q(nombre__icontains=search)
-            )
-        return queryset.order_by('codigo')
+    url_prefix = 'unidad-medida'
 
-class UnidadMedidaCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
+class UnidadMedidaCreateView(BaseCreateView):
     model = UnidadMedida
     fields = ['codigo', 'nombre']
     template_name = 'configuracion/unidadmedida_form.html'
-    permission_required = 'configuracion.add_unidadmedida'
-    success_url = reverse_lazy('configuracion_web:unidad-medida-list')
-    
-    def form_valid(self, form):
-        messages.success(self.request, 'Unidad de medida creada exitosamente.')
-        return super().form_valid(form)
+    url_prefix = 'unidad-medida'
 
-class UnidadMedidaUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+class UnidadMedidaUpdateView(BaseUpdateView):
     model = UnidadMedida
     fields = ['codigo', 'nombre']
     template_name = 'configuracion/unidadmedida_form.html'
-    permission_required = 'configuracion.change_unidadmedida'
-    success_url = reverse_lazy('configuracion_web:unidad-medida-list')
-    
-    def form_valid(self, form):
-        messages.success(self.request, 'Unidad de medida actualizada exitosamente.')
-        return super().form_valid(form)
+    url_prefix = 'unidad-medida'
 
-class UnidadMedidaDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
+class UnidadMedidaDeleteView(BaseDeleteView):
     model = UnidadMedida
     template_name = 'configuracion/unidadmedida_confirm_delete.html'
-    permission_required = 'configuracion.delete_unidadmedida'
-    success_url = reverse_lazy('configuracion_web:unidad-medida-list')
-    
-    def delete(self, request, *args, **kwargs):
-        messages.success(self.request, 'Unidad de medida eliminada exitosamente.')
-        return super().delete(request, *args, **kwargs)
+    url_prefix = 'unidad-medida'
 
 # ===== CATEGORÍAS DE MATERIA PRIMA =====
-class CategoriaMPListView(LoginRequiredMixin, ListView):
+class CategoriaMPListView(BaseListView):
     model = CategoriaMateriaPrima
     template_name = 'configuracion/categoria_mp_list.html'
-    context_object_name = 'categorias'
-    paginate_by = 20
-    
-    def get_queryset(self):
-        queryset = CategoriaMateriaPrima.objects.all()
-        search = self.request.GET.get('search')
-        if search:
-            queryset = queryset.filter(
-                Q(nombre__icontains=search) | Q(descripcion__icontains=search)
-            )
-        return queryset.order_by('nombre')
+    context_object_name = 'object_list'
+    url_prefix = 'categoria-mp'
 
-class CategoriaMPCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
+class CategoriaMPCreateView(BaseCreateView):
     model = CategoriaMateriaPrima
     fields = ['nombre', 'descripcion']
     template_name = 'configuracion/categoria_mp_form.html'
-    permission_required = 'configuracion.add_categoriamateriaprima'
-    success_url = reverse_lazy('configuracion_web:categoria-mp-list')
-    
-    def form_valid(self, form):
-        messages.success(self.request, 'Categoría de materia prima creada exitosamente.')
-        return super().form_valid(form)
+    url_prefix = 'categoria-mp'
 
-class CategoriaMPUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+class CategoriaMPUpdateView(BaseUpdateView):
     model = CategoriaMateriaPrima
     fields = ['nombre', 'descripcion']
     template_name = 'configuracion/categoria_mp_form.html'
-    permission_required = 'configuracion.change_categoriamateriaprima'
-    success_url = reverse_lazy('configuracion_web:categoria-mp-list')
-    
-    def form_valid(self, form):
-        messages.success(self.request, 'Categoría de materia prima actualizada exitosamente.')
-        return super().form_valid(form)
+    url_prefix = 'categoria-mp'
 
-class CategoriaMPDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
+class CategoriaMPDeleteView(BaseDeleteView):
     model = CategoriaMateriaPrima
     template_name = 'configuracion/categoria_mp_confirm_delete.html'
-    permission_required = 'configuracion.delete_categoriamateriaprima'
-    success_url = reverse_lazy('configuracion_web:categoria-mp-list')
-    
-    def delete(self, request, *args, **kwargs):
-        messages.success(self.request, 'Categoría de materia prima eliminada exitosamente.')
-        return super().delete(request, *args, **kwargs)
+    url_prefix = 'categoria-mp'
 
 # ===== UBICACIONES =====
 class UbicacionListView(LoginRequiredMixin, ListView):
@@ -447,24 +400,28 @@ class CausaParoUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateVie
 class TipoDesperdicioListView(LoginRequiredMixin, ListView):
     model = TipoDesperdicio
     template_name = 'configuracion/tipo_desperdicio_list.html'
-    context_object_name = 'tipos'
+    context_object_name = 'tipos_desperdicio'
     paginate_by = 20
     
     def get_queryset(self):
         queryset = TipoDesperdicio.objects.all()
         search = self.request.GET.get('search')
+        activo = self.request.GET.get('activo')
         
         if search:
             queryset = queryset.filter(
                 Q(codigo__icontains=search) | Q(descripcion__icontains=search)
             )
             
+        if activo:
+            queryset = queryset.filter(is_active=activo == 'true')
+            
         return queryset.order_by('codigo')
 
 class TipoDesperdicioCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
     model = TipoDesperdicio
     template_name = 'configuracion/tipo_desperdicio_form.html'
-    fields = ['codigo', 'descripcion', 'es_recuperable']
+    fields = ['codigo', 'descripcion', 'es_recuperable', 'is_active']
     success_url = reverse_lazy('configuracion_web:tipo-desperdicio-list')
     permission_required = 'configuracion.add_tipodesperdicio'
     
@@ -475,7 +432,7 @@ class TipoDesperdicioCreateView(LoginRequiredMixin, PermissionRequiredMixin, Cre
 class TipoDesperdicioUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
     model = TipoDesperdicio
     template_name = 'configuracion/tipo_desperdicio_form.html'
-    fields = ['codigo', 'descripcion', 'es_recuperable']
+    fields = ['codigo', 'descripcion', 'es_recuperable', 'is_active']
     success_url = reverse_lazy('configuracion_web:tipo-desperdicio-list')
     permission_required = 'configuracion.change_tipodesperdicio'
     
@@ -485,13 +442,13 @@ class TipoDesperdicioUpdateView(LoginRequiredMixin, PermissionRequiredMixin, Upd
 
 # ===== VISTAS GENÉRICAS PARA MODELOS SIMPLES =====
 
-def create_simple_model_views(model_class, template_prefix, url_prefix, permission_prefix):
+def create_simple_model_views(model_class, template_prefix, url_prefix, permission_prefix, list_template=None):
     """Factory function para crear vistas CRUD para modelos simples"""
     
     class SimpleListView(LoginRequiredMixin, ListView):
         model = model_class
-        template_name = f'configuracion/{template_prefix}_list.html'
-        context_object_name = 'objects'
+        template_name = list_template if list_template else f'configuracion/{template_prefix}_list.html'
+        context_object_name = 'object_list'
         paginate_by = 20
         
         def get_queryset(self):
@@ -571,11 +528,8 @@ SubLineaListView, SubLineaCreateView, SubLineaUpdateView = create_simple_model_v
 )
 
 EstadoProductoListView, EstadoProductoCreateView, EstadoProductoUpdateView = create_simple_model_views(
-    EstadoProducto, 'estado_producto', 'estado-producto', 'estadoproducto'
-)
-
-CategoriaProductoListView, CategoriaProductoCreateView, CategoriaProductoUpdateView = create_simple_model_views(
-    CategoriaProducto, 'categoria_producto', 'categoria-producto', 'categoriaproducto'
+    EstadoProducto, 'estado_producto', 'estado-producto', 'estadoproducto',
+    list_template='configuracion/estado_producto_list.html'
 )
 
 TipoMateriaPrimaListView, TipoMateriaPrimaCreateView, TipoMateriaPrimaUpdateView = create_simple_model_views(
@@ -584,6 +538,11 @@ TipoMateriaPrimaListView, TipoMateriaPrimaCreateView, TipoMateriaPrimaUpdateView
 
 TipoMaterialListView, TipoMaterialCreateView, TipoMaterialUpdateView = create_simple_model_views(
     TipoMaterial, 'tipo_material', 'tipo-material', 'tipomaterial'
+)
+
+# Categorías de Producto
+CategoriaProductoListView, CategoriaProductoCreateView, CategoriaProductoUpdateView = create_simple_model_views(
+    CategoriaProducto, 'categoria_producto', 'categoria-producto', 'categoriaproducto'
 )
 
 # Cuenta Contable

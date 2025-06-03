@@ -1,7 +1,7 @@
 {% extends "produccion/layouts/produccion_base.html" %}
 {% load widget_tweaks %}
 
-{% block title %}Nuevo Registro de Doblado - ARCOPACK{% endblock %}
+{% block title %}{{ page_title|default:"Nuevo Registro de Doblado" }} - ARCOPACK{% endblock %}
 
 {% block page_title %}{{ page_title|default:"Nuevo Registro de Doblado" }}{% endblock %}
 
@@ -9,8 +9,8 @@
 <div class="row">
     <div class="col-lg-12">
         <div class="card">
-            <div class="card-header bg-info text-white">
-                <i class="fas fa-layer-group me-2"></i>Nuevo Registro de Doblado
+            <div class="card-header bg-warning text-dark">
+                <i class="fas fa-fold me-2"></i>{{ page_title|default:"Nuevo Registro de Doblado" }}
             </div>
             <div class="card-body">
                 <form method="post" id="registroDobladoForm">
@@ -102,16 +102,30 @@
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <div class="form-group">
-                                {{ form.bolsas_procesadas.label_tag }}
-                                {% render_field form.bolsas_procesadas class="form-control" %}
-                                {% if form.bolsas_procesadas.errors %}
+                                {{ form.cantidad_programada_kg.label_tag }}
+                                {% render_field form.cantidad_programada_kg class="form-control" %}
+                                {% if form.cantidad_programada_kg.errors %}
                                     <div class="invalid-feedback d-block">
-                                        {{ form.bolsas_procesadas.errors }}
+                                        {{ form.cantidad_programada_kg.errors }}
                                     </div>
                                 {% endif %}
                             </div>
                         </div>
                         <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form.medida_doblado_cm.label_tag }}
+                                {% render_field form.medida_doblado_cm class="form-control" %}
+                                {% if form.medida_doblado_cm.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.medida_doblado_cm.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-12">
                             <div class="form-group">
                                 {{ form.observaciones.label_tag }}
                                 {% render_field form.observaciones class="form-control" %}
@@ -124,6 +138,7 @@
                         </div>
                     </div>
 
+                    <!-- Paros Section -->
                     <div class="card mb-4">
                         <div class="card-header">
                             <h4><i class="fas fa-pause-circle me-2"></i>Paros</h4>
@@ -140,31 +155,136 @@
                         </div>
                     </div>
 
+                    <!-- Consumo de WIP Section -->
                     <div class="card mb-4">
                         <div class="card-header">
-                            <h4><i class="fas fa-trash me-2"></i>Desperdicios</h4>
+                            <h4><i class="fas fa-recycle me-2"></i>Consumo de WIP</h4>
                         </div>
                         <div class="card-body">
-                            <div class="d-flex gap-2 mb-3">
-                                <button type="button" class="btn btn-outline-danger btn-sm" onclick="abrirModalDesperdicio()">
-                                    <i class="fas fa-trash me-2"></i>Registrar Desperdicio
-                                </button>
+                            {{ consumo_wip_formset.management_form }}
+                            <div id="consumo-wip-forms">
+                                {% for form in consumo_wip_formset %}
+                                <div class="consumo-wip-form mb-3 border p-3" style="{% if form.DELETE.value %}display: none;{% endif %}">
+                                    <div class="row">
+                                        <div class="col-md-5">
+                                            <div class="mb-2">
+                                                <label class="form-label">{{ form.lote_consumido.label }}</label>
+                                                {% render_field form.lote_consumido class="form-control" %}
+                                                {% if form.lote_consumido.errors %}
+                                                    <div class="invalid-feedback d-block">
+                                                        {{ form.lote_consumido.errors }}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="mb-2">
+                                                <label class="form-label">{{ form.cantidad_kg_consumida.label }}</label>
+                                                {% render_field form.cantidad_kg_consumida class="form-control" %}
+                                                {% if form.cantidad_kg_consumida.errors %}
+                                                    <div class="invalid-feedback d-block">
+                                                        {{ form.cantidad_kg_consumida.errors }}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="mb-2">
+                                                <div class="d-flex align-items-end">
+                                                    {% if consumo_wip_formset.can_delete %}
+                                                        <div class="form-check">
+                                                            {% render_field form.DELETE class="form-check-input" %}
+                                                            <label class="form-check-label" for="{{ form.DELETE.id_for_label }}">
+                                                                Eliminar
+                                                            </label>
+                                                        </div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% for hidden in form.hidden_fields %}
+                                        {{ hidden }}
+                                    {% endfor %}
+                                </div>
+                                {% endfor %}
                             </div>
-                            <div id="desperdicios-registrados" class="mt-3">
-                                <!-- Aquí se mostrarán los desperdicios registrados -->
-                            </div>
+                            <button type="button" class="btn btn-secondary" id="add-consumo-wip">
+                                <i class="fas fa-plus me-2"></i>Agregar Consumo WIP
+                            </button>
                         </div>
                     </div>
 
+                    <!-- Consumo de MP Section -->
                     <div class="card mb-4">
-                        <div class="card-header bg-success text-white">
-                            <h4><i class="fas fa-boxes me-2"></i>Bolsas Procesadas</h4>
+                        <div class="card-header">
+                            <h4><i class="fas fa-box me-2"></i>Consumo de Materia Prima</h4>
+                        </div>
+                        <div class="card-body">
+                            {{ consumo_mp_formset.management_form }}
+                            <div id="consumo-mp-forms">
+                                {% for form in consumo_mp_formset %}
+                                <div class="consumo-mp-form mb-3 border p-3" style="{% if form.DELETE.value %}display: none;{% endif %}">
+                                    <div class="row">
+                                        <div class="col-md-5">
+                                            <div class="mb-2">
+                                                <label class="form-label">{{ form.lote_consumido.label }}</label>
+                                                {% render_field form.lote_consumido class="form-control" %}
+                                                {% if form.lote_consumido.errors %}
+                                                    <div class="invalid-feedback d-block">
+                                                        {{ form.lote_consumido.errors }}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="mb-2">
+                                                <label class="form-label">{{ form.cantidad_consumida.label }}</label>
+                                                {% render_field form.cantidad_consumida class="form-control" %}
+                                                {% if form.cantidad_consumida.errors %}
+                                                    <div class="invalid-feedback d-block">
+                                                        {{ form.cantidad_consumida.errors }}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="mb-2">
+                                                <div class="d-flex align-items-end">
+                                                    {% if consumo_mp_formset.can_delete %}
+                                                        <div class="form-check">
+                                                            {% render_field form.DELETE class="form-check-input" %}
+                                                            <label class="form-check-label" for="{{ form.DELETE.id_for_label }}">
+                                                                Eliminar
+                                                            </label>
+                                                        </div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% for hidden in form.hidden_fields %}
+                                        {{ hidden }}
+                                    {% endfor %}
+                                </div>
+                                {% endfor %}
+                            </div>
+                            <button type="button" class="btn btn-secondary" id="add-consumo-mp">
+                                <i class="fas fa-plus me-2"></i>Agregar Consumo MP
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Producción Section -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-success text-dark">
+                            <h4><i class="fas fa-boxes me-2"></i>Rollos Producidos</h4>
                         </div>
                         <div class="card-body">
                             {{ produccion_formset.management_form }}
                             <div id="produccion-forms">
                                 {% for form in produccion_formset %}
-                                <div class="produccion-form mb-3 border p-3">
+                                <div class="produccion-form mb-3 border p-3" style="{% if form.DELETE.value %}display: none;{% endif %}">
                                     <div class="row">
                                         <div class="col-md-2">
                                             <div class="mb-2">
@@ -179,11 +299,22 @@
                                         </div>
                                         <div class="col-md-2">
                                             <div class="mb-2">
-                                                <label class="form-label">{{ form.cantidad_procesada.label }}</label>
-                                                {% render_field form.cantidad_procesada class="form-control" %}
-                                                {% if form.cantidad_procesada.errors %}
+                                                <label class="form-label">{{ form.cantidad_producida_primaria.label }}</label>
+                                                {% render_field form.cantidad_producida_primaria class="form-control" %}
+                                                {% if form.cantidad_producida_primaria.errors %}
                                                     <div class="invalid-feedback d-block">
-                                                        {{ form.cantidad_procesada.errors }}
+                                                        {{ form.cantidad_producida_primaria.errors }}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <div class="mb-2">
+                                                <label class="form-label">{{ form.cantidad_producida_secundaria.label }}</label>
+                                                {% render_field form.cantidad_producida_secundaria class="form-control" %}
+                                                {% if form.cantidad_producida_secundaria.errors %}
+                                                    <div class="invalid-feedback d-block">
+                                                        {{ form.cantidad_producida_secundaria.errors }}
                                                     </div>
                                                 {% endif %}
                                             </div>
@@ -214,28 +345,32 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="row">
-                                        <div class="col-md-12">
-                                            <div class="mb-2">
-                                                <label class="form-label">{{ form.observaciones.label }}</label>
-                                                {% render_field form.observaciones class="form-control" %}
-                                                {% if form.observaciones.errors %}
-                                                    <div class="invalid-feedback d-block">
-                                                        {{ form.observaciones.errors }}
-                                                    </div>
-                                                {% endif %}
-                                            </div>
-                                        </div>
-                                    </div>
                                     {% for hidden in form.hidden_fields %}
                                         {{ hidden }}
                                     {% endfor %}
                                 </div>
                                 {% endfor %}
                             </div>
-                            <button type="button" class="btn btn-success" id="add-produccion">
-                                <i class="fas fa-plus me-2"></i>Agregar Lote Procesado
+                            <button type="button" class="btn btn-secondary" id="add-produccion">
+                                <i class="fas fa-plus me-2"></i>Agregar Lote Producido
                             </button>
+                        </div>
+                    </div>
+
+                    <!-- Desperdicios Section -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h4><i class="fas fa-trash me-2"></i>Desperdicios</h4>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex gap-2 mb-3">
+                                <button type="button" class="btn btn-outline-danger btn-sm" onclick="abrirModalDesperdicio()">
+                                    <i class="fas fa-trash me-2"></i>Registrar Desperdicio
+                                </button>
+                            </div>
+                            <div id="desperdicios-registrados" class="mt-3">
+                                <!-- Aquí se mostrarán los desperdicios registrados -->
+                            </div>
                         </div>
                     </div>
 
@@ -248,6 +383,71 @@
                         </button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Registrar Paro -->
+<div class="modal fade" id="modalParo" tabindex="-1" aria-labelledby="modalParoLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalParoLabel">
+                    <i class="fas fa-pause-circle me-2"></i>Registrar Paro
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formParo">
+                    <div class="mb-3">
+                        <label for="maquinaParo" class="form-label">
+                            Máquina 
+                            <span class="text-muted small">(Se usa la máquina seleccionada en el registro)</span>
+                        </label>
+                        <select class="form-control" id="maquinaParo" required>
+                            <option value="">Seleccionar...</option>
+                            {% for maquina in form.maquina.field.queryset %}
+                                <option value="{{ maquina.pk }}">{{ maquina.codigo }} - {{ maquina.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="causaParo" class="form-label">
+                            Causa del Paro
+                            <a href="{% url 'configuracion_web:causa-paro-list' %}" 
+                               target="_blank" 
+                               class="btn btn-sm btn-outline-info ms-2" 
+                               title="Gestionar causas de paro">
+                                <i class="fas fa-external-link-alt"></i>
+                            </a>
+                        </label>
+                        <select class="form-control" id="causaParo" required>
+                            <option value="">Seleccionar...</option>
+                            {% for causa in causas_paro %}
+                                <option value="{{ causa.pk }}" data-tipo="{{ causa.tipo }}">
+                                    {{ causa.codigo }} - {{ causa.descripcion }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="horaInicioParo" class="form-label">Hora Inicio Paro</label>
+                        <input type="datetime-local" class="form-control" id="horaInicioParo" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="horaFinalParo" class="form-label">Hora Final Paro</label>
+                        <input type="datetime-local" class="form-control" id="horaFinalParo" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="observacionesParo" class="form-label">Observaciones</label>
+                        <textarea class="form-control" id="observacionesParo" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-warning" onclick="registrarParo()">Registrar Paro</button>
             </div>
         </div>
     </div>
@@ -275,128 +475,29 @@
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label for="cantidadDesperdicio" class="form-label">Cantidad (unidades/kg)</label>
+                        <label for="cantidadDesperdicio" class="form-label">Cantidad (kg)</label>
                         <input type="number" class="form-control" id="cantidadDesperdicio" step="0.01" min="0" required>
                     </div>
                     <div class="mb-3">
                         <label for="motivoDesperdicio" class="form-label">Motivo del Desperdicio</label>
                         <select class="form-control" id="motivoDesperdicio" required>
                             <option value="">Seleccionar...</option>
-                            <option value="defecto_calidad">Defecto de Calidad</option>
-                            <option value="error_operacion">Error de Operación</option>
-                            <option value="falla_maquina">Falla de Máquina</option>
-                            <option value="material_defectuoso">Material Defectuoso</option>
-                            <option value="cambio_referencia">Cambio de Referencia</option>
+                            <option value="defecto_doblado">Defecto en doblado</option>
+                            <option value="material_defectuoso">Material defectuoso</option>
+                            <option value="error_operario">Error de operario</option>
+                            <option value="falla_maquina">Falla de máquina</option>
                             <option value="otro">Otro</option>
                         </select>
                     </div>
                     <div class="mb-3">
                         <label for="observacionesDesperdicio" class="form-label">Observaciones</label>
-                        <textarea class="form-control" id="observacionesDesperdicio" rows="3" placeholder="Detalles adicionales sobre el desperdicio"></textarea>
+                        <textarea class="form-control" id="observacionesDesperdicio" rows="3"></textarea>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-danger" onclick="registrarDesperdicio()">
-                    <i class="fas fa-save me-2"></i>Registrar Desperdicio
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal para Registrar Paro -->
-<div class="modal fade" id="modalParo" tabindex="-1" aria-labelledby="modalParoLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modalParoLabel">
-                    <i class="fas fa-pause-circle me-2"></i>Registrar Paro
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="formParo">
-                    <div class="mb-3">
-                        <label for="maquinaParo" class="form-label">Máquina</label>
-                        <select class="form-control" id="maquinaParo" required>
-                            <option value="">Seleccionar...</option>
-                            <!-- Opciones de máquinas -->
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="motivoParo" class="form-label">Motivo del Paro</label>
-                        <select class="form-control" id="motivoParo" required>
-                            <option value="">Seleccionar...</option>
-                            <option value="mantenimiento">Mantenimiento</option>
-                            <option value="falla_tecnica">Falla Técnica</option>
-                            <option value="sin_material">Sin Material</option>
-                            <option value="otro">Otro</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="duracionParo" class="form-label">Duración (minutos)</label>
-                        <input type="number" class="form-control" id="duracionParo" step="0.01" min="0" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="observacionesParo" class="form-label">Observaciones</label>
-                        <textarea class="form-control" id="observacionesParo" rows="3" placeholder="Detalles adicionales sobre el paro"></textarea>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-warning" onclick="registrarParo()">
-                    <i class="fas fa-save me-2"></i>Registrar Paro
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal para Registrar Consumo WIP -->
-<div class="modal fade" id="modalConsumo" tabindex="-1" aria-labelledby="modalConsumoLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modalConsumoLabel">
-                    <i class="fas fa-recycle me-2"></i>Registrar Consumo WIP
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="formConsumo">
-                    <div class="mb-3">
-                        <label for="maquinaConsumo" class="form-label">Máquina</label>
-                        <select class="form-control" id="maquinaConsumo" required>
-                            <option value="">Seleccionar...</option>
-                            <!-- Opciones de máquinas -->
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="cantidadConsumo" class="form-label">Cantidad (unidades/kg)</label>
-                        <input type="number" class="form-control" id="cantidadConsumo" step="0.01" min="0" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="materialConsumo" class="form-label">Material</label>
-                        <select class="form-control" id="materialConsumo" required>
-                            <option value="">Seleccionar...</option>
-                            <option value="materia_prima">Materia Prima</option>
-                            <option value="producto_terminado">Producto Terminado</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="observacionesConsumo" class="form-label">Observaciones</label>
-                        <textarea class="form-control" id="observacionesConsumo" rows="3" placeholder="Detalles adicionales sobre el consumo"></textarea>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-info" onclick="registrarConsumo()">
-                    <i class="fas fa-save me-2"></i>Registrar Consumo
-                </button>
+                <button type="button" class="btn btn-danger" onclick="registrarDesperdicio()">Registrar Desperdicio</button>
             </div>
         </div>
     </div>
@@ -406,41 +507,24 @@
 {% block extra_js %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Funcionalidad para agregar/eliminar formularios dinámicamente
-        function setupFormsetManagement(prefix, containerSelector, addButtonSelector, formClass) {
+        // Función para configurar manejo de formsets
+        function setupFormsetManagement(formsetPrefix, containerSelector, addButtonSelector, formClass) {
             const container = document.querySelector(containerSelector);
             const addButton = document.querySelector(addButtonSelector);
+            const totalForms = document.querySelector(`input[name="${formsetPrefix}-TOTAL_FORMS"]`);
             
-            if (!container || !addButton) {
-                console.warn(`Formset setup failed: container(${containerSelector}) or button(${addButtonSelector}) not found`);
-                return;
-            }
-
-            addButton.addEventListener('click', function(e) {
-                e.preventDefault();
-                
-                const totalForms = document.querySelector(`#id_${prefix}-TOTAL_FORMS`);
-                if (!totalForms) {
-                    console.error(`TOTAL_FORMS field not found: #id_${prefix}-TOTAL_FORMS`);
-                    return;
-                }
-                
+            if (!container || !addButton || !totalForms) return;
+            
+            addButton.addEventListener('click', function() {
                 const formCount = parseInt(totalForms.value);
-                const existingForms = container.querySelectorAll(`.${formClass}`);
-                
-                if (existingForms.length === 0) {
-                    console.error(`No existing forms found with class: ${formClass}`);
-                    return;
-                }
-                
-                const newForm = existingForms[0].cloneNode(true);
+                const emptyForm = container.querySelector(`.${formClass}`).cloneNode(true);
                 
                 // Actualizar los nombres e IDs de los campos del nuevo formulario
-                const formRegex = new RegExp(`${prefix}-(\\d+)-`, 'g');
-                newForm.innerHTML = newForm.innerHTML.replace(formRegex, `${prefix}-${formCount}-`);
+                const formRegex = new RegExp(`${formsetPrefix}-(\\d+)-`, 'g');
+                emptyForm.innerHTML = emptyForm.innerHTML.replace(formRegex, `${formsetPrefix}-${formCount}-`);
                 
                 // Limpiar los valores del nuevo formulario
-                const inputs = newForm.querySelectorAll('input, select, textarea');
+                const inputs = emptyForm.querySelectorAll('input, select, textarea');
                 inputs.forEach(input => {
                     if (input.type === 'checkbox') {
                         input.checked = false;
@@ -449,14 +533,17 @@
                     }
                 });
                 
+                // Mostrar el formulario
+                emptyForm.style.display = 'block';
+                
                 // Agregar el nuevo formulario al contenedor
-                container.appendChild(newForm);
+                container.appendChild(emptyForm);
                 
                 // Actualizar el contador de formularios
                 totalForms.value = formCount + 1;
                 
                 // Agregar funcionalidad de eliminar al nuevo formulario
-                setupDeleteButton(newForm);
+                setupDeleteButton(emptyForm);
             });
         }
 
@@ -465,13 +552,13 @@
             if (deleteCheckbox) {
                 const deleteLabel = formElement.querySelector('label[for="' + deleteCheckbox.id + '"]');
                 if (deleteLabel) {
-                  deleteLabel.addEventListener('click', function() {
-                    if (deleteCheckbox.checked) {
-                      formElement.style.display = 'none';
-                    } else {
-                      formElement.style.display = 'block';
-                    }
-                  });
+                    deleteLabel.addEventListener('click', function() {
+                        if (deleteCheckbox.checked) {
+                            formElement.style.display = 'none';
+                        } else {
+                            formElement.style.display = 'block';
+                        }
+                    });
                 }
             }
         }
@@ -479,10 +566,11 @@
         // Configurar manejo de formsets con los prefijos correctos
         setupFormsetManagement('paro_formset', '#paro-forms', '#add-paro', 'paro-form');
         setupFormsetManagement('consumo_wip_formset', '#consumo-wip-forms', '#add-consumo-wip', 'consumo-wip-form');
+        setupFormsetManagement('consumo_mp_formset', '#consumo-mp-forms', '#add-consumo-mp', 'consumo-mp-form');
         setupFormsetManagement('produccion_formset', '#produccion-forms', '#add-produccion', 'produccion-form');
 
         // Configurar botones de eliminar existentes
-        document.querySelectorAll('.paro-form, .consumo-wip-form, .produccion-form').forEach(setupDeleteButton);
+        document.querySelectorAll('.paro-form, .consumo-wip-form, .consumo-mp-form, .produccion-form').forEach(setupDeleteButton);
 
         // Inicializar datepicker para el campo de fecha
         if (typeof flatpickr !== 'undefined') {
@@ -515,39 +603,23 @@
         }
     });
 
-    // Array para almacenar los desperdicios registrados temporalmente
+    // Variables para desperdicios
     let desperdiciosRegistrados = [];
 
-    // Función para abrir el modal de desperdicio
-    function abrirModalDesperdicio() {
-        const modal = new bootstrap.Modal(document.getElementById('modalDesperdicio'));
-        modal.show();
-        
-        // Limpiar formulario
-        document.getElementById('formDesperdicio').reset();
-    }
-
-    // Función para registrar un desperdicio
+    // Función para registrar desperdicio
     function registrarDesperdicio() {
         const tipoMaterial = document.getElementById('tipoMaterial').value;
         const cantidad = document.getElementById('cantidadDesperdicio').value;
         const motivo = document.getElementById('motivoDesperdicio').value;
         const observaciones = document.getElementById('observacionesDesperdicio').value;
 
-        // Validar campos requeridos
         if (!tipoMaterial || !cantidad || !motivo) {
-            alert('Por favor, complete todos los campos requeridos.');
+            alert('Por favor complete todos los campos obligatorios');
             return;
         }
 
-        if (parseFloat(cantidad) <= 0) {
-            alert('La cantidad debe ser mayor a 0.');
-            return;
-        }
-
-        // Crear objeto desperdicio
         const desperdicio = {
-            id: Date.now(), // ID temporal único
+            id: Date.now(),
             tipoMaterial: tipoMaterial,
             cantidad: parseFloat(cantidad),
             motivo: motivo,
@@ -555,49 +627,41 @@
             fecha: new Date().toLocaleString()
         };
 
-        // Agregar al array
         desperdiciosRegistrados.push(desperdicio);
-
-        // Actualizar la visualización
         actualizarVisualizacionDesperdicios();
 
+        // Limpiar formulario
+        document.getElementById('formDesperdicio').reset();
+        
         // Cerrar modal
         const modal = bootstrap.Modal.getInstance(document.getElementById('modalDesperdicio'));
         modal.hide();
-
-        // Mostrar mensaje de éxito
-        mostrarMensaje('Desperdicio registrado exitosamente', 'success');
+        
+        alert('Desperdicio registrado exitosamente');
     }
 
-    // Función para actualizar la visualización de desperdicios
+    // Función para actualizar visualización de desperdicios
     function actualizarVisualizacionDesperdicios() {
         const container = document.getElementById('desperdicios-registrados');
-        
         if (desperdiciosRegistrados.length === 0) {
-            container.innerHTML = '<p class="text-muted">No hay desperdicios registrados.</p>';
+            container.innerHTML = '';
             return;
         }
 
-        let html = '<div class="table-responsive"><table class="table table-sm table-striped">';
-        html += '<thead><tr><th>Tipo</th><th>Cantidad</th><th>Motivo</th><th>Observaciones</th><th>Acciones</th></tr></thead><tbody>';
-
+        let html = '<div class="mt-3"><h6>Desperdicios Registrados:</h6>';
+        html += '<div class="table-responsive"><table class="table table-sm table-striped">';
+        html += '<thead><tr><th>Tipo</th><th>Cantidad</th><th>Motivo</th><th>Fecha</th><th>Acciones</th></tr></thead><tbody>';
+        
         desperdiciosRegistrados.forEach(desperdicio => {
-            const motivoTexto = obtenerTextoMotivo(desperdicio.motivo);
-            html += `
-                <tr>
-                    <td><span class="badge bg-${obtenerColorTipo(desperdicio.tipoMaterial)}">${desperdicio.tipoMaterial}</span></td>
-                    <td>${desperdicio.cantidad}</td>
-                    <td>${motivoTexto}</td>
-                    <td>${desperdicio.observaciones || '-'}</td>
-                    <td>
-                        <button type="button" class="btn btn-outline-danger btn-sm" onclick="eliminarDesperdicio(${desperdicio.id})">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </td>
-                </tr>
-            `;
+            html += `<tr>
+                <td>${desperdicio.tipoMaterial}</td>
+                <td>${desperdicio.cantidad} kg</td>
+                <td>${desperdicio.motivo}</td>
+                <td>${desperdicio.fecha}</td>
+                <td><button class="btn btn-sm btn-danger" onclick="eliminarDesperdicio(${desperdicio.id})">Eliminar</button></td>
+            </tr>`;
         });
-
+        
         html += '</tbody></table></div>';
         container.innerHTML = html;
     }
@@ -607,133 +671,69 @@
         if (confirm('¿Está seguro de eliminar este desperdicio?')) {
             desperdiciosRegistrados = desperdiciosRegistrados.filter(d => d.id !== id);
             actualizarVisualizacionDesperdicios();
-            mostrarMensaje('Desperdicio eliminado', 'info');
+            alert('Desperdicio eliminado');
         }
     }
 
-    // Funciones auxiliares
-    function obtenerTextoMotivo(motivo) {
-        const motivos = {
-            'defecto_calidad': 'Defecto de Calidad',
-            'error_operacion': 'Error de Operación',
-            'falla_maquina': 'Falla de Máquina',
-            'material_defectuoso': 'Material Defectuoso',
-            'cambio_referencia': 'Cambio de Referencia',
-            'otro': 'Otro'
-        };
-        return motivos[motivo] || motivo;
-    }
+    // Variables para paros
+    let parosRegistrados = [];
 
-    function obtenerColorTipo(tipo) {
-        const colores = {
-            'WIP': 'warning',
-            'MP': 'info',
-            'PT': 'success'
-        };
-        return colores[tipo] || 'secondary';
-    }
-
-    function mostrarMensaje(mensaje, tipo) {
-        // Crear un toast/alert temporal
-        const alertDiv = document.createElement('div');
-        alertDiv.className = `alert alert-${tipo} alert-dismissible fade show position-fixed`;
-        alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
-        alertDiv.innerHTML = `
-            ${mensaje}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        `;
-        
-        document.body.appendChild(alertDiv);
-        
-        // Auto-remove after 3 seconds
-        setTimeout(() => {
-            if (alertDiv.parentNode) {
-                alertDiv.parentNode.removeChild(alertDiv);
-            }
-        }, 3000);
-    }
-
-    // Funciones para manejo de paros
-    function abrirModalParo() {
-        const modal = new bootstrap.Modal(document.getElementById('modalParo'));
-        modal.show();
-        
-        // Limpiar formulario
-        document.getElementById('formParo').reset();
-    }
-
+    // Función para registrar paro
     function registrarParo() {
-        const maquina = document.getElementById('maquinaParo').value;
-        const motivo = document.getElementById('motivoParo').value;
-        const duracion = document.getElementById('duracionParo').value;
+        const causa = document.getElementById('causaParo').value;
+        const horaInicio = document.getElementById('horaInicioParo').value;
+        const horaFin = document.getElementById('horaFinalParo').value;
         const observaciones = document.getElementById('observacionesParo').value;
 
-        // Validar campos requeridos
-        if (!maquina || !motivo || !duracion) {
-            alert('Por favor, complete todos los campos requeridos.');
+        if (!causa || !horaInicio || !horaFin) {
+            alert('Por favor complete todos los campos obligatorios');
             return;
         }
 
-        if (parseFloat(duracion) <= 0) {
-            alert('La duración debe ser mayor a 0.');
-            return;
-        }
-
-        // Crear objeto paro
         const paro = {
-            id: Date.now(), // ID temporal único
-            maquina: maquina,
-            motivo: motivo,
-            duracion: parseFloat(duracion),
+            id: Date.now(),
+            causa: causa,
+            horaInicio: horaInicio,
+            horaFin: horaFin,
             observaciones: observaciones,
             fecha: new Date().toLocaleString()
         };
 
-        // Agregar al array (temporalmente, para visualización)
         parosRegistrados.push(paro);
-
-        // Actualizar la visualización
         actualizarVisualizacionParos();
 
+        // Limpiar formulario
+        document.getElementById('formParo').reset();
+        
         // Cerrar modal
         const modal = bootstrap.Modal.getInstance(document.getElementById('modalParo'));
         modal.hide();
-
-        // Mostrar mensaje de éxito
-        mostrarMensaje('Paro registrado exitosamente', 'success');
+        
+        alert('Paro registrado exitosamente');
     }
 
-    // Array para almacenar los paros registrados temporalmente
-    let parosRegistrados = [];
-
-    // Función para actualizar la visualización de paros
+    // Función para actualizar visualización de paros
     function actualizarVisualizacionParos() {
         const container = document.getElementById('paros-registrados');
-        
         if (parosRegistrados.length === 0) {
-            container.innerHTML = '<p class="text-muted">No hay paros registrados.</p>';
+            container.innerHTML = '';
             return;
         }
 
-        let html = '<div class="table-responsive"><table class="table table-sm table-striped">';
-        html += '<thead><tr><th>Máquina</th><th>Motivo</th><th>Duración</th><th>Observaciones</th><th>Acciones</th></tr></thead><tbody>';
-
+        let html = '<div class="mt-3"><h6>Paros Registrados:</h6>';
+        html += '<div class="table-responsive"><table class="table table-sm table-striped">';
+        html += '<thead><tr><th>Causa</th><th>Hora Inicio</th><th>Hora Fin</th><th>Fecha</th><th>Acciones</th></tr></thead><tbody>';
+        
         parosRegistrados.forEach(paro => {
-            html += `
-                <tr>
-                    <td>${paro.maquina}</td>
-                    <td>${paro.motivo}</td>
-                    <td>${paro.duracion} min</td>
-                    <td>${paro.observaciones || '-'}</td>
-                    <td>
-                        <button type="button" class="btn btn-outline-danger btn-sm" onclick="eliminarParo(${paro.id})">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </td>
-                </tr>
-            `;
+            html += `<tr>
+                <td>${paro.causa}</td>
+                <td>${paro.horaInicio}</td>
+                <td>${paro.horaFin}</td>
+                <td>${paro.fecha}</td>
+                <td><button class="btn btn-sm btn-danger" onclick="eliminarParo(${paro.id})">Eliminar</button></td>
+            </tr>`;
         });
-
+        
         html += '</tbody></table></div>';
         container.innerHTML = html;
     }
@@ -743,102 +743,33 @@
         if (confirm('¿Está seguro de eliminar este paro?')) {
             parosRegistrados = parosRegistrados.filter(p => p.id !== id);
             actualizarVisualizacionParos();
-            mostrarMensaje('Paro eliminado', 'info');
+            alert('Paro eliminado');
         }
     }
 
-    // Funciones para manejo de consumos WIP
-    function abrirModalConsumo() {
-        const modal = new bootstrap.Modal(document.getElementById('modalConsumo'));
+    // Función para abrir modal de paro
+    function abrirModalParo() {
+        const modal = new bootstrap.Modal(document.getElementById('modalParo'));
         modal.show();
+        document.getElementById('formParo').reset();
         
-        // Limpiar formulario
-        document.getElementById('formConsumo').reset();
-    }
-
-    function registrarConsumo() {
-        const maquina = document.getElementById('maquinaConsumo').value;
-        const cantidad = document.getElementById('cantidadConsumo').value;
-        const material = document.getElementById('materialConsumo').value;
-        const observaciones = document.getElementById('observacionesConsumo').value;
-
-        // Validar campos requeridos
-        if (!maquina || !cantidad || !material) {
-            alert('Por favor, complete todos los campos requeridos.');
-            return;
+        // Configurar la máquina por defecto basada en la seleccionada en el registro principal
+        const maquinaRegistro = document.getElementById('{{ form.maquina.id_for_label }}').value;
+        if (maquinaRegistro) {
+            document.getElementById('maquinaParo').value = maquinaRegistro;
         }
-
-        if (parseFloat(cantidad) <= 0) {
-            alert('La cantidad debe ser mayor a 0.');
-            return;
-        }
-
-        // Crear objeto consumo
-        const consumo = {
-            id: Date.now(), // ID temporal único
-            maquina: maquina,
-            cantidad: parseFloat(cantidad),
-            material: material,
-            observaciones: observaciones,
-            fecha: new Date().toLocaleString()
-        };
-
-        // Agregar al array (temporalmente, para visualización)
-        consumosRegistrados.push(consumo);
-
-        // Actualizar la visualización
-        actualizarVisualizacionConsumos();
-
-        // Cerrar modal
-        const modal = bootstrap.Modal.getInstance(document.getElementById('modalConsumo'));
-        modal.hide();
-
-        // Mostrar mensaje de éxito
-        mostrarMensaje('Consumo registrado exitosamente', 'success');
-    }
-
-    // Array para almacenar los consumos registrados temporalmente
-    let consumosRegistrados = [];
-
-    // Función para actualizar la visualización de consumos
-    function actualizarVisualizacionConsumos() {
-        const container = document.getElementById('consumos-registrados');
         
-        if (consumosRegistrados.length === 0) {
-            container.innerHTML = '<p class="text-muted">No hay consumos registrados.</p>';
-            return;
-        }
-
-        let html = '<div class="table-responsive"><table class="table table-sm table-striped">';
-        html += '<thead><tr><th>Máquina</th><th>Cantidad</th><th>Material</th><th>Observaciones</th><th>Acciones</th></tr></thead><tbody>';
-
-        consumosRegistrados.forEach(consumo => {
-            html += `
-                <tr>
-                    <td>${consumo.maquina}</td>
-                    <td>${consumo.cantidad}</td>
-                    <td>${consumo.material}</td>
-                    <td>${consumo.observaciones || '-'}</td>
-                    <td>
-                        <button type="button" class="btn btn-outline-danger btn-sm" onclick="eliminarConsumo(${consumo.id})">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </td>
-                </tr>
-            `;
-        });
-
-        html += '</tbody></table></div>';
-        container.innerHTML = html;
+        // Configurar hora inicial por defecto (hora actual)
+        const ahora = new Date();
+        const fechaHoraActual = ahora.toISOString().slice(0, 16);
+        document.getElementById('horaInicioParo').value = fechaHoraActual;
     }
 
-    // Función para eliminar un consumo
-    function eliminarConsumo(id) {
-        if (confirm('¿Está seguro de eliminar este consumo?')) {
-            consumosRegistrados = consumosRegistrados.filter(c => c.id !== id);
-            actualizarVisualizacionConsumos();
-            mostrarMensaje('Consumo eliminado', 'info');
-        }
+    // Función para abrir modal de desperdicio
+    function abrirModalDesperdicio() {
+        const modal = new bootstrap.Modal(document.getElementById('modalDesperdicio'));
+        modal.show();
+        document.getElementById('formDesperdicio').reset();
     }
 </script>
 {% endblock %}

@@ -6,10 +6,12 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1>OP {{ op.op_numero }}</h1>
     <div>
-        <a href="{% url 'admin:produccion_ordenproduccion_change' op.id %}" class="btn btn-warning">
+        {% if op.is_active %}
+        <a href="{% url 'produccion_web:orden-produccion-update' op.id %}" class="btn btn-warning">
             <i class="fas fa-edit"></i> Editar
         </a>
-        <a href="{% url 'op_list' %}" class="btn btn-secondary">
+        {% endif %}
+        <a href="{% url 'produccion_web:orden-produccion-list' %}" class="btn btn-secondary">
             <i class="fas fa-arrow-left"></i> Volver
         </a>
     </div>

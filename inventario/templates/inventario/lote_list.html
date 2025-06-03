@@ -136,7 +136,7 @@
     <div class="card mb-4">
         <div class="card-body">
             <form method="get" class="row g-3 align-items-end">
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label class="form-label">Buscar</label>
                     <div class="search-box">
                         <i class="fas fa-search"></i>
@@ -144,7 +144,7 @@
                                placeholder="ID de lote, material..." value="{{ request.GET.q }}">
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label class="form-label">Estado</label>
                     <select name="estado" class="form-select">
                         <option value="">Todos los estados</option>
@@ -157,6 +157,18 @@
                         <option value="CUARENTENA" {% if request.GET.estado == 'CUARENTENA' %}selected{% endif %}>
                             Cuarentena
                         </option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Categoría</label>
+                    <select name="categoria" class="form-select">
+                        <option value="">Todas las categorías</option>
+                        {% for categoria in categorias %}
+                        <option value="{{ categoria.id }}" 
+                                {% if request.GET.categoria == categoria.id|stringformat:'s' %}selected{% endif %}>
+                            {{ categoria.nombre }}
+                        </option>
+                        {% endfor %}
                     </select>
                 </div>
                 <div class="col-md-3">

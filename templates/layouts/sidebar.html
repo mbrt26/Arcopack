@@ -29,22 +29,22 @@
                         </div>
                         <ul class="nav flex-column" style="list-style: none; padding: 0; margin: 4px 0 0 10px;">
                             <li class="nav-item" style="margin-bottom: 2px;">
-                                <a class="nav-link" href="{% url 'produccion_web:impresion-kanban' %}" style="display: block; padding: 4px 8px; color: #495057; text-decoration: none; border-radius: 4px; font-size: 13px;">
+                                <a class="nav-link" href="{% url 'produccion_web:registro-impresion-list' %}" style="display: block; padding: 4px 8px; color: #495057; text-decoration: none; border-radius: 4px; font-size: 13px;">
                                     <i class="fas fa-print" style="margin-right: 6px; width: 12px; text-align: center; font-size: 11px;"></i> Impresión
                                 </a>
                             </li>
                             <li class="nav-item" style="margin-bottom: 2px;">
-                                <a class="nav-link" href="{% url 'produccion_web:refilado-kanban' %}" style="display: block; padding: 4px 8px; color: #495057; text-decoration: none; border-radius: 4px; font-size: 13px;">
+                                <a class="nav-link" href="{% url 'produccion_web:registro-refilado-list' %}" style="display: block; padding: 4px 8px; color: #495057; text-decoration: none; border-radius: 4px; font-size: 13px;">
                                     <i class="fas fa-cut" style="margin-right: 6px; width: 12px; text-align: center; font-size: 11px;"></i> Refilado
                                 </a>
                             </li>
                             <li class="nav-item" style="margin-bottom: 2px;">
-                                <a class="nav-link" href="{% url 'produccion_web:sellado-kanban' %}" style="display: block; padding: 4px 8px; color: #495057; text-decoration: none; border-radius: 4px; font-size: 13px;">
+                                <a class="nav-link" href="{% url 'produccion_web:registro-sellado-list' %}" style="display: block; padding: 4px 8px; color: #495057; text-decoration: none; border-radius: 4px; font-size: 13px;">
                                     <i class="fas fa-compress" style="margin-right: 6px; width: 12px; text-align: center; font-size: 11px;"></i> Sellado
                                 </a>
                             </li>
                             <li class="nav-item" style="margin-bottom: 2px;">
-                                <a class="nav-link" href="{% url 'produccion_web:doblado-kanban' %}" style="display: block; padding: 4px 8px; color: #495057; text-decoration: none; border-radius: 4px; font-size: 13px;">
+                                <a class="nav-link" href="{% url 'produccion_web:registro-doblado-list' %}" style="display: block; padding: 4px 8px; color: #495057; text-decoration: none; border-radius: 4px; font-size: 13px;">
                                     <i class="fas fa-layer-group" style="margin-right: 6px; width: 12px; text-align: center; font-size: 11px;"></i> Doblado
                                 </a>
                             </li>
@@ -66,7 +66,22 @@
                     </li>
                     <li class="nav-item" style="margin-bottom: 3px;">
                         <a class="nav-link" href="{% url 'inventario_web:lote-list' %}" style="display: block; padding: 6px 12px; color: #495057; text-decoration: none; border-radius: 6px; font-size: 14px;">
-                            <i class="fas fa-tags" style="margin-right: 8px; width: 14px; text-align: center;"></i> Lotes
+                            <i class="fas fa-tags" style="margin-right: 8px; width: 14px; text-align: center;"></i> Lotes MP
+                        </a>
+                    </li>
+                    <li class="nav-item" style="margin-bottom: 3px;">
+                        <a class="nav-link" href="{% url 'inventario_web:wip-list' %}" style="display: block; padding: 6px 12px; color: #495057; text-decoration: none; border-radius: 6px; font-size: 14px;">
+                            <i class="fas fa-cogs" style="margin-right: 8px; width: 14px; text-align: center;"></i> Productos WIP
+                        </a>
+                    </li>
+                    <li class="nav-item" style="margin-bottom: 3px;">
+                        <a class="nav-link" href="{% url 'inventario_web:pt-list' %}" style="display: block; padding: 6px 12px; color: #495057; text-decoration: none; border-radius: 6px; font-size: 14px;">
+                            <i class="fas fa-box-open" style="margin-right: 8px; width: 14px; text-align: center;"></i> Productos PT
+                        </a>
+                    </li>
+                    <li class="nav-item" style="margin-bottom: 3px;">
+                        <a class="nav-link" href="{% url 'inventario_web:despachos-list' %}" style="display: block; padding: 6px 12px; color: #495057; text-decoration: none; border-radius: 6px; font-size: 14px;">
+                            <i class="fas fa-truck-loading" style="margin-right: 8px; width: 14px; text-align: center;"></i> Despachos
                         </a>
                     </li>
                 </ul>

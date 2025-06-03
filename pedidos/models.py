@@ -146,7 +146,7 @@ class Pedido(models.Model):
         return f"Pedido {self.numero_pedido} - {self.cliente.razon_social}"
 
     def get_absolute_url(self):
-        return reverse('pedidos:pedido_detail', kwargs={'pk': self.pk})
+        return reverse('pedidos_web:pedido_detail', kwargs={'pk': self.pk})
 
     @property
     def tiene_orden_produccion(self):
@@ -191,19 +191,26 @@ class Pedido(models.Model):
         Este método actualiza el campo valor_total del pedido y retorna el valor calculado.
         """
         # Usar aggregate para optimizar la consulta a la base de datos
-        from django.db.models import Sum, F, ExpressionWrapper, DecimalField
+        from django.db.models import Sum, F, ExpressionWrapper, DecimalField, Value
         from django.db.models.functions import Coalesce
         
         # Calcular el subtotal de cada línea: (cantidad * precio_unitario) * (1 - descuento_porcentaje/100)
+        # Asegurarse de que todas las operaciones tengan un tipo de salida definido
         resultado = self.lineas.aggregate(
             total=Coalesce(
                 Sum(
                     ExpressionWrapper(
-                        F('cantidad') * F('precio_unitario') * (1 - F('descuento_porcentaje') / 100),
-                        output_field=DecimalField()
+                        F('cantidad') * F('precio_unitario') * (
+                            Value(1, output_field=DecimalField()) - 
+                            ExpressionWrapper(
+                                F('descuento_porcentaje') / Value(100, output_field=DecimalField()),
+                                output_field=DecimalField()
+                            )
+                        ),
+                        output_field=DecimalField(max_digits=12, decimal_places=2)
                     )
                 ),
-                0
+                Value(0, output_field=DecimalField())
             )
         )
         

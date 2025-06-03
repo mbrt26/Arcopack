@@ -113,6 +113,20 @@
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
+                                {{ form.pistas.label_tag }}
+                                {% render_field form.pistas class="form-control" %}
+                                {% if form.pistas.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.pistas.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <div class="form-group">
                                 {{ form.observaciones.label_tag }}
                                 {% render_field form.observaciones class="form-control" %}
                                 {% if form.observaciones.errors %}
@@ -124,6 +138,7 @@
                         </div>
                     </div>
 
+                    <!-- Paros Section -->
                     <div class="card mb-4">
                         <div class="card-header">
                             <h4><i class="fas fa-pause-circle me-2"></i>Paros</h4>
@@ -158,23 +173,60 @@
 
                     <div class="card mb-4">
                         <div class="card-header">
-                            <h4>Consumo de WIP</h4>
+                            <h4><i class="fas fa-recycle me-2"></i>Consumo de WIP</h4>
                         </div>
                         <div class="card-body">
                             {{ consumo_wip_formset.management_form }}
                             <div id="consumo-wip-forms">
                                 {% for form in consumo_wip_formset %}
-                                <div class="consumo-wip-form mb-3 border p-3">
-                                    {% for field in form %}
-                                    <div class="mb-2">
-                                        <label class="form-label">{{ field.label }}</label>
-                                        {% render_field field class="form-control" %}
+                                <div class="consumo-wip-form mb-3 border p-3" style="{% if form.DELETE.value %}display: none;{% endif %}">
+                                    <div class="row">
+                                        <div class="col-md-5">
+                                            <div class="mb-2">
+                                                <label class="form-label">{{ form.lote_consumido.label }}</label>
+                                                {% render_field form.lote_consumido class="form-control" %}
+                                                {% if form.lote_consumido.errors %}
+                                                    <div class="invalid-feedback d-block">
+                                                        {{ form.lote_consumido.errors }}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="mb-2">
+                                                <label class="form-label">{{ form.cantidad_kg_consumida.label }}</label>
+                                                {% render_field form.cantidad_kg_consumida class="form-control" %}
+                                                {% if form.cantidad_kg_consumida.errors %}
+                                                    <div class="invalid-feedback d-block">
+                                                        {{ form.cantidad_kg_consumida.errors }}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="mb-2">
+                                                <div class="d-flex align-items-end">
+                                                    {% if consumo_wip_formset.can_delete %}
+                                                        <div class="form-check">
+                                                            {% render_field form.DELETE class="form-check-input" %}
+                                                            <label class="form-check-label" for="{{ form.DELETE.id_for_label }}">
+                                                                Eliminar
+                                                            </label>
+                                                        </div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
+                                    {% for hidden in form.hidden_fields %}
+                                        {{ hidden }}
                                     {% endfor %}
                                 </div>
                                 {% endfor %}
                             </div>
-                            <button type="button" class="btn btn-secondary" id="add-consumo-wip">Agregar Consumo WIP</button>
+                            <button type="button" class="btn btn-secondary" id="add-consumo-wip">
+                                <i class="fas fa-plus me-2"></i>Agregar Consumo WIP
+                            </button>
                         </div>
                     </div>
 
@@ -352,18 +404,43 @@
             <div class="modal-body">
                 <form id="formParo">
                     <div class="mb-3">
-                        <label for="motivoParo" class="form-label">Motivo del Paro</label>
-                        <select class="form-control" id="motivoParo" required>
+                        <label for="maquinaParo" class="form-label">
+                            Máquina 
+                            <span class="text-muted small">(Se usa la máquina seleccionada en el registro)</span>
+                        </label>
+                        <select class="form-control" id="maquinaParo" required>
                             <option value="">Seleccionar...</option>
-                            <option value="mantenimiento">Mantenimiento</option>
-                            <option value="falla_maquina">Falla de Máquina</option>
-                            <option value="escasez_materiales">Escasez de Materiales</option>
-                            <option value="otro">Otro</option>
+                            {% for maquina in form.maquina.field.queryset %}
+                                <option value="{{ maquina.pk }}">{{ maquina.codigo }} - {{ maquina.nombre }}</option>
+                            {% endfor %}
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label for="duracionParo" class="form-label">Duración (minutos)</label>
-                        <input type="number" class="form-control" id="duracionParo" step="1" min="1" required>
+                        <label for="causaParo" class="form-label">
+                            Causa del Paro
+                            <a href="{% url 'configuracion_web:causa-paro-list' %}" 
+                               target="_blank" 
+                               class="btn btn-sm btn-outline-info ms-2" 
+                               title="Gestionar causas de paro">
+                                <i class="fas fa-external-link-alt"></i>
+                            </a>
+                        </label>
+                        <select class="form-control" id="causaParo" required>
+                            <option value="">Seleccionar...</option>
+                            {% for causa in causas_paro %}
+                                <option value="{{ causa.pk }}" data-tipo="{{ causa.tipo }}">
+                                    {{ causa.codigo }} - {{ causa.descripcion }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="horaInicioParo" class="form-label">Hora Inicio Paro</label>
+                        <input type="datetime-local" class="form-control" id="horaInicioParo" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="horaFinalParo" class="form-label">Hora Final Paro</label>
+                        <input type="datetime-local" class="form-control" id="horaFinalParo" required>
                     </div>
                     <div class="mb-3">
                         <label for="observacionesParo" class="form-label">Observaciones</label>
@@ -456,7 +533,6 @@
         }
 
         // Configurar manejo de formsets con los prefijos correctos
-        setupFormsetManagement('paro_formset', '#paro-forms', '#add-paro', 'paro-form');
         setupFormsetManagement('consumo_wip_formset', '#consumo-wip-forms', '#add-consumo-wip', 'consumo-wip-form');
         setupFormsetManagement('produccion_formset', '#produccion-forms', '#add-produccion', 'produccion-form');
 
@@ -642,30 +718,40 @@
         
         // Limpiar formulario
         document.getElementById('formParo').reset();
+        
+        // Configurar la máquina por defecto basada en la seleccionada en el registro principal
+        const maquinaRegistro = document.getElementById('{{ form.maquina.id_for_label }}').value;
+        if (maquinaRegistro) {
+            document.getElementById('maquinaParo').value = maquinaRegistro;
+        }
+        
+        // Configurar hora inicial por defecto (hora actual)
+        const ahora = new Date();
+        const fechaHoraActual = ahora.toISOString().slice(0, 16);
+        document.getElementById('horaInicioParo').value = fechaHoraActual;
     }
 
     // Función para registrar un paro
     function registrarParo() {
-        const motivo = document.getElementById('motivoParo').value;
-        const duracion = document.getElementById('duracionParo').value;
+        const maquina = document.getElementById('maquinaParo').value;
+        const causa = document.getElementById('causaParo').value;
+        const horaInicio = document.getElementById('horaInicioParo').value;
+        const horaFinal = document.getElementById('horaFinalParo').value;
         const observaciones = document.getElementById('observacionesParo').value;
 
         // Validar campos requeridos
-        if (!motivo || !duracion) {
+        if (!maquina || !causa || !horaInicio || !horaFinal) {
             alert('Por favor, complete todos los campos requeridos.');
-            return;
-        }
-
-        if (parseInt(duracion) <= 0) {
-            alert('La duración debe ser mayor a 0.');
             return;
         }
 
         // Crear objeto paro
         const paro = {
             id: Date.now(), // ID temporal único
-            motivo: motivo,
-            duracion: parseInt(duracion),
+            maquina: maquina,
+            causa: causa,
+            horaInicio: horaInicio,
+            horaFinal: horaFinal,
             observaciones: observaciones,
             fecha: new Date().toLocaleString()
         };

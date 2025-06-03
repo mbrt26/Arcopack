@@ -1,0 +1,194 @@
+{% extends 'base.html' %}
+
+{% block title %}Transferir Lote PT: {{ lote.lote_id }}{% endblock %}
+
+{% block styles %}
+<style>
+    .form-card {
+        margin-bottom: 1.5rem;
+    }
+    .form-header {
+        background-color: #f8f9fa;
+        padding: 1rem;
+        border-bottom: 1px solid #dee2e6;
+    }
+    .form-body {
+        padding: 1.5rem;
+    }
+    .lote-info {
+        background-color: #f8f9fa;
+        padding: 1rem;
+        border-radius: 0.25rem;
+        margin-bottom: 1.5rem;
+    }
+    .info-label {
+        font-weight: 600;
+        color: #495057;
+    }
+    .info-value {
+        font-weight: 400;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">{{ titulo }}</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="{% url 'root' %}">Inicio</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'inventario_web:pt-list' %}">Inventario PT</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'inventario_web:pt-detail' lote.id %}">Detalle Lote</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Transferir</li>
+            </ol>
+        </nav>
+    </div>
+    
+    <div class="row">
+        <div class="col-lg-4">
+            <!-- Información del Lote -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Información del Lote</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="info-label">ID Lote:</div>
+                        <div class="info-value">{{ lote.lote_id }}</div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="info-label">Producto:</div>
+                        <div class="info-value">{{ lote.producto_terminado.codigo }}</div>
+                        <div class="text-muted small">{{ lote.producto_terminado.nombre }}</div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="info-label">Cantidad:</div>
+                        <div class="info-value">{{ lote.cantidad_actual|floatformat:2 }} {{ lote.unidad_medida.codigo }}</div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="info-label">Ubicación Actual:</div>
+                        <div class="info-value">{{ lote.ubicacion.nombre }}</div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="info-label">Estado:</div>
+                        <div class="info-value">
+                            {% if lote.estado == 'DISPONIBLE' %}
+                            <span class="badge bg-success">Disponible</span>
+                            {% elif lote.estado == 'CONSUMIDO' %}
+                            <span class="badge bg-danger">Consumido</span>
+                            {% elif lote.estado == 'CUARENTENA' %}
+                            <span class="badge bg-warning">Cuarentena</span>
+                            {% elif lote.estado == 'DESPACHADO' %}
+                            <span class="badge bg-primary">Despachado</span>
+                            {% else %}
+                            <span class="badge bg-secondary">{{ lote.estado }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <a href="{% url 'inventario_web:pt-detail' lote.id %}" class="btn btn-outline-secondary btn-sm w-100">
+                            <i class="fas fa-arrow-left me-2"></i> Volver al Detalle
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-8">
+            <!-- Formulario de Transferencia -->
+            <div class="card form-card">
+                <div class="card-header form-header">
+                    <h5 class="card-title mb-0">Transferir a Nueva Ubicación</h5>
+                </div>
+                <div class="card-body form-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="alert alert-info mb-4">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Seleccione si desea transferir el lote completo o solo una parte del mismo.
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="form-label">{{ form.tipo_transferencia.label }}</label>
+                            <div class="d-flex flex-column gap-2">
+                                <div class="form-check">
+                                    <input type="radio" name="tipo_transferencia" value="TOTAL" id="id_tipo_transferencia_0" class="form-check-input" checked onclick="document.getElementById('cantidad-container').style.display='none';">
+                                    <label class="form-check-label" for="id_tipo_transferencia_0">Transferir todo el lote</label>
+                                </div>
+                                <div class="form-check">
+                                    <input type="radio" name="tipo_transferencia" value="PARCIAL" id="id_tipo_transferencia_1" class="form-check-input" onclick="document.getElementById('cantidad-container').style.display='block';">
+                                    <label class="form-check-label" for="id_tipo_transferencia_1">Transferir cantidad parcial</label>
+                                </div>
+                            </div>
+                            {% if form.tipo_transferencia.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.tipo_transferencia.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3" id="cantidad-container" style="display: none;">
+                            <label for="{{ form.cantidad.id_for_label }}" class="form-label">{{ form.cantidad.label }}</label>
+                            {{ form.cantidad }}
+                            {% if form.cantidad.help_text %}
+                            <div class="form-text">{{ form.cantidad.help_text }}</div>
+                            {% endif %}
+                            {% if form.cantidad.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.cantidad.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.ubicacion_destino.id_for_label }}" class="form-label">{{ form.ubicacion_destino.label }}</label>
+                            {{ form.ubicacion_destino }}
+                            {% if form.ubicacion_destino.help_text %}
+                            <div class="form-text">{{ form.ubicacion_destino.help_text }}</div>
+                            {% endif %}
+                            {% if form.ubicacion_destino.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.ubicacion_destino.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.observaciones.id_for_label }}" class="form-label">{{ form.observaciones.label }}</label>
+                            {{ form.observaciones }}
+                            {% if form.observaciones.help_text %}
+                            <div class="form-text">{{ form.observaciones.help_text }}</div>
+                            {% endif %}
+                            {% if form.observaciones.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.observaciones.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="d-flex justify-content-end mt-4">
+                            <a href="{% url 'inventario_web:pt-detail' lote.id %}" class="btn btn-outline-secondary me-2">Cancelar</a>
+                            <button type="submit" class="btn btn-warning">
+                                <i class="fas fa-exchange-alt me-2"></i> Transferir Lote
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+

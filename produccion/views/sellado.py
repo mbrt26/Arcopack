@@ -5,6 +5,8 @@ Incluye vistas HTML, ViewSets y acciones específicas para el proceso de sellado
 """
 
 from django.db import transaction
+from django.views.generic import ListView
+from django.urls import reverse_lazy
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -37,7 +39,7 @@ class RegistroSelladoCreateView(BaseProduccionCreateView):
     model = Sellado
     form_class = RegistroSelladoForm
     template_name = 'produccion/registro_sellado_form.html'
-    success_url = '/produccion/sellado/'
+    success_url = reverse_lazy('produccion_web:registro-sellado-list')
     
     def get_formsets(self, context):
         """Define los formsets específicos para sellado."""
@@ -53,6 +55,10 @@ class RegistroSelladoCreateView(BaseProduccionCreateView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        # Agregar causas de paro al contexto
+        from configuracion.models import CausaParo
+        context['causas_paro'] = CausaParo.objects.all().order_by('codigo')
+        
         context.update({
             'page_title': 'Nuevo Registro de Sellado',
             'form_action': 'Crear',
@@ -66,7 +72,7 @@ class RegistroSelladoUpdateView(BaseProduccionUpdateView):
     model = Sellado
     form_class = RegistroSelladoForm
     template_name = 'produccion/registro_sellado_form.html'
-    success_url = '/produccion/sellado/'
+    success_url = reverse_lazy('produccion_web:registro-sellado-list')
     
     def get_formsets(self, context):
         """Define los formsets específicos para sellado."""
@@ -82,6 +88,10 @@ class RegistroSelladoUpdateView(BaseProduccionUpdateView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        # Agregar causas de paro al contexto
+        from configuracion.models import CausaParo
+        context['causas_paro'] = CausaParo.objects.all().order_by('codigo')
+        
         context.update({
             'page_title': f'Editar Registro de Sellado - {self.object.orden_produccion.op_numero}',
             'form_action': 'Actualizar',
@@ -90,48 +100,89 @@ class RegistroSelladoUpdateView(BaseProduccionUpdateView):
         return context
 
 
+class RegistroSelladoListView(ListView):
+    """Vista para listar todos los registros de sellado."""
+    model = Sellado
+    template_name = 'produccion/registro_sellado_list.html'
+    context_object_name = 'registros'
+    
+    def get_queryset(self):
+        """Obtener todos los registros activos ordenados por fecha y hora."""
+        return Sellado.objects.filter(is_active=True).select_related(
+            'orden_produccion', 'maquina', 'operario_principal'
+        ).order_by('-fecha', '-hora_inicio')
+
+
 class RegistroSelladoDetailView(BaseProduccionDetailView):
     """Vista para mostrar detalles de un registro de sellado."""
     template_name = 'produccion/registro_sellado_detail.html'
     
     def get_queryset(self):
-        return Sellado.objects.select_related(
-            'orden_produccion', 'maquina', 'operario_principal'
-        ).prefetch_related(
-            'paros_sellado', 'desperdicios_sellado', 'consumos_wip_sellado',
-            'consumos_mp_sellado'
+        return Sellado.objects.filter(is_active=True).select_related(
+            'orden_produccion', 'orden_produccion__cliente', 'orden_produccion__producto',
+            'maquina', 'operario_principal'
         )
     
     def get_lotes_producidos(self, registro):
         """Obtiene información de lotes producidos en sellado (bolsas)."""
+        from django.contrib.contenttypes.models import ContentType
+        
+        ct = ContentType.objects.get_for_model(registro.__class__)
+        
+        # Sellado normalmente produce PT (bolsas) pero puede producir WIP en algunos casos
+        lotes_wip = LoteProductoEnProceso.objects.filter(
+            proceso_origen_content_type=ct,
+            proceso_origen_object_id=registro.id
+        ).select_related('ubicacion', 'producto_terminado')
+        
         lotes_pt = LoteProductoTerminado.objects.filter(
-            registro_origen_sellado=registro
-        ).select_related('ubicacion', 'producto')
+            proceso_final_content_type=ct,
+            proceso_final_object_id=registro.id
+        ).select_related('ubicacion', 'producto_terminado')
+        
+        lotes_data = [
+            {
+                'tipo': 'WIP',
+                'lote_id': lote.lote_id,
+                'cantidad_producida': lote.cantidad_actual
+            } for lote in lotes_wip
+        ] + [
+            {
+                'tipo': 'PT',
+                'lote_id': lote.lote_id,
+                'cantidad_producida': lote.cantidad_actual
+            } for lote in lotes_pt
+        ]
         
         return {
+            'lotes_wip': lotes_wip,
             'lotes_pt': lotes_pt,
-            'lotes_wip': [],  # Sellado normalmente produce PT (bolsas)
-            'total_lotes': lotes_pt.count()
+            'lotes_data': lotes_data,
+            'total_lotes': lotes_wip.count() + lotes_pt.count()
         }
     
     def calculate_totales(self, registro, lotes_data):
         """Calcula totales específicos para sellado."""
         # Calcular total de WIP consumido
         total_wip_kg = sum(
-            consumo.cantidad_kg_consumida for consumo in registro.consumos_wip_sellado.all()
+            consumo.cantidad_kg_consumida 
+            for consumo in registro.consumos_wip.all()
         )
         
         # Calcular total de MP consumida (zipper, válvulas, etc.)
         total_mp_unidades = sum(
-            consumo.cantidad_consumida for consumo in registro.consumos_mp_sellado.all()
+            consumo.cantidad_consumida 
+            for consumo in registro.consumos_mp.all()
         )
         
         # Calcular total producido (unidades de bolsas)
         total_producido_unidades = sum(
-            lote.cantidad_actual for lote in lotes_data['lotes_pt']
+            lote.cantidad_actual
+            for lote_type in ['lotes_wip', 'lotes_pt']
+            for lote in lotes_data.get(lote_type, [])
         )
         
-        # Calcular eficiencia de material (kg de WIP vs unidades producidas)
+        # Calcular eficiencia de material (unidades producidas vs kg de WIP)
         eficiencia_material = (total_producido_unidades / total_wip_kg) if total_wip_kg > 0 else 0
         
         return {

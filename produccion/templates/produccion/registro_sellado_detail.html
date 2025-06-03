@@ -1,0 +1,348 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-seal me-2"></i>
+                        Registro de Sellado - {{ registro.orden_produccion.op_numero }}
+                    </h4>
+                    <div class="btn-group">
+                        <a href="{% url 'produccion_web:registro-sellado-update' registro.pk %}" 
+                           class="btn btn-warning btn-sm">
+                            <i class="fas fa-edit me-1"></i>Editar
+                        </a>
+                        <a href="{% url 'produccion_web:registro-sellado-list' %}" 
+                           class="btn btn-secondary btn-sm">
+                            <i class="fas fa-arrow-left me-1"></i>Volver al Listado
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Información General -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Información General</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6"><strong>Cliente:</strong></div>
+                        <div class="col-6">{{ registro.orden_produccion.cliente.razon_social }}</div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-6"><strong>Producto:</strong></div>
+                        <div class="col-6">{{ registro.orden_produccion.producto.nombre }}</div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-6"><strong>Máquina:</strong></div>
+                        <div class="col-6">{{ registro.maquina.nombre }}</div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-6"><strong>Operario:</strong></div>
+                        <div class="col-6">{{ registro.operario_principal.get_full_name }}</div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-6"><strong>Fecha:</strong></div>
+                        <div class="col-6">{{ registro.fecha|date:"d/m/Y" }}</div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-6"><strong>Tipo de Sellado:</strong></div>
+                        <div class="col-6">{{ registro.tipo_sellado|default:"--" }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-clock me-2"></i>Tiempos y Dimensiones</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6"><strong>Hora Inicio:</strong></div>
+                        <div class="col-6">{{ registro.hora_inicio|time:"H:i" }}</div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-6"><strong>Hora Final:</strong></div>
+                        <div class="col-6">{{ registro.hora_final|time:"H:i"|default:"En proceso" }}</div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-6"><strong>Tiempo Total:</strong></div>
+                        <div class="col-6">{{ registro.duracion_total_min|floatformat:0 }} min</div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-6"><strong>Ancho Bolsa:</strong></div>
+                        <div class="col-6">{{ registro.ancho_mm|floatformat:0 }} mm</div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-6"><strong>Largo Bolsa:</strong></div>
+                        <div class="col-6">{{ registro.largo_mm|floatformat:0 }} mm</div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-6"><strong>Unidades Objetivo:</strong></div>
+                        <div class="col-6">{{ registro.unidades_objetivo|default:"--" }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resumen de Producción -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Resumen de Producción</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <div class="d-flex flex-column">
+                                <span class="h3 text-primary">{{ totales.total_producido_unidades|floatformat:0 }}</span>
+                                <span class="text-muted">Bolsas Producidas</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="d-flex flex-column">
+                                <span class="h3 text-info">{{ totales.total_wip_kg|floatformat:2 }}</span>
+                                <span class="text-muted">kg WIP Consumidos</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="d-flex flex-column">
+                                <span class="h3 text-secondary">{{ totales.total_mp_unidades|floatformat:0 }}</span>
+                                <span class="text-muted">Unidades MP Consumidas</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="d-flex flex-column">
+                                <span class="h3 {% if totales.eficiencia_material >= 95 %}text-success{% elif totales.eficiencia_material >= 85 %}text-warning{% else %}text-danger{% endif %}">
+                                    {{ totales.eficiencia_material|floatformat:1 }}
+                                </span>
+                                <span class="text-muted">Bolsas/kg WIP</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lotes Producidos -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-boxes me-2"></i>Lotes Producto Terminado</h5>
+                </div>
+                <div class="card-body">
+                    {% if lotes_data.lotes_pt %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Lote</th>
+                                        <th>Cantidad (unidades)</th>
+                                        <th>Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for lote in lotes_data.lotes_pt %}
+                                    <tr>
+                                        <td>{{ lote.lote_id }}</td>
+                                        <td>{{ lote.cantidad_producida|floatformat:0 }}</td>
+                                        <td>
+                                            <span class="badge bg-success">{{ lote.estado }}</span>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted mb-0">No hay lotes de producto terminado registrados.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-cogs me-2"></i>Lotes en Proceso (WIP)</h5>
+                </div>
+                <div class="card-body">
+                    {% if lotes_data.lotes_wip %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Lote</th>
+                                        <th>Cantidad (unidades)</th>
+                                        <th>Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for lote in lotes_data.lotes_wip %}
+                                    <tr>
+                                        <td>{{ lote.lote_id }}</td>
+                                        <td>{{ lote.cantidad_producida|floatformat:0 }}</td>
+                                        <td>
+                                            <span class="badge bg-warning">{{ lote.estado }}</span>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted mb-0">No hay lotes en proceso registrados.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Paros -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-stop-circle me-2"></i>Paros Registrados</h5>
+                </div>
+                <div class="card-body">
+                    {% if registro.paros_sellado.all %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Causa</th>
+                                        <th>Inicio</th>
+                                        <th>Final</th>
+                                        <th>Duración</th>
+                                        <th>Observaciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for paro in registro.paros_sellado.all %}
+                                    <tr>
+                                        <td>{{ paro.causa_paro.descripcion }}</td>
+                                        <td>{{ paro.hora_inicio_paro|time:"H:i" }}</td>
+                                        <td>
+                                            {% if paro.hora_final_paro %}
+                                                {{ paro.hora_final_paro|time:"H:i" }}
+                                            {% else %}
+                                                <span class="badge bg-danger">Activo</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if paro.hora_final_paro %}
+                                                <span class="text-muted">{{ paro.duracion_paro_min|floatformat:0 }} min</span>
+                                            {% else %}
+                                                <span class="text-warning">En curso</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ paro.observaciones|default:"--" }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted mb-0">No hay paros registrados para este proceso.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Consumos -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-cogs me-2"></i>Consumos WIP</h5>
+                </div>
+                <div class="card-body">
+                    {% if registro.consumos_wip.all %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Lote WIP</th>
+                                        <th>Cantidad (kg)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for consumo in registro.consumos_wip.all %}
+                                    <tr>
+                                        <td>{{ consumo.lote_consumido.lote_id }}</td>
+                                        <td>{{ consumo.cantidad_kg_consumida|floatformat:2 }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted mb-0">No hay consumos WIP registrados.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-layer-group me-2"></i>Consumos Materia Prima</h5>
+                </div>
+                <div class="card-body">
+                    {% if registro.consumos_mp.all %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Lote MP</th>
+                                        <th>Material</th>
+                                        <th>Cantidad</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for consumo in registro.consumos_mp.all %}
+                                    <tr>
+                                        <td>{{ consumo.lote_consumido.lote_id }}</td>
+                                        <td>{{ consumo.lote_consumido.materia_prima.nombre }}</td>
+                                        <td>{{ consumo.cantidad_consumida|floatformat:2 }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted mb-0">No hay consumos de materia prima registrados.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

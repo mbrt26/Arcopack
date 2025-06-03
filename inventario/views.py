@@ -9,20 +9,21 @@ from rest_framework import permissions, status
 from django.db.models import Sum, Count, F, Value, CharField, DecimalField # <<< AÑADIDO DecimalField
 from django.db.models.functions import Coalesce
 from django.core.exceptions import ObjectDoesNotExist # Para manejo de errores
-from django.views.generic import ListView, TemplateView, DetailView
-from django.views.generic.edit import CreateView, UpdateView
-from django.urls import reverse_lazy
-from django.contrib import messages
+from django.shortcuts import render, get_object_or_404, redirect
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Q
+from django.urls import reverse_lazy
+from django.db.models import Q, Case, When, IntegerField
 from django.core.paginator import Paginator
 
-# Importar modelos y serializers necesarios
+# Importar modelos, serializers y formularios necesarios
+from .forms import MateriaPrimaForm
 from .models import (
     LoteMateriaPrima, LoteProductoEnProceso, LoteProductoTerminado, 
-    MateriaPrima, MovimientoInventario
+    MateriaPrima, MovimientoInventario, Ubicacion
 )
 from .serializers import StockItemSerializer
+from productos.models import ProductoTerminado
 # from configuracion.models import UnidadMedida # Ya no se necesita aquí con el fix anterior
 
 logger = logging.getLogger(__name__)
@@ -105,7 +106,7 @@ class StockActualAPIView(APIView):
             logger.exception(f"Error inesperado al calcular stock actual: {e}")
             return Response({"error": "Error interno al procesar la solicitud de stock."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-class MateriaPrimaListView(ListView):
+class MateriaPrimaListView(LoginRequiredMixin, ListView):
     model = MateriaPrima
     template_name = 'inventario/materia_prima_list.html'
     context_object_name = 'materias_primas'
@@ -113,26 +114,87 @@ class MateriaPrimaListView(ListView):
     
     def get_queryset(self):
         queryset = super().get_queryset()
-        # You can add filtering/sorting here if needed
+        
+        # Filtros
+        search_query = self.request.GET.get('q', '')
+        categoria_id = self.request.GET.get('categoria')
+        estado = self.request.GET.get('estado')
+        stock_filter = self.request.GET.get('stock')
+        
+        if search_query:
+            queryset = queryset.filter(
+                Q(codigo__icontains=search_query) | 
+                Q(nombre__icontains=search_query)
+            )
+            
+        if categoria_id:
+            queryset = queryset.filter(categoria_id=categoria_id)
+            
+        if estado:
+            is_active = estado == 'ACTIVO'
+            queryset = queryset.filter(is_active=is_active)
+            
+        # Filtros de stock requieren lógica adicional
+        if stock_filter:
+            # Necesitamos anotar cada materia prima con su stock actual
+            from django.db.models import Sum, Case, When, DecimalField, F, Value, ExpressionWrapper
+            from django.db.models.functions import Coalesce
+            
+            # Primero, anotamos el stock_actual para cada materia prima
+            queryset = queryset.annotate(
+                stock_actual_anotado=Coalesce(
+                    Sum(
+                        Case(
+                            When(lotes__estado='DISPONIBLE', then='lotes__cantidad_actual'),
+                            default=Value(0),
+                            output_field=DecimalField()
+                        )
+                    ),
+                    Value(0, output_field=DecimalField())
+                )
+            )
+            
+            # Luego aplicamos el filtro correspondiente
+            if stock_filter == 'bajo_minimo':
+                # Filtrar materias primas cuyo stock actual es menor que el stock mínimo
+                queryset = queryset.filter(stock_actual_anotado__lt=F('stock_minimo'))
+            elif stock_filter == 'sobre_maximo':
+                # Filtrar materias primas cuyo stock actual es mayor que el stock máximo
+                queryset = queryset.filter(stock_actual_anotado__gt=F('stock_maximo'))
+            
         return queryset.order_by('codigo')
+        
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Añadir categorías para el filtro
+        from configuracion.models import CategoriaMateriaPrima
+        context['categorias'] = CategoriaMateriaPrima.objects.all().order_by('nombre')
+        
+        # Añadir parámetros de filtro al contexto
+        context.update({
+            'search_query': self.request.GET.get('q', ''),
+            'categoria_selected': self.request.GET.get('categoria', ''),
+            'estado_selected': self.request.GET.get('estado', ''),
+            'stock_filter': self.request.GET.get('stock', '')
+        })
+        
+        return context
 
 
-class MateriaPrimaCreateView(CreateView):
+class MateriaPrimaCreateView(LoginRequiredMixin, CreateView):
     model = MateriaPrima
     template_name = 'inventario/materia_prima_form.html'
-    fields = ['codigo', 'nombre', 'descripcion', 'categoria', 'unidad_medida', 
-              'stock_minimo', 'stock_maximo', 'proveedor_preferido', 'requiere_lote']
+    form_class = MateriaPrimaForm
     success_url = reverse_lazy('inventario_web:materia-prima-list')
 
     def form_valid(self, form):
         messages.success(self.request, 'Materia prima creada exitosamente.')
         return super().form_valid(form)
 
-class MateriaPrimaUpdateView(UpdateView):
+class MateriaPrimaUpdateView(LoginRequiredMixin, UpdateView):
     model = MateriaPrima
     template_name = 'inventario/materia_prima_form.html'
-    fields = ['codigo', 'nombre', 'descripcion', 'categoria', 'unidad_medida', 
-              'stock_minimo', 'stock_maximo', 'proveedor_preferido', 'requiere_lote']
+    form_class = MateriaPrimaForm
     success_url = reverse_lazy('inventario_web:materia-prima-list')
     
     def form_valid(self, form):
@@ -152,6 +214,7 @@ class LoteListView(LoginRequiredMixin, TemplateView):
         search_query = self.request.GET.get('q', '')
         estado_filter = self.request.GET.get('estado', '')
         ubicacion_filter = self.request.GET.get('ubicacion', '')
+        categoria_filter = self.request.GET.get('categoria', '')
         
         # Filtrar lotes de materia prima
         mp_lotes = LoteMateriaPrima.objects.select_related(
@@ -171,18 +234,32 @@ class LoteListView(LoginRequiredMixin, TemplateView):
             
         if ubicacion_filter:
             mp_lotes = mp_lotes.filter(ubicacion_id=ubicacion_filter)
+            
+        if categoria_filter:
+            mp_lotes = mp_lotes.filter(materia_prima__categoria_id=categoria_filter)
         
         # Paginar resultados
         paginator = Paginator(mp_lotes, self.paginate_by)
         page = self.request.GET.get('page')
         mp_lotes_paginated = paginator.get_page(page)
         
+        # Obtener las categorías de materia prima para el filtro
+        from configuracion.models import CategoriaMateriaPrima
+        categorias = CategoriaMateriaPrima.objects.all().order_by('nombre')
+        
+        # Obtener las ubicaciones para el filtro
+        from inventario.models import Ubicacion
+        ubicaciones = Ubicacion.objects.all().order_by('nombre')
+        
         context.update({
             'mp_lotes': mp_lotes_paginated,
             'search_query': search_query,
             'estado_filter': estado_filter,
             'ubicacion_filter': ubicacion_filter,
+            'categoria_filter': categoria_filter,
             'estados_lote': LoteMateriaPrima.ESTADO_LOTE_CHOICES,
+            'categorias': categorias,
+            'ubicaciones': ubicaciones,
         })
         
         return context
@@ -257,7 +334,10 @@ class LoteCreateView(LoginRequiredMixin, CreateView):
         # Si se proporciona una materia prima en la URL, pre-seleccionarla
         materia_prima_id = self.request.GET.get('materia_prima')
         if materia_prima_id:
-            initial['materia_prima'] = materia_prima_id
+            try:
+                initial['materia_prima'] = MateriaPrima.objects.get(pk=materia_prima_id)
+            except MateriaPrima.DoesNotExist:
+                pass
         return initial
 
     def form_valid(self, form):

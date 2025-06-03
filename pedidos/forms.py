@@ -112,10 +112,18 @@ class LineaPedidoForm(forms.ModelForm):
         # Filtrar productos activos - CORREGIDO: usar is_active en lugar de activo
         self.fields['producto'].queryset = ProductoTerminado.objects.filter(is_active=True).order_by('codigo')
         
-        # Campos requeridos
+        # Hacer campos requeridos
         self.fields['producto'].required = True
         self.fields['cantidad'].required = True
         self.fields['precio_unitario'].required = True
+        
+        # Hacer descuento_porcentaje opcional y asegurar valor por defecto
+        self.fields['descuento_porcentaje'].required = False
+        self.fields['descuento_porcentaje'].initial = 0.00
+        
+        # Hacer orden_linea opcional y asegurar valor por defecto
+        self.fields['orden_linea'].required = False
+        self.fields['orden_linea'].initial = 1
 
     def clean_cantidad(self):
         cantidad = self.cleaned_data.get('cantidad')
@@ -156,7 +164,7 @@ LineaPedidoFormSet = inlineformset_factory(
     Pedido,
     LineaPedido,
     form=LineaPedidoForm,
-    extra=1,  # Una línea extra vacía por defecto
+    extra=0,  # No mostrar líneas extra vacías automáticamente
     min_num=1,  # Mínimo una línea
     validate_min=True,
     can_delete=True

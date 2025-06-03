@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+
+{% block title %}{% if form.instance.pk %}Editar{% else %}Nueva{% endif %} Causa de Paro - ARCOPACK{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h2>
+                <i class="fas fa-{% if form.instance.pk %}edit{% else %}plus{% endif %}"></i> 
+                {% if form.instance.pk %}Editar{% else %}Nueva{% endif %} Causa de Paro
+            </h2>
+        </div>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-pause-circle"></i> Información de la Causa de Paro
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Código *</label>
+                                    {{ form.codigo }}
+                                    {% if form.codigo.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.codigo.errors|join:", " }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Tipo *</label>
+                                    {{ form.tipo }}
+                                    {% if form.tipo.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.tipo.errors|join:", " }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Descripción *</label>
+                            {{ form.descripcion }}
+                            {% if form.descripcion.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.descripcion.errors|join:", " }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Aplica A</label>
+                                    {{ form.aplica_a }}
+                                    {% if form.aplica_a.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.aplica_a.errors|join:", " }}
+                                        </div>
+                                    {% endif %}
+                                    <div class="form-text">Especifica a qué procesos o áreas aplica esta causa de paro</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        {{ form.requiere_observacion }}
+                                        <label class="form-check-label" for="{{ form.requiere_observacion.id_for_label }}">
+                                            Requiere Observación
+                                        </label>
+                                    </div>
+                                    {% if form.requiere_observacion.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.requiere_observacion.errors|join:", " }}
+                                        </div>
+                                    {% endif %}
+                                    <div class="form-text">Marcar si esta causa de paro requiere observaciones obligatorias</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel de ayuda -->
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-info-circle"></i> Ayuda
+                    </div>
+                    <div class="card-body">
+                        <h6>Tipos de Causa de Paro:</h6>
+                        <ul class="list-unstyled">
+                            <li><strong>Mecánica:</strong> Problemas de equipos y máquinas</li>
+                            <li><strong>Operacional:</strong> Problemas del proceso o operación</li>
+                            <li><strong>Materia Prima:</strong> Problemas con materiales</li>
+                            <li><strong>Personal:</strong> Problemas relacionados con el personal</li>
+                            <li><strong>Calidad:</strong> Problemas de calidad del producto</li>
+                            <li><strong>Programada:</strong> Paros programados (mantenimiento, etc.)</li>
+                        </ul>
+                        
+                        <hr>
+                        
+                        <h6>Consejos:</h6>
+                        <ul class="small">
+                            <li>Use códigos descriptivos y únicos</li>
+                            <li>La descripción debe ser clara y específica</li>
+                            <li>Marque "Requiere Observación" para causas que necesiten explicación detallada</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botones de acción -->
+        <div class="row mb-4">
+            <div class="col text-end">
+                <a href="{% url 'configuracion_web:causa-paro-list' %}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> Cancelar
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Guardar
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Script para mejorar la UX -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-generar código basado en la descripción (solo para nuevos registros)
+    {% if not form.instance.pk %}
+    const descripcionField = document.getElementById('{{ form.descripcion.id_for_label }}');
+    const codigoField = document.getElementById('{{ form.codigo.id_for_label }}');
+    
+    if (descripcionField && codigoField && !codigoField.value) {
+        descripcionField.addEventListener('blur', function() {
+            if (!codigoField.value && this.value) {
+                // Generar código basado en las primeras palabras de la descripción
+                const codigo = this.value
+                    .split(' ')
+                    .slice(0, 3)
+                    .map(word => word.charAt(0).toUpperCase())
+                    .join('');
+                if (codigo.length >= 2) {
+                    codigoField.value = codigo;
+                }
+            }
+        });
+    }
+    {% endif %}
+    
+    // Agregar clases de Bootstrap a los campos del formulario
+    const formFields = document.querySelectorAll('input[type="text"], input[type="email"], input[type="number"], select, textarea');
+    formFields.forEach(field => {
+        if (!field.classList.contains('form-control') && !field.classList.contains('form-check-input')) {
+            field.classList.add('form-control');
+        }
+    });
+});
+</script>
+{% endblock %}

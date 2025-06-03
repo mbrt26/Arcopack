@@ -171,6 +171,7 @@ class TipoDesperdicio(models.Model):
     codigo = models.CharField(max_length=50, unique=True, verbose_name="Código Desperdicio")
     descripcion = models.CharField(max_length=200, verbose_name="Descripción Desperdicio")
     es_recuperable = models.BooleanField(default=False, verbose_name="¿Es Recuperable?")
+    is_active = models.BooleanField(default=True, verbose_name="Activo")
 
     def __str__(self):
         return f"{self.codigo} - {self.descripcion}"
@@ -237,15 +238,26 @@ class Ubicacion(models.Model):
 # =============================================================
 
 class Lamina(models.Model):
-    nombre = models.CharField(max_length=100, unique=True)
+    codigo = models.CharField(max_length=100, unique=True, verbose_name="Código", default='PENDIENTE')
+    nombre = models.CharField(max_length=100, verbose_name="Nombre")
+    descripcion = models.TextField(blank=True, verbose_name="Descripción")
+    is_active = models.BooleanField(default=True, verbose_name="Activo")
+    creado_en = models.DateTimeField(default=timezone.now, editable=False)
+    actualizado_en = models.DateTimeField(default=timezone.now, editable=False)
+
+    def save(self, *args, **kwargs):
+        if not self.id:  # Only on creation
+            self.creado_en = timezone.now()
+        self.actualizado_en = timezone.now()
+        super().save(*args, **kwargs)
 
     def __str__(self):
-        return self.nombre
+        return f"{self.codigo} - {self.nombre}"
 
     class Meta:
-        verbose_name="Tipo de Lámina"
-        verbose_name_plural="Tipos de Lámina"
-        ordering = ['nombre']
+        verbose_name = "Tipo de Lámina"
+        verbose_name_plural = "Tipos de Lámina"
+        ordering = ['codigo']
 
 class Tratamiento(models.Model):
     nombre = models.CharField(max_length=100, unique=True, verbose_name="Nombre Tratamiento")

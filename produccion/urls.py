@@ -29,6 +29,10 @@ from .views import (
     RegistroRefiladoCreateView,
     RegistroSelladoCreateView,
     RegistroDobladoCreateView,
+    RegistroImpresionListView,
+    RegistroRefiladoListView,
+    RegistroSelladoListView,
+    RegistroDobladoListView,
     # Vistas CRUD para orden de producción
     OrdenProduccionCreateView,
     OrdenProduccionUpdateView,
@@ -96,18 +100,22 @@ urlpatterns = [
     path('doblado/nuevo/', RegistroDobladoCreateView.as_view(), name='doblado-create'),
 
     # URLs para registros de impresión
+    path('registros/impresion/', RegistroImpresionListView.as_view(), name='registro-impresion-list'),
     path('registros/impresion/<int:pk>/', RegistroImpresionDetailView.as_view(), name='registro-impresion-detail'),
     path('registros/impresion/<int:pk>/editar/', RegistroImpresionUpdateView.as_view(), name='registro-impresion-update'),
     
     # URLs para registros de refilado
+    path('registros/refilado/', RegistroRefiladoListView.as_view(), name='registro-refilado-list'),
     path('registros/refilado/<int:pk>/', RegistroRefiladoDetailView.as_view(), name='registro-refilado-detail'),
     path('registros/refilado/<int:pk>/editar/', RegistroRefiladoUpdateView.as_view(), name='registro-refilado-update'),
     
     # URLs para registros de sellado
+    path('registros/sellado/', RegistroSelladoListView.as_view(), name='registro-sellado-list'),
     path('registros/sellado/<int:pk>/', RegistroSelladoDetailView.as_view(), name='registro-sellado-detail'),
     path('registros/sellado/<int:pk>/editar/', RegistroSelladoUpdateView.as_view(), name='registro-sellado-update'),
     
     # URLs para registros de doblado
+    path('registros/doblado/', RegistroDobladoListView.as_view(), name='registro-doblado-list'),
     path('registros/doblado/<int:pk>/', RegistroDobladoDetailView.as_view(), name='registro-doblado-detail'),
     path('registros/doblado/<int:pk>/editar/', RegistroDobladoUpdateView.as_view(), name='registro-doblado-update'),
 

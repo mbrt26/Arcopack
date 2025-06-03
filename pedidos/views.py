@@ -7,7 +7,8 @@ from django.views.generic import ListView, DetailView, CreateView, UpdateView
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.urls import reverse_lazy, reverse
 from django.db import transaction
-from django.db.models import Q, Sum, Count, F, Case, When, Value, IntegerField, Avg
+from django.db.models import Q, Sum, Count, F, Case, When, Value, IntegerField, Avg, ExpressionWrapper, DecimalField
+from decimal import Decimal
 from django.utils import timezone
 from django.core.paginator import Paginator
 from django.http import Http404
@@ -276,10 +277,48 @@ class PedidoCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
             return self.form_invalid(form)
 
     def form_invalid(self, form):
-        messages.error(
-            self.request,
-            'Error al crear el pedido. Verifique los datos ingresados.'
-        )
+        context = self.get_context_data()
+        lineas_formset = context.get('lineas_formset')
+        
+        # Construir mensajes de error más específicos
+        error_messages = []
+        
+        # Errores del formulario principal
+        if form.errors:
+            for field, errors in form.errors.items():
+                field_name = form.fields[field].label if field in form.fields else field
+                for error in errors:
+                    error_messages.append(f"{field_name}: {error}")
+        
+        # Errores no asociados a campos específicos del formulario principal
+        if form.non_field_errors():
+            for error in form.non_field_errors():
+                error_messages.append(f"Error general: {error}")
+        
+        # Errores del formset de líneas
+        if lineas_formset and hasattr(lineas_formset, 'errors'):
+            # Errores generales del formset
+            if hasattr(lineas_formset, 'non_form_errors') and lineas_formset.non_form_errors():
+                for error in lineas_formset.non_form_errors():
+                    error_messages.append(f"Error en líneas: {error}")
+            
+            # Errores de formularios individuales en el formset
+            for i, form_errors in enumerate(lineas_formset.errors):
+                if form_errors:
+                    for field, errors in form_errors.items():
+                        for error in errors:
+                            error_messages.append(f"Línea {i+1} - {field}: {error}")
+        
+        # Mostrar errores específicos o mensaje genérico
+        if error_messages:
+            for error_msg in error_messages:
+                messages.error(self.request, error_msg)
+        else:
+            messages.error(
+                self.request,
+                'Error al crear el pedido. Verifique los datos ingresados.'
+            )
+        
         return super().form_invalid(form)
 
 
@@ -323,7 +362,7 @@ class PedidoUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
                 self.request,
                 'Solo se pueden editar pedidos en estado BORRADOR'
             )
-            return redirect('pedidos:pedido_detail', pk=self.object.pk)
+            return redirect('pedidos_web:pedido_detail', pk=self.object.pk)
         
         with transaction.atomic():
             form.instance.actualizado_por = self.request.user
@@ -345,10 +384,48 @@ class PedidoUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
                 return self.form_invalid(form)
 
     def form_invalid(self, form):
-        messages.error(
-            self.request,
-            'Error al actualizar el pedido. Verifique los datos ingresados.'
-        )
+        context = self.get_context_data()
+        lineas_formset = context.get('lineas_formset')
+        
+        # Construir mensajes de error más específicos
+        error_messages = []
+        
+        # Errores del formulario principal
+        if form.errors:
+            for field, errors in form.errors.items():
+                field_name = form.fields[field].label if field in form.fields else field
+                for error in errors:
+                    error_messages.append(f"{field_name}: {error}")
+        
+        # Errores no asociados a campos específicos del formulario principal
+        if form.non_field_errors():
+            for error in form.non_field_errors():
+                error_messages.append(f"Error general: {error}")
+        
+        # Errores del formset de líneas
+        if lineas_formset and hasattr(lineas_formset, 'errors'):
+            # Errores generales del formset
+            if hasattr(lineas_formset, 'non_form_errors') and lineas_formset.non_form_errors():
+                for error in lineas_formset.non_form_errors():
+                    error_messages.append(f"Error en líneas: {error}")
+            
+            # Errores de formularios individuales en el formset
+            for i, form_errors in enumerate(lineas_formset.errors):
+                if form_errors:
+                    for field, errors in form_errors.items():
+                        for error in errors:
+                            error_messages.append(f"Línea {i+1} - {field}: {error}")
+        
+        # Mostrar errores específicos o mensaje genérico
+        if error_messages:
+            for error_msg in error_messages:
+                messages.error(self.request, error_msg)
+        else:
+            messages.error(
+                self.request,
+                'Error al actualizar el pedido. Verifique los datos ingresados.'
+            )
+        
         return super().form_invalid(form)
 
 
@@ -367,7 +444,7 @@ def cambiar_estado_pedido(request, pk):
             # Validar transición de estado
             if nuevo_estado == pedido.estado:
                 messages.warning(request, 'El pedido ya se encuentra en ese estado')
-                return redirect('pedidos:pedido_detail', pk=pk)
+                return redirect('pedidos_web:pedido_detail', pk=pk)
             
             # Validaciones específicas según el estado actual y el nuevo estado
             transiciones_validas = {
@@ -386,7 +463,7 @@ def cambiar_estado_pedido(request, pk):
                     request,
                     f'No se puede cambiar el estado de {pedido.get_estado_display()} a {dict(Pedido.ESTADO_CHOICES)[nuevo_estado]}'
                 )
-                return redirect('pedidos:pedido_detail', pk=pk)
+                return redirect('pedidos_web:pedido_detail', pk=pk)
             
             # Guardar estado anterior para el seguimiento
             estado_anterior = pedido.estado
@@ -398,7 +475,7 @@ def cambiar_estado_pedido(request, pk):
             if nuevo_estado == 'FACTURADO':
                 if not form.cleaned_data.get('numero_factura'):
                     messages.error(request, 'Debe proporcionar un número de factura')
-                    return redirect('pedidos:pedido_detail', pk=pk)
+                    return redirect('pedidos_web:pedido_detail', pk=pk)
                     
                 pedido.numero_factura = form.cleaned_data.get('numero_factura')
                 pedido.fecha_facturacion = form.cleaned_data.get('fecha_facturacion') or timezone.now().date()
@@ -410,7 +487,7 @@ def cambiar_estado_pedido(request, pk):
             # Si se está cancelando, validar que haya una observación
             if nuevo_estado == 'CANCELADO' and not observaciones:
                 messages.error(request, 'Debe proporcionar un motivo para cancelar el pedido')
-                return redirect('pedidos:pedido_detail', pk=pk)
+                return redirect('pedidos_web:pedido_detail', pk=pk)
             
             pedido.actualizado_por = request.user
             pedido.save()
@@ -430,7 +507,7 @@ def cambiar_estado_pedido(request, pk):
                 for error in errors:
                     messages.error(request, f'Error en {field}: {error}')
     
-    return redirect('pedidos:pedido_detail', pk=pk)
+    return redirect('pedidos_web:pedido_detail', pk=pk)
 
 
 @login_required
@@ -660,7 +737,7 @@ def eliminar_pedido(request, pk):
             request,
             'Solo se pueden eliminar pedidos en estado BORRADOR'
         )
-        return redirect('pedidos:pedido_detail', pk=pk)
+        return redirect('pedidos_web:pedido_detail', pk=pk)
     
     if request.method == 'POST':
         numero_pedido = pedido.numero_pedido
@@ -688,7 +765,7 @@ def crear_orden_produccion(request, pk):
             request,
             'Solo se pueden crear órdenes de producción para pedidos en estado CONFIRMADO o EN_PRODUCCION'
         )
-        return redirect('pedidos:pedido_detail', pk=pk)
+        return redirect('pedidos_web:pedido_detail', pk=pk)
     
     # Verificar si hay líneas disponibles para producción
     lineas_disponibles = pedido.lineas.filter(cantidad__gt=F('cantidad_producida'))
@@ -697,7 +774,7 @@ def crear_orden_produccion(request, pk):
             request,
             'Todas las líneas de este pedido ya tienen órdenes de producción asociadas'
         )
-        return redirect('pedidos:pedido_detail', pk=pk)
+        return redirect('pedidos_web:pedido_detail', pk=pk)
     
     if request.method == 'POST':
         form = CrearOrdenProduccionForm(pedido, request.POST)
@@ -713,7 +790,19 @@ def crear_orden_produccion(request, pk):
                     observaciones = form.cleaned_data.get('observaciones', '')
                     
                     # Importar aquí para evitar importación circular
-                    from produccion.models import OrdenProduccion, LineaOrdenProduccion
+                    from produccion.models import OrdenProduccion
+                    from inventario.models import MateriaPrima
+                    
+                    # Obtener una materia prima por defecto para usar como sustrato
+                    try:
+                        sustrato_default = MateriaPrima.objects.filter(is_active=True).first()
+                        if not sustrato_default:
+                            sustrato_default = MateriaPrima.objects.first()
+                        if not sustrato_default:
+                            raise Exception('No se encontró ninguna materia prima para usar como sustrato')
+                    except Exception as e:
+                        messages.error(request, f'Error al obtener materia prima por defecto: {str(e)}')
+                        return redirect('pedidos_web:pedido_detail', pk=pedido.pk)
                     
                     # Generar órdenes según el tipo seleccionado
                     if tipo_orden == 'individual':
@@ -727,13 +816,19 @@ def crear_orden_produccion(request, pk):
                                 
                             # Crear orden de producción
                             orden = OrdenProduccion.objects.create(
-                                pedido=pedido,
+                                id_pedido_contable=pedido.numero_pedido,
+                                cliente=pedido.cliente,
                                 producto=linea.producto,
-                                cantidad=cantidad_pendiente,
-                                fecha_compromiso=fecha_compromiso,
-                                prioridad=prioridad,
+                                cantidad_solicitada_kg=cantidad_pendiente,
+                                fecha_compromiso_entrega=fecha_compromiso,
+                                etapa_actual='PLAN',
                                 observaciones=f"{observaciones}\nLínea de pedido: {linea.orden_linea}",
-                                creado_por=request.user
+                                creado_por=request.user,
+                                # Campos requeridos que no están en el formulario
+                                op_numero=f"OP-{pedido.numero_pedido}-{linea.orden_linea}",
+                                sustrato=sustrato_default,
+                                ancho_sustrato_mm=linea.producto.ancho or Decimal('0.01'),
+                                calibre_sustrato_um=linea.producto.calibre_um or Decimal('0.01')
                             )
                             
                             # Actualizar línea de pedido
@@ -765,13 +860,19 @@ def crear_orden_produccion(request, pk):
                         for producto_id, datos in productos_agrupados.items():
                             # Crear orden de producción
                             orden = OrdenProduccion.objects.create(
-                                pedido=pedido,
+                                id_pedido_contable=pedido.numero_pedido,
+                                cliente=pedido.cliente,
                                 producto=datos['producto'],
-                                cantidad=datos['cantidad_total'],
-                                fecha_compromiso=fecha_compromiso,
-                                prioridad=prioridad,
+                                cantidad_solicitada_kg=datos['cantidad_total'],
+                                fecha_compromiso_entrega=fecha_compromiso,
+                                etapa_actual='PLAN',
                                 observaciones=observaciones,
-                                creado_por=request.user
+                                creado_por=request.user,
+                                # Campos requeridos que no están en el formulario
+                                op_numero=f"OP-{pedido.numero_pedido}-CONS-{datos['producto'].codigo}",
+                                sustrato=sustrato_default,
+                                ancho_sustrato_mm=datos['producto'].ancho or Decimal('0.01'),
+                                calibre_sustrato_um=datos['producto'].calibre_um or Decimal('0.01')
                             )
                             
                             # Actualizar líneas de pedido
@@ -816,4 +917,4 @@ def crear_orden_produccion(request, pk):
             'lineas_disponibles': lineas_disponibles
         })
     
-    return redirect('pedidos:pedido_detail', pk=pk)
+    return redirect('pedidos_web:pedido_detail', pk=pk)

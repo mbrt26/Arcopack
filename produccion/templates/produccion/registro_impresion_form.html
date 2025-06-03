@@ -77,7 +77,7 @@
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <div class="form-group">
-                                {{ form.hora_inicio.label_tag }}
+                                <label for="id_hora_inicio">Fecha y Hora Inicio</label>
                                 {% render_field form.hora_inicio class="form-control" %}
                                 {% if form.hora_inicio.errors %}
                                     <div class="invalid-feedback d-block">
@@ -88,7 +88,7 @@
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                {{ form.hora_final.label_tag }}
+                                <label for="id_hora_final">Fecha y Hora Final</label>
                                 {% render_field form.hora_final class="form-control" %}
                                 {% if form.hora_final.errors %}
                                     <div class="invalid-feedback d-block">
@@ -267,7 +267,7 @@
                             {{ produccion_formset.management_form }}
                             <div id="produccion-forms">
                                 {% for form in produccion_formset %}
-                                <div class="produccion-form mb-3 border p-3" style="{% if form.DELETE.value %}display: none;{% endif %}">
+                                <div class="produccion-form mb-3 border p-3"{% if form.DELETE.value %} style="display: none;"{% endif %}>
                                     <div class="row">
                                         <div class="col-md-3">
                                             <div class="mb-2">
@@ -340,11 +340,20 @@
                         </div>
                     </div>
 
+                    <!-- Campos ocultos para almacenar los datos de JavaScript -->
+                    <div id="js-data-container">
+                        <!-- Estos campos se llenarán con JavaScript antes de enviar el formulario -->
+                        <input type="hidden" name="paros_data" id="paros_data" value="">
+                        <input type="hidden" name="desperdicios_data" id="desperdicios_data" value="">
+                        <input type="hidden" name="consumos_tinta_data" id="consumos_tinta_data" value="">
+                        <input type="hidden" name="consumos_sustrato_data" id="consumos_sustrato_data" value="">
+                    </div>
+
                     <div class="d-flex justify-content-between mt-4">
                         <a href="{{ cancel_url }}" class="btn btn-secondary">
                             <i class="fas fa-arrow-left me-2"></i>Cancelar
                         </a>
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="btn btn-primary" id="btn-guardar-registro">
                             <i class="fas fa-save me-2"></i>Guardar Registro
                         </button>
                     </div>
@@ -423,27 +432,43 @@
             <div class="modal-body">
                 <form id="formParo">
                     <div class="mb-3">
-                        <label for="maquinaParo" class="form-label">Máquina</label>
+                        <label for="maquinaParo" class="form-label">
+                            Máquina 
+                            <span class="text-muted small">(Se usa la máquina seleccionada en el registro)</span>
+                        </label>
                         <select class="form-control" id="maquinaParo" required>
                             <option value="">Seleccionar...</option>
-                            <!-- Opciones de máquinas de impresión -->
+                            {% for maquina in form.maquina.field.queryset %}
+                                <option value="{{ maquina.pk }}">{{ maquina.codigo }} - {{ maquina.nombre }}</option>
+                            {% endfor %}
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label for="motivoParo" class="form-label">Motivo del Paro</label>
+                        <label for="motivoParo" class="form-label">
+                            Motivo del Paro
+                            <a href="{% url 'configuracion_web:causa-paro-list' %}" 
+                               target="_blank" 
+                               class="btn btn-sm btn-outline-info ms-2" 
+                               title="Gestionar causas de paro">
+                                <i class="fas fa-external-link-alt"></i>
+                            </a>
+                        </label>
                         <select class="form-control" id="motivoParo" required>
                             <option value="">Seleccionar...</option>
-                            <option value="mantenimiento">Mantenimiento</option>
-                            <option value="falla_tecnica">Falla Técnica</option>
-                            <option value="ajuste_color">Ajuste de Color</option>
-                            <option value="cambio_anilox">Cambio de Anilox</option>
-                            <option value="sin_material">Sin Material</option>
-                            <option value="otro">Otro</option>
+                            {% for causa in causas_paro %}
+                                <option value="{{ causa.pk }}" data-tipo="{{ causa.tipo }}">
+                                    {{ causa.codigo }} - {{ causa.descripcion }}
+                                </option>
+                            {% endfor %}
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label for="duracionParo" class="form-label">Duración (minutos)</label>
-                        <input type="number" class="form-control" id="duracionParo" step="1" min="1" required>
+                        <label for="horaInicioParo" class="form-label">Hora Inicio Paro</label>
+                        <input type="datetime-local" class="form-control" id="horaInicioParo" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="horaFinalParo" class="form-label">Hora Final Paro</label>
+                        <input type="datetime-local" class="form-control" id="horaFinalParo" required>
                     </div>
                     <div class="mb-3">
                         <label for="observacionesParo" class="form-label">Observaciones</label>
@@ -571,6 +596,65 @@
         });
         
         console.log('=== FIN DEBUG ===');
+        
+        // Cargar datos existentes si estamos en modo edición
+        {% if object %}
+        console.log('Cargando datos existentes para el registro {{ object.pk }}');
+        
+        // Cargar paros existentes
+        {% for paro in object.paroimpresion_set.all %}
+        parosRegistrados.push({
+            id: {{ paro.pk }},
+            horaInicio: "{{ paro.hora_inicio|date:'Y-m-d H:i' }}",
+            horaFin: "{{ paro.hora_fin|date:'Y-m-d H:i' }}",
+            motivo: "{{ paro.motivo }}",
+            observaciones: "{{ paro.observaciones|default:'' }}",
+            fecha: "{{ paro.created_at|date:'Y-m-d H:i' }}"
+        });
+        {% endfor %}
+        
+        // Cargar desperdicios existentes
+        {% for desperdicio in object.desperdicioimpresion_set.all %}
+        desperdiciosRegistrados.push({
+            id: {{ desperdicio.pk }},
+            tipoMaterial: "{{ desperdicio.tipo_material }}",
+            cantidad: {{ desperdicio.cantidad }},
+            motivo: "{{ desperdicio.motivo }}",
+            observaciones: "{{ desperdicio.observaciones|default:'' }}",
+            fecha: "{{ desperdicio.created_at|date:'Y-m-d H:i' }}"
+        });
+        {% endfor %}
+        
+        // Cargar consumos de tinta existentes
+        {% for consumo in object.consumotintaimpresion_set.all %}
+        consumosTintaRegistrados.push({
+            id: {{ consumo.pk }},
+            tipoTinta: "{{ consumo.tipo_tinta }}",
+            cantidad: {{ consumo.cantidad }},
+            loteProveedor: "{{ consumo.lote_proveedor|default:'' }}",
+            observaciones: "{{ consumo.observaciones|default:'' }}",
+            fecha: "{{ consumo.created_at|date:'Y-m-d H:i' }}"
+        });
+        {% endfor %}
+        
+        // Cargar consumos de sustrato existentes
+        {% for consumo in object.consumosustratoimpresion_set.all %}
+        consumosSustratoRegistrados.push({
+            id: {{ consumo.pk }},
+            tipoSustrato: "{{ consumo.tipo_sustrato }}",
+            cantidad: {{ consumo.cantidad }},
+            ancho: {{ consumo.ancho|default:'null' }},
+            observaciones: "{{ consumo.observaciones|default:'' }}",
+            fecha: "{{ consumo.created_at|date:'Y-m-d H:i' }}"
+        });
+        {% endfor %}
+        
+        // Actualizar visualizaciones con los datos cargados
+        actualizarVisualizacionParos();
+        actualizarVisualizacionDesperdicios();
+        actualizarVisualizacionConsumosTinta();
+        actualizarVisualizacionConsumosSustrato();
+        {% endif %}
         
         // Configuración para mostrar/ocultar pistas retal
         const usaRetalCheckbox = document.getElementById('id_usa_retal');
@@ -842,29 +926,54 @@
         const modal = new bootstrap.Modal(document.getElementById('modalParo'));
         modal.show();
         document.getElementById('formParo').reset();
+        
+        // Configurar la máquina por defecto basada en la seleccionada en el registro principal
+        const maquinaRegistro = document.getElementById('{{ form.maquina.id_for_label }}').value;
+        if (maquinaRegistro) {
+            document.getElementById('maquinaParo').value = maquinaRegistro;
+        }
+        
+        // Configurar hora inicial por defecto (hora actual)
+        const ahora = new Date();
+        const fechaHoraActual = ahora.toISOString().slice(0, 16); // formato YYYY-MM-DDTHH:mm
+        document.getElementById('horaInicioParo').value = fechaHoraActual;
     }
 
     function registrarParo() {
         const maquina = document.getElementById('maquinaParo').value;
-        const motivo = document.getElementById('motivoParo').value;
-        const duracion = document.getElementById('duracionParo').value;
+        const maquinaTexto = document.getElementById('maquinaParo').selectedOptions[0]?.text || maquina;
+        const motivoId = document.getElementById('motivoParo').value;
+        const motivoTexto = document.getElementById('motivoParo').selectedOptions[0]?.text || motivoId;
+        const horaInicio = document.getElementById('horaInicioParo').value;
+        const horaFinal = document.getElementById('horaFinalParo').value;
         const observaciones = document.getElementById('observacionesParo').value;
 
-        if (!maquina || !motivo || !duracion) {
+        if (!maquina || !motivoId || !horaInicio || !horaFinal) {
             alert('Por favor, complete todos los campos requeridos.');
             return;
         }
 
-        if (parseInt(duracion) <= 0) {
-            alert('La duración debe ser mayor a 0.');
+        // Validar que la hora final sea posterior a la hora inicial
+        const fechaInicio = new Date(horaInicio);
+        const fechaFinal = new Date(horaFinal);
+        
+        if (fechaFinal <= fechaInicio) {
+            alert('La hora final debe ser posterior a la hora de inicio.');
             return;
         }
 
+        // Calcular duración en minutos
+        const duracionMinutos = Math.round((fechaFinal - fechaInicio) / (1000 * 60));
+
         const paro = {
             id: Date.now(),
-            maquina: maquina,
-            motivo: motivo,
-            duracion: parseInt(duracion),
+            maquina: maquinaTexto,
+            maquinaId: maquina,
+            motivo: motivoTexto,
+            motivoId: motivoId,
+            horaInicio: horaInicio,
+            horaFinal: horaFinal,
+            duracion: duracionMinutos,
             observaciones: observaciones,
             fecha: new Date().toLocaleString()
         };
@@ -886,15 +995,30 @@
         }
 
         let html = '<div class="table-responsive"><table class="table table-sm table-striped">';
-        html += '<thead><tr><th>Máquina</th><th>Motivo</th><th>Duración (min)</th><th>Observaciones</th><th>Acciones</th></tr></thead><tbody>';
+        html += '<thead><tr><th>Máquina</th><th>Motivo</th><th>Inicio</th><th>Final</th><th>Duración (min)</th><th>Observaciones</th><th>Acciones</th></tr></thead><tbody>';
 
         parosRegistrados.forEach(paro => {
+            const horaInicioFormateada = new Date(paro.horaInicio).toLocaleString('es-ES', {
+                day: '2-digit',
+                month: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            const horaFinalFormateada = new Date(paro.horaFinal).toLocaleString('es-ES', {
+                day: '2-digit',
+                month: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
             html += `
                 <tr>
-                    <td>${paro.maquina}</td>
-                    <td>${paro.motivo}</td>
-                    <td>${paro.duracion}</td>
-                    <td>${paro.observaciones || '-'}</td>
+                    <td><small>${paro.maquina}</small></td>
+                    <td><small>${paro.motivo}</small></td>
+                    <td><small>${horaInicioFormateada}</small></td>
+                    <td><small>${horaFinalFormateada}</small></td>
+                    <td><span class="badge bg-warning">${paro.duracion}</span></td>
+                    <td><small>${paro.observaciones || '-'}</small></td>
                     <td>
                         <button type="button" class="btn btn-outline-danger btn-sm" onclick="eliminarParo(${paro.id})">
                             <i class="fas fa-trash"></i>
@@ -1122,5 +1246,33 @@
     actualizarVisualizacionParos();
     actualizarVisualizacionConsumosTinta();
     actualizarVisualizacionConsumosSustrato();
+    
+    // Manejar el envío del formulario
+    document.getElementById('registroImpresionForm').addEventListener('submit', function(event) {
+        // Prevenir el envío predeterminado para procesar los datos primero
+        event.preventDefault();
+        
+        console.log('Preparando datos para envío...');
+        
+        try {
+            // Preparar los datos de los arrays JavaScript para enviarlos al servidor
+            document.getElementById('paros_data').value = JSON.stringify(parosRegistrados);
+            document.getElementById('desperdicios_data').value = JSON.stringify(desperdiciosRegistrados);
+            document.getElementById('consumos_tinta_data').value = JSON.stringify(consumosTintaRegistrados);
+            document.getElementById('consumos_sustrato_data').value = JSON.stringify(consumosSustratoRegistrados);
+            
+            console.log('Datos preparados para envío:');
+            console.log('- Paros:', parosRegistrados.length);
+            console.log('- Desperdicios:', desperdiciosRegistrados.length);
+            console.log('- Consumos de tinta:', consumosTintaRegistrados.length);
+            console.log('- Consumos de sustrato:', consumosSustratoRegistrados.length);
+            
+            // Continuar con el envío del formulario
+            this.submit();
+        } catch (error) {
+            console.error('Error al preparar datos para envío:', error);
+            alert('Ocurrió un error al preparar los datos para enviar. Por favor, intente nuevamente.');
+        }
+    });
 </script>
 {% endblock %}

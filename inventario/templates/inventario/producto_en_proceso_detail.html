@@ -1,0 +1,183 @@
+{% extends 'base.html' %}
+
+{% block title %}Detalle de Lote WIP: {{ lote.lote_id }}{% endblock %}
+
+{% block styles %}
+<style>
+    .detail-card {
+        margin-bottom: 1.5rem;
+    }
+    .detail-header {
+        background-color: #f8f9fa;
+        padding: 1rem;
+        border-bottom: 1px solid #dee2e6;
+    }
+    .detail-body {
+        padding: 1.5rem;
+    }
+    .detail-label {
+        font-weight: 600;
+        color: #495057;
+    }
+    .detail-value {
+        font-weight: 400;
+    }
+    .status-available {
+        background-color: #d4edda;
+        color: #155724;
+    }
+    .status-consumed {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+    .status-quarantine {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+    .lote-status {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 0.25rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">{{ titulo }}</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="{% url 'root' %}">Inicio</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'inventario_web:wip-list' %}">Inventario WIP</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Detalle Lote</li>
+            </ol>
+        </nav>
+    </div>
+    
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Información General -->
+            <div class="card detail-card">
+                <div class="card-header detail-header">
+                    <h5 class="card-title mb-0">Información General</h5>
+                </div>
+                <div class="card-body detail-body">
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <div class="detail-label">ID Lote:</div>
+                            <div class="detail-value">{{ lote.lote_id }}</div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="detail-label">Estado:</div>
+                            <div class="detail-value">
+                                {% if lote.estado == 'DISPONIBLE' %}
+                                <span class="lote-status status-available">Disponible</span>
+                                {% elif lote.estado == 'CONSUMIDO' %}
+                                <span class="lote-status status-consumed">Consumido</span>
+                                {% elif lote.estado == 'CUARENTENA' %}
+                                <span class="lote-status status-quarantine">Cuarentena</span>
+                                {% else %}
+                                <span class="lote-status">{{ lote.estado }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="detail-label">Fecha Creación:</div>
+                            <div class="detail-value">{{ lote.creado_en|date:"d/m/Y H:i" }}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <div class="detail-label">Producto:</div>
+                            <div class="detail-value">{{ lote.producto_terminado.codigo }}</div>
+                            <div class="text-muted small">{{ lote.producto_terminado.nombre }}</div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="detail-label">Orden Producción:</div>
+                            <div class="detail-value">{{ lote.orden_produccion.codigo }}</div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="detail-label">Ubicación:</div>
+                            <div class="detail-value">{{ lote.ubicacion.nombre }}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <div class="detail-label">Cantidad Actual:</div>
+                            <div class="detail-value">{{ lote.cantidad_actual|floatformat:2 }} {{ lote.unidad_medida_primaria.codigo }}</div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="detail-label">Cantidad Producida:</div>
+                            <div class="detail-value">{{ lote.cantidad_producida_primaria|floatformat:2 }} {{ lote.unidad_medida_primaria.codigo }}</div>
+                        </div>
+                        {% if lote.cantidad_producida_secundaria %}
+                        <div class="col-md-4">
+                            <div class="detail-label">Cantidad Secundaria:</div>
+                            <div class="detail-value">{{ lote.cantidad_producida_secundaria|floatformat:2 }} {{ lote.unidad_medida_secundaria.codigo }}</div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="detail-label">Observaciones:</div>
+                            <div class="detail-value">{{ lote.observaciones|default:"Sin observaciones" }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <!-- Acciones -->
+            <div class="card detail-card">
+                <div class="card-header detail-header">
+                    <h5 class="card-title mb-0">Acciones</h5>
+                </div>
+                <div class="card-body detail-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'inventario_web:wip-history' lote.id %}" class="btn btn-outline-primary">
+                            <i class="fas fa-history me-2"></i> Ver Historial de Movimientos
+                        </a>
+                        {% if lote.estado == 'DISPONIBLE' %}
+                        <a href="{% url 'inventario_web:wip-transferir' lote.id %}" class="btn btn-outline-warning">
+                            <i class="fas fa-exchange-alt me-2"></i> Transferir
+                        </a>
+                        <a href="{% url 'inventario_web:wip-consumir' lote.id %}" class="btn btn-outline-danger">
+                            <i class="fas fa-tools me-2"></i> Consumir
+                        </a>
+                        <a href="{% url 'inventario_web:wip-ajustar' lote.id %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-balance-scale me-2"></i> Ajustar Stock
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Información de Auditoría -->
+            <div class="card detail-card">
+                <div class="card-header detail-header">
+                    <h5 class="card-title mb-0">Auditoría</h5>
+                </div>
+                <div class="card-body detail-body">
+                    <div class="mb-3">
+                        <div class="detail-label">Creado por:</div>
+                        <div class="detail-value">{{ lote.creado_por.get_full_name|default:lote.creado_por.username }}</div>
+                        <div class="text-muted small">{{ lote.creado_en|date:"d/m/Y H:i" }}</div>
+                    </div>
+                    <div>
+                        <div class="detail-label">Última actualización:</div>
+                        <div class="detail-value">{{ lote.actualizado_por.get_full_name|default:lote.actualizado_por.username|default:"N/A" }}</div>
+                        <div class="text-muted small">{{ lote.actualizado_en|date:"d/m/Y H:i" }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

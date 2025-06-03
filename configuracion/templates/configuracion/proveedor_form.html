@@ -1,135 +1,196 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 {% load static %}
+{% load widget_tweaks %}
 
-{% block title %}{{ object.pk|yesno:"Editar,Nuevo" }} Proveedor{% endblock %}
+{% block title %}{% if object %}Editar{% else %}Nuevo{% endif %} Proveedor - ARCOPACK{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-label {
+        font-weight: 500;
+        color: #4a5568;
+    }
+    .form-text {
+        font-size: 0.875rem;
+        color: #6c757d;
+    }
+    .required-field::after {
+        content: "*";
+        color: #dc3545;
+        margin-left: 4px;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
-    <div class="row justify-content-center">
-        <div class="col-12 col-xl-8">
-            <div class="card">
-                <div class="card-header">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h3 class="card-title mb-0">{{ object.pk|yesno:"Editar,Nuevo" }} Proveedor</h3>
-                        <a href="{% url 'configuracion:proveedor_list' %}" class="btn btn-outline-secondary">
-                            <i class="bi bi-arrow-left"></i> Volver
-                        </a>
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-truck me-2"></i>{% if object %}Editar{% else %}Nuevo{% endif %} Proveedor
+        </h1>
+        <a href="{% url 'configuracion_web:proveedor-list' %}" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-arrow-left me-1"></i>Volver al Listado
+        </a>
+    </div>
+
+    <!-- Form Card -->
+    <div class="card shadow">
+        <div class="card-body">
+            <form method="post" class="needs-validation" novalidate>
+                {% csrf_token %}
+                
+                <!-- NIT/RUT -->
+                <div class="mb-3">
+                    <label for="{{ form.nit.id_for_label }}" class="form-label required-field">NIT/RUT</label>
+                    {% render_field form.nit class="form-control" placeholder="Ingrese el NIT/RUT del proveedor" %}
+                    {% if form.nit.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.nit.errors|join:", " }}
+                        </div>
+                    {% endif %}
+                    {% if form.nit.help_text %}
+                        <div class="form-text">{{ form.nit.help_text }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Razón Social -->
+                <div class="mb-3">
+                    <label for="{{ form.razon_social.id_for_label }}" class="form-label required-field">Razón Social</label>
+                    {% render_field form.razon_social class="form-control" placeholder="Ingrese la razón social" %}
+                    {% if form.razon_social.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.razon_social.errors|join:", " }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Nombre Comercial -->
+                <div class="mb-3">
+                    <label for="{{ form.nombre_comercial.id_for_label }}" class="form-label">Nombre Comercial</label>
+                    {% render_field form.nombre_comercial class="form-control" placeholder="Ingrese el nombre comercial" %}
+                    {% if form.nombre_comercial.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.nombre_comercial.errors|join:", " }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Dirección -->
+                <div class="mb-3">
+                    <label for="{{ form.direccion.id_for_label }}" class="form-label">Dirección</label>
+                    {% render_field form.direccion class="form-control" placeholder="Ingrese la dirección" %}
+                    {% if form.direccion.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.direccion.errors|join:", " }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="row">
+                    <!-- Ciudad -->
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.ciudad.id_for_label }}" class="form-label">Ciudad</label>
+                        {% render_field form.ciudad class="form-control" placeholder="Ingrese la ciudad" %}
+                        {% if form.ciudad.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.ciudad.errors|join:", " }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Teléfono -->
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.telefono.id_for_label }}" class="form-label">Teléfono</label>
+                        {% render_field form.telefono class="form-control" placeholder="Ingrese el teléfono" %}
+                        {% if form.telefono.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.telefono.errors|join:", " }}
+                            </div>
+                        {% endif %}
                     </div>
                 </div>
-                <div class="card-body">
-                    {% include "configuracion/components/_form_errors.html" %}
-                    
-                    <form method="post" novalidate>
-                        {% csrf_token %}
-                        
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label for="{{ form.nit.id_for_label }}" class="form-label">NIT *</label>
-                                {{ form.nit }}
-                                {% if form.nit.errors %}
-                                <div class="invalid-feedback">{{ form.nit.errors.0 }}</div>
-                                {% endif %}
-                            </div>
-                            <div class="col-md-6">
-                                <label for="{{ form.razon_social.id_for_label }}" class="form-label">Razón Social *</label>
-                                {{ form.razon_social }}
-                                {% if form.razon_social.errors %}
-                                <div class="invalid-feedback">{{ form.razon_social.errors.0 }}</div>
-                                {% endif %}
-                            </div>
-                        </div>
 
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label for="{{ form.nombre_comercial.id_for_label }}" class="form-label">Nombre Comercial</label>
-                                {{ form.nombre_comercial }}
-                                {% if form.nombre_comercial.errors %}
-                                <div class="invalid-feedback">{{ form.nombre_comercial.errors.0 }}</div>
-                                {% endif %}
+                <div class="row">
+                    <!-- Email -->
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.email.id_for_label }}" class="form-label">Email</label>
+                        {% render_field form.email class="form-control" placeholder="Ingrese el email" type="email" %}
+                        {% if form.email.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.email.errors|join:", " }}
                             </div>
-                            <div class="col-md-6">
-                                <label for="{{ form.ciudad.id_for_label }}" class="form-label">Ciudad *</label>
-                                {{ form.ciudad }}
-                                {% if form.ciudad.errors %}
-                                <div class="invalid-feedback">{{ form.ciudad.errors.0 }}</div>
-                                {% endif %}
-                            </div>
-                        </div>
+                        {% endif %}
+                    </div>
 
-                        <div class="row mb-3">
-                            <div class="col-12">
-                                <label for="{{ form.direccion.id_for_label }}" class="form-label">Dirección</label>
-                                {{ form.direccion }}
-                                {% if form.direccion.errors %}
-                                <div class="invalid-feedback">{{ form.direccion.errors.0 }}</div>
-                                {% endif %}
+                    <!-- Días de Crédito -->
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.dias_credito.id_for_label }}" class="form-label">Días de Crédito</label>
+                        {% render_field form.dias_credito class="form-control" type="number" min="0" %}
+                        {% if form.dias_credito.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.dias_credito.errors|join:", " }}
                             </div>
-                        </div>
-
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label for="{{ form.telefono.id_for_label }}" class="form-label">Teléfono</label>
-                                {{ form.telefono }}
-                                {% if form.telefono.errors %}
-                                <div class="invalid-feedback">{{ form.telefono.errors.0 }}</div>
-                                {% endif %}
-                            </div>
-                            <div class="col-md-6">
-                                <label for="{{ form.email.id_for_label }}" class="form-label">Email</label>
-                                {{ form.email }}
-                                {% if form.email.errors %}
-                                <div class="invalid-feedback">{{ form.email.errors.0 }}</div>
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label for="{{ form.plazo_pago_dias.id_for_label }}" class="form-label">Plazo de Pago (días)</label>
-                                {{ form.plazo_pago_dias }}
-                                {% if form.plazo_pago_dias.errors %}
-                                <div class="invalid-feedback">{{ form.plazo_pago_dias.errors.0 }}</div>
-                                {% endif %}
-                            </div>
-                            <div class="col-md-6">
-                                <label for="{{ form.tiempo_entrega_dias.id_for_label }}" class="form-label">Tiempo de Entrega (días)</label>
-                                {{ form.tiempo_entrega_dias }}
-                                {% if form.tiempo_entrega_dias.errors %}
-                                <div class="invalid-feedback">{{ form.tiempo_entrega_dias.errors.0 }}</div>
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        <div class="row mb-3">
-                            <div class="col-12">
-                                <label for="{{ form.observaciones.id_for_label }}" class="form-label">Observaciones</label>
-                                {{ form.observaciones }}
-                                {% if form.observaciones.errors %}
-                                <div class="invalid-feedback">{{ form.observaciones.errors.0 }}</div>
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        <div class="row mb-3">
-                            <div class="col-12">
-                                <div class="form-check">
-                                    {{ form.is_active }}
-                                    <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
-                                        Proveedor Activo
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-save"></i> Guardar
-                            </button>
-                        </div>
-                    </form>
+                        {% endif %}
+                    </div>
                 </div>
-            </div>
+
+                <!-- Contacto Principal -->
+                <div class="mb-3">
+                    <label for="{{ form.contacto_principal.id_for_label }}" class="form-label">Contacto Principal</label>
+                    {% render_field form.contacto_principal class="form-control" placeholder="Ingrese el nombre del contacto principal" %}
+                    {% if form.contacto_principal.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.contacto_principal.errors|join:", " }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Activo -->
+                <div class="mb-4">
+                    <div class="form-check">
+                        {% render_field form.is_active class="form-check-input" %}
+                        <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                            Proveedor activo
+                        </label>
+                    </div>
+                    {% if form.is_active.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.is_active.errors|join:", " }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Submit Buttons -->
+                <div class="d-flex justify-content-end">
+                    <a href="{% url 'configuracion_web:proveedor-list' %}" class="btn btn-outline-secondary me-2">
+                        Cancelar
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>Guardar
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Form validation
+(function () {
+    'use strict'
+    var forms = document.querySelectorAll('.needs-validation')
+    Array.prototype.slice.call(forms).forEach(function (form) {
+        form.addEventListener('submit', function (event) {
+            if (!form.checkValidity()) {
+                event.preventDefault()
+                event.stopPropagation()
+            }
+            form.classList.add('was-validated')
+        }, false)
+    })
+})()
+</script>
 {% endblock %}

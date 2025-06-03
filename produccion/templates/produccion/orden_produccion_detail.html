@@ -20,7 +20,7 @@
                 <button class="btn btn-primary" onclick="window.print()">
                     <i class="fas fa-print"></i> Imprimir
                 </button>
-                {% if orden.estado == 'PENDIENTE' %}
+                {% if orden.etapa_actual == 'PLAN' or orden.etapa_actual == 'PROG' %}
                     <a href="{% url 'produccion_web:orden-produccion-update' orden.id %}" class="btn btn-warning">
                         <i class="fas fa-edit"></i> Editar
                     </a>

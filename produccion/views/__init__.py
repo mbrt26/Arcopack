@@ -22,6 +22,7 @@ from .impresion import (
     RegistroImpresionCreateView,
     RegistroImpresionUpdateView,
     RegistroImpresionDetailView,
+    RegistroImpresionListView,
 )
 
 # Vistas de Refilado
@@ -30,6 +31,7 @@ from .refilado import (
     RegistroRefiladoCreateView,
     RegistroRefiladoUpdateView,
     RegistroRefiladoDetailView,
+    RegistroRefiladoListView,
 )
 
 # Vistas de Sellado
@@ -38,6 +40,7 @@ from .sellado import (
     RegistroSelladoCreateView,
     RegistroSelladoUpdateView,
     RegistroSelladoDetailView,
+    RegistroSelladoListView,
 )
 
 # Vistas de Doblado
@@ -46,6 +49,7 @@ from .doblado import (
     RegistroDobladoCreateView,
     RegistroDobladoUpdateView,
     RegistroDobladoDetailView,
+    RegistroDobladoListView,
 )
 
 # Vistas Kanban
