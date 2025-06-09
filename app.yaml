@@ -1,3 +1,4 @@
+service: arcopack
 runtime: python39
 
 entrypoint: gunicorn -b :$PORT erp_config.wsgi:application
