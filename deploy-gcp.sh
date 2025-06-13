@@ -13,7 +13,19 @@ DB_USER="arcopackuser"
 DB_PASSWORD="ArcopakDB2025!"
 SERVICE_NAME="arcopack"
 
+# Detectar el comando Python correcto
+if command -v python3 &> /dev/null; then
+    PYTHON_CMD="python3"
+elif command -v python &> /dev/null; then
+    PYTHON_CMD="python"
+else
+    echo "❌ Error: No se encontró Python en el sistema. Por favor, instala Python o especifica la ruta completa."
+    echo "   Puedes editar este script y cambiar PYTHON_CMD con la ruta correcta a tu ejecutable de Python."
+    PYTHON_CMD="/usr/bin/python3"  # Intenta con una ruta común
+fi
+
 echo "🚀 Iniciando despliegue de ARCOPACK en Google Cloud..."
+echo "📌 Usando Python: $PYTHON_CMD"
 
 # 1. Configurar proyecto
 echo "📋 Configurando proyecto..."
@@ -68,19 +80,55 @@ else
     echo "App Engine ya está inicializado."
 fi
 
-# 7. Recolectar archivos estáticos
-echo "📁 Recolectando archivos estáticos..."
-python manage.py collectstatic --noinput
+# 7. Verificar que existan todos los archivos estáticos
+echo "🔍 Verificando archivos CSS específicos de pedidos..."
+mkdir -p static/pedidos/css/
+if [ ! -f static/pedidos/css/pedido_form.css ]; then
+    echo "Creando archivo CSS faltante para pedidos..."
+    echo "/* Estilos para el formulario de pedidos */" > static/pedidos/css/pedido_form.css
+    echo "Archivo pedido_form.css creado."
+fi
 
-# 8. Ejecutar migraciones localmente (opcional)
-echo "🔄 Aplicando migraciones..."
-python manage.py migrate
+# También verificamos en la carpeta de la aplicación
+mkdir -p pedidos/static/pedidos/css/
+if [ ! -f pedidos/static/pedidos/css/pedido_form.css ]; then
+    echo "Creando archivo CSS faltante en la carpeta de la aplicación pedidos..."
+    echo "/* Estilos para el formulario de pedidos */" > pedidos/static/pedidos/css/pedido_form.css
+    echo "Archivo pedido_form.css creado en la carpeta de la aplicación."
+fi
 
-# 9. Desplegar aplicación como servicio dedicado
+# 8. Recolectar archivos estáticos manualmente (sin depender de Python)
+echo "📁 Preparando archivos estáticos..."
+mkdir -p staticfiles/pedidos/css/
+cp -f pedidos/static/pedidos/css/pedido_form.css staticfiles/pedidos/css/
+echo "✅ Copiados archivos estáticos manualmente."
+
+# Intentar collectstatic solo si Python está disponible
+if $PYTHON_CMD -c "print('Python funciona')" 2>/dev/null; then
+    echo "📁 Recolectando archivos estáticos con $PYTHON_CMD..."
+    export DJANGO_DEBUG=False
+    $PYTHON_CMD manage.py collectstatic --clear --noinput
+    
+    echo "Verificando manifiesto de archivos estáticos..."
+    if [ -f staticfiles/staticfiles.json ]; then
+        echo "✅ Manifiesto de archivos estáticos generado correctamente."
+        grep -q "pedidos/css/pedido_form.css" staticfiles/staticfiles.json && echo "✅ CSS de pedidos encontrado en el manifiesto." || echo "❌ CSS de pedidos NO encontrado en el manifiesto."
+    else
+        echo "❌ Advertencia: No se generó el manifiesto de archivos estáticos. Continuando de todos modos..."
+    fi
+    
+    # 9. Ejecutar migraciones localmente (opcional)
+    echo "🔄 Aplicando migraciones..."
+    $PYTHON_CMD manage.py migrate || echo "❌ No se pudieron aplicar migraciones. Continuando de todos modos..."
+else
+    echo "⚠️ Python no está disponible para collectstatic. Continuando con los archivos copiados manualmente."
+fi
+
+# 10. Desplegar aplicación como servicio dedicado
 echo "🚀 Desplegando aplicación en App Engine como servicio '$SERVICE_NAME'..."
 gcloud app deploy app.yaml --quiet
 
-# 10. Obtener URL de la aplicación
+# 11. Obtener URL de la aplicación
 echo "✅ Despliegue completado!"
 echo "🌐 URLs de la aplicación:"
 echo "   Servicio principal: https://$SERVICE_NAME-dot-$PROJECT_ID.rj.r.appspot.com"

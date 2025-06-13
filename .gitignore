@@ -1,59 +1,48 @@
-# Python
+# Base de datos SQLite local
+db.sqlite3
+db.sqlite3.backup
+
+# Archivos de caché de Python
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
-.Python
-env/
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-*.egg-info/
-.installed.cfg
-*.egg
 
-# Virtual Environment
+# Archivos de entorno virtual
 venv/
+env/
 ENV/
+env.bak/
+venv.bak/
 
-# Django
-*.log
-local_settings.py
-db.sqlite3
-db.sqlite3-journal
-media/
+# Archivos de configuración específicos del entorno
+.env
+.venv
+
+# Archivos de sistema macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Archivos estáticos compilados (se generan automáticamente)
 staticfiles/
 
-# Credentials and Secrets
-*.pem
-*.key
-*.crt
-*.cer
-*.p12
-*.pfx
-*.json
-!package.json
-!package-lock.json
-!staticfiles.json
-
-# macOS
-.DS_Store
-._*
-
-# IDEs
-.idea/
+# Archivos de configuración del IDE
 .vscode/
+.idea/
 *.swp
 *.swo
 
-# Environment variables
-.env
-.env.*
+# Archivos de logs
+*.log
+
+# Archivos temporales
+*.tmp
+*.temp
+
+# Archivos de respaldo
+*.backup
+*.bak
+
+# Archivos de migración compilados (opcional, según el flujo de trabajo)
+# migrations/__pycache__/

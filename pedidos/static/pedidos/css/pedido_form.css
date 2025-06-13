@@ -1,0 +1,36 @@
+/* 
+ * Estilos para el formulario de pedidos
+ * Archivo generado para solucionar el error: Missing staticfiles manifest entry for 'pedidos/css/pedido_form.css'
+ */
+
+/* Estilos básicos para el formulario */
+.pedido-form {
+    margin-bottom: 20px;
+}
+
+.pedido-form label {
+    font-weight: 500;
+}
+
+.pedido-form .form-control {
+    border-radius: 4px;
+}
+
+/* Estilos para secciones del formulario */
+.pedido-section {
+    margin-bottom: 25px;
+    padding: 15px;
+    border-radius: 5px;
+}
+
+/* Estilos para botones */
+.pedido-form .btn-primary {
+    margin-top: 10px;
+}
+
+/* Responsividad */
+@media (max-width: 768px) {
+    .pedido-form .col-form-label {
+        text-align: left;
+    }
+}
