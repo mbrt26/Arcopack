@@ -7,6 +7,9 @@
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h3 mb-0 text-gray-800">Lotes de Inventario</h1>
+        <a href="{% url 'inventario_web:lote-create' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Nuevo Lote
+        </a>
     </div>
 
     <!-- Filtros -->
@@ -84,10 +87,6 @@
                                     <td>{{ lote.fecha_recepcion|date:"d/m/Y H:i" }}</td>
                                     <td>{{ lote.fecha_vencimiento|date:"d/m/Y"|default:"-" }}</td>
                                     <td>{{ lote.proveedor.razon_social|default:"-" }}</td>
-                                </tr>
-                                {% empty %}
-                                <tr>
-                                    <td colspan="8" class="text-center">No se encontraron lotes</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
